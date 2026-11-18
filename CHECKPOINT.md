@@ -1,13 +1,13 @@
-# CHECKPOINT 4628 — read me first, then TASKS.md
+# CHECKPOINT 4629 — read me first, then TASKS.md
 
-**Written:** 2026-11-18T03:16:00Z · **tests:** all 10 fast checks green
-**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `0c5cbefa1` (this checkpoint is the commit after it)
+**Written:** 2026-11-18T03:17:23Z · **tests:** all 10 fast checks green
+**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `04b5bf82c` (this checkpoint is the commit after it)
 
 ## Just done
-MK3: first real SHADOW run read: production serves RFQ v3, maker registered, socket live; flow ~60 RFQs/s and ~1.7 trades/s, 0.4% priceable. Journal sampled + 5-min TALLY + leg classes + 2-min pending window; data+cloud suites green
+MK3: CHANGES.md line for the sampled RFQ journal; engine reset issued (cc b1e61380f) so the new job runs the sampling+tally
 
 ## Do this next
-reset the engine so the sampled journal runs; read the first rfq-<day> journal from cloud-archive (every 20 min) with tools/rfq_summary.py; resolve unscanned legs; tell Tj
+when the old job's full journal and the new job's sampled one reach cloud-archive-2026-11-18: python3 -I tools/rfq_summary.py run; resolve unscanned leg ids; then tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ reset the engine so the sampled journal runs; read the first rfq-<day> journal f
 
 ## Last ten checkpoints
 ```
+  c855ae799 ckpt 4628: MK3: first real SHADOW run read: production serves RFQ v3, maker registered
   0f0039298 ckpt 4627: MK: maker landed 02:48, runner replaced again (the 02:46 job predated it); 
   f34f0e681 ckpt 4626: MK: Novig parlay maker built (protocol, pricer, maker, socket, engine wirin
   f0ff790a4 ckpt 4625: NVR done: verified live (device pass until Thu 03:00 ET; locks 37 games/160
@@ -25,8 +26,7 @@ reset the engine so the sampled journal runs; read the first rfq-<day> journal f
   350e50d60 ckpt 4621: NVR: Novig geolocation status (GeoWatch + message), locks (NovigLocks into 
   9495a33ba ckpt 4620: ENGINEER 11-17 slot2: watch ok, PLR4 ticked, no ship
   4c096d534 ckpt 4619: PLR: SGP logger+grader live-tested with the key (344 quotes, Novig best on 
-  9749ec207 ckpt 4618: PLR trial fixes from the first real run: SGP needs a total point, ev/calc n
 ```
 
-(6 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
