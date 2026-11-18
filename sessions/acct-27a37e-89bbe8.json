@@ -8,8 +8,8 @@
  "branch": "ccr-f4518318-aidjgt",
  "head": "e178969a87205a0aab46bb3f1770619d1f1492ad",
  "since": 1794955330,
- "beat": 1794980249,
- "beatIso": "2026-11-18T05:37:29Z",
+ "beat": 1794980963,
+ "beatIso": "2026-11-18T05:49:23Z",
  "done": "pre-release: MKV: parlay maker results in the app (Settled parlays tile, 24 h loss stop status), live at small limits, game lines only (versionCode 478, v1.0.138)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.138), then run: bash tools/record-release.sh v1.0.138 478 \"MKV: parlay maker results in the app (Settled parlays tile, 24 h loss stop status), live at small limits, game lines only\""
 }
