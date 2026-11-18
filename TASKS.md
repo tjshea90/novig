@@ -6764,3 +6764,5 @@ Tj, verbatim: "I want to become a parlay maker and try to profit from it. Resear
 - [ ] MK6 coverage, in order: maxLegs 3 -> 6 (the stake rule declines what the caps cannot take); two-legs-in-one-game using the SGP correlation logs; alternate prop numbers (ladder model); read the 'unscanned' legs by kind first (the largest class: 31-38k legs per 5 minutes).
 - [ ] MK7 LIVE decision by the evidence rule (200+ priced trades, median market margin above our margin plus a cushion, AND MK5 not showing the winners lose); first caps $12 stake / $45 per parlay / $90 total, margin 8%; tell Tj before switching.
 - [~] MK4 (landed, SHADOW running; Tj told 2026-11-18) tests, land, engine reset; tell Tj exactly what runs, what it risks and how to switch it.
+
+- [x] PLQ (Tj typed 2026-11-18 03:49): check PropLine API+socket health and list every PropLine feature with how Vigilant can use it. Answered in chat from research/propline_unused_features_2026-11-17.md + live status.json (stream live, 0s behind).

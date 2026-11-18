@@ -1,21 +1,23 @@
-# CHECKPOINT 4633 — read me first, then TASKS.md
+# CHECKPOINT 4634 — read me first, then TASKS.md
 
-**Written:** 2026-11-18T03:44:05Z · **tests:** all 10 fast checks green
-**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `d69f54433` (this checkpoint is the commit after it)
+**Written:** 2026-11-18T03:55:42Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-btwsi1` · **builds on:** `9cf84a004` (this checkpoint is the commit after it)
 
 ## Just done
-Handoff manifest saved (.handoff/). The handoff tool had replaced the marked block in CLAUDE.md, which wrongly spanned ~58 lines of standing rules; restored CLAUDE.md from ckpt 4619 and moved the begin marker directly above 'Session Learnings'
+PLQ: answered Tj PropLine health+feature list
 
 ## Do this next
-MK5 daily catalog snapshot + grade the market's RFQ trades; MK6 coverage (maxLegs 3->6, same-game, prop ladders); LIVE only by the evidence rule; remind Tj: open the Novig app before Thu 03:00 ET
+PLR5 settle fallback grader; check propline-ev sweep rows 0
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  3b6279c74 ckpt 4633: Handoff manifest saved (.handoff/). The handoff tool had replaced the marke
   b2e2a0f37 ckpt 4632: MK3: research index rebuilt for the RFQ leg/catalog studies (index test gre
   21bd5babd ckpt 4631: MK3: warm-run read (TALLY rows + 164 priced trades): market pays median +1.
   eb2082199 ckpt 4630: MK3: rfq_legs.py (what the legs of RFQs are, via Novig's public catalog) + 
@@ -25,8 +27,7 @@ MK5 daily catalog snapshot + grade the market's RFQ trades; MK6 coverage (maxLeg
   f34f0e681 ckpt 4626: MK: Novig parlay maker built (protocol, pricer, maker, socket, engine wirin
   f0ff790a4 ckpt 4625: NVR done: verified live (device pass until Thu 03:00 ET; locks 37 games/160
   c8217ab93 ckpt 4624: NVR: locks guard is the share of the engine's own candidates, not a guessed
-  cfb5539b4 ckpt 4623: NVR: :data:test green on the landing tree
 ```
 
-(3 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
