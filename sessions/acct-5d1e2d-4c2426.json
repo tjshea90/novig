@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "4c2426",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-7isr42",
+ "head": "9495a33ba96b85026a0576fab2dc10d4684425ed",
+ "since": 1794961560,
+ "beat": 1794961560,
+ "beatIso": "2026-11-18T00:26:00Z",
+ "done": "ENGINEER 11-17 slot2: watch ok, PLR4 ticked, no ship",
+ "next": "PLR7/PLS6 only if live trading funded; HB2 needs Tj to fund wallet"
+}
