@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "cfb5539b49b1af98ae49b4d02e5ce98a8de609e0",
+ "head": "76748e2ba346f6a052ad4ec1b9a9bcb4e4a05051",
  "since": 1794955330,
- "beat": 1794964715,
- "beatIso": "2026-11-18T01:18:35Z",
+ "beat": 1794964968,
+ "beatIso": "2026-11-18T01:22:48Z",
  "done": "NVR: :data:test green on the landing tree",
  "next": "confirm landed; engine_set --reset"
 }
