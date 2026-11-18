@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "d318f40caf43622e9b6bc664e72667b637af97db",
+ "head": "eb20821993204f951922dfa276e5316d178088d0",
  "since": 1794955330,
- "beat": 1794972027,
- "beatIso": "2026-11-18T03:20:27Z",
- "done": "MK3: CHANGES.md line for the sampled RFQ journal; engine reset issued (cc b1e61380f) so the new job runs the sampling+tally",
- "next": "when the old job's full journal and the new job's sampled one reach cloud-archive-2026-11-18: python3 -I tools/rfq_summary.py run; resolve unscanned leg ids; then tell Tj"
+ "beat": 1794972065,
+ "beatIso": "2026-11-18T03:21:05Z",
+ "done": "MK3: rfq_legs.py (what the legs of RFQs are, via Novig's public catalog) + first-10-min leg findings in the research file: 45% in play, props ~40% of legs, 55% of trades are 4-20 legs, coverage unmeasured (cold window)",
+ "next": "read the warm job's sampled journal (run 44229304633, uploads ~03:37 UTC) with rfq_summary.py + TALLY rows; decide coverage work (props ladder, fair-age rule) from it; tell Tj what runs"
 }
