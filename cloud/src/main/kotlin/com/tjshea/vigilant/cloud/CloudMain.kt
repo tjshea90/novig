@@ -936,10 +936,10 @@ fun main(args: Array<String>) = runBlocking {
 }
 
 /**
- * PropLine's +EV-at-Novig sweep is OFF (Tj, 2026-10-17: "this propline feature may just be a waste of usage... if it is inaccurate, get rid of it"): its prop Overs lose 9-14% on 6,393 graded closes whatever the stated edge
+ * PropLine's +EV-at-Novig sweep is back ON (Tj, 2026-11-18, DG2: "I want to see what propline api considers +ev at novig ... compare it to what our engine finds"; the Streaming Lite plan's 250,000 a day makes its ~224 requests an hour small). It was OFF (Tj, 2026-10-17: "this propline feature may just be a waste of usage... if it is inaccurate, get rid of it"): its prop Overs lose 9-14% on 6,393 graded closes whatever the stated edge
  * (research/propline_vs_vigilant_2026-10-16.md), Vigilant calls 94% of its lines 0% or worse, and a sweep was 224 requests of the Pro key's 25,000 a day. PropLine's odds, closing lines, grading and archive are untouched.
  */
-private const val PROPLINE_EV_SWEEP = false
+private const val PROPLINE_EV_SWEEP = true
 
 /** PropLine's freshness rows for the status: the books the engine prices PropLine's lines with, and Novig (PSL). */
 private fun propLineFreshShown(sources: CloudSources, s: com.tjshea.vigilant.data.scanner.ScanSettings?): List<com.tjshea.vigilant.data.reference.PropLineFreshness.Row> {
