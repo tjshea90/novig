@@ -6749,7 +6749,7 @@ Tj, verbatim: "Review that both novig api and socket and propline api and socket
 - [x] NVR1 (docs mirror diff 10-25 -> 11-18; NOVIG_API.md section 32) fetch Novig's current API docs, diff against the saved copies / NOVIG_API.md, list every change.
 - [x] NVR2 (built: GeoWatch, NovigLocks, unsubscribed notice, tier fields; tests green) audit the app + engine's Novig REST, stream (bbo/book), order socket, limits against the docs; fix what is wrong or unused.
 - [x] NVR3 (healthy: both sockets live, 11 games' scores, 1 connect each) re-check the PropLine API + sockets as running now (engine log/status after last night's reset); fix what is wrong.
-- [~] NVR4 (doc written; land + engine reset + verify geoNote/locksNote in status pending) write research/novig_propline_review_2026-11-18.md, CHANGES.md line, ship the code, tell Tj.
+- [x] NVR4 (landed, engine reset twice, VERIFIED live: geoNote 'good until Thu 03:00 ET', locks 37 games / 160,425 markets) write research/novig_propline_review_2026-11-18.md, CHANGES.md line, ship the code, tell Tj.
 - [ ] NVR5 `GET /v3/catalog/consensus` (a family's main line) as the exact main-number pick for the NCAAB board instead of the 30-70 cent heuristic.
 - [ ] NVR6 RFQ v3 maker (Tj's decision): read `propline-sgp-summary` across the 2026-11-19 parlay fee change first.
 - [ ] NVR7 re-run `propline.yml` task `trial` on 11-19/20 and compare Novig's parlay quote EV with 11-17 (-4.3% to -8.4%).
