@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-5qtg6r",
  "head": "cc0983b28251b222faed1a791b2c8881c490df56",
  "since": 1794964792,
- "beat": 1794965065,
- "beatIso": "2026-11-18T01:24:25Z",
+ "beat": 1794966607,
+ "beatIso": "2026-11-18T01:50:07Z",
  "done": "Odds API: one key at a time (no day pacing), tests green, replied in chat",
  "next": "ship with next release; watch oddsapi key usage"
 }
