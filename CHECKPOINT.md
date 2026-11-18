@@ -1,13 +1,13 @@
-# CHECKPOINT 4636 — read me first, then TASKS.md
+# CHECKPOINT 4637 — read me first, then TASKS.md
 
-**Written:** 2026-11-18T04:03:22Z · **tests:** all 10 fast checks green
-**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `0e334bb99` (this checkpoint is the commit after it)
+**Written:** 2026-11-18T04:04:48Z · **tests:** all 10 fast checks green
+**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `9ee91002e` (this checkpoint is the commit after it)
 
 ## Just done
-MKV: app suite green on the exact tree (v1.0.137 bump)
+MK5: rfq-catalog.yml snapshots Novig's public catalog every 4 h into the rfq-catalog Release so RFQ legs can be named after their markets close
 
 ## Do this next
-ship v1.0.137: ci.yml green on the commit, ship.sh, release.yml, record-release.sh; engine reset so the new pricing runs; MK5; MK6
+run rfq-catalog.yml once (workflow_dispatch) and read its log; ship v1.0.137 when ci.yml is green on main; MK5 grader; MK6
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ ship v1.0.137: ci.yml green on the commit, ship.sh, release.yml, record-release.
 
 ## Last ten checkpoints
 ```
+  65a5e2f60 ckpt 4636: MKV: app suite green on the exact tree (v1.0.137 bump)
   0e334bb99 ckpt 4635: MKV: parlay maker in the app (Engine > Parlays: status, evidence counter, O
   35071ac65 ckpt 4634: PLQ: answered Tj PropLine health+feature list
   3b6279c74 ckpt 4633: Handoff manifest saved (.handoff/). The handoff tool had replaced the marke
@@ -25,5 +26,7 @@ ship v1.0.137: ci.yml green on the commit, ship.sh, release.yml, record-release.
   d15c145fe ckpt 4629: MK3: CHANGES.md line for the sampled RFQ journal; engine reset issued (cc b
   c855ae799 ckpt 4628: MK3: first real SHADOW run read: production serves RFQ v3, maker registered
   0f0039298 ckpt 4627: MK: maker landed 02:48, runner replaced again (the 02:46 job predated it); 
-  f34f0e681 ckpt 4626: MK: Novig parlay maker built (protocol, pricer, maker, socket, engine wirin
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
