@@ -30,6 +30,13 @@ data class RfqStatus(
     val filled: Long = 0L,
     /** The maker's collateral in unsettled parlays (Novig's `GET /rfq/v3/collateral`), dollars. */
     val openCollateral: Double = 0.0,
+    /** What the maker's fills actually paid (Novig's executions): settled parlays, how many the maker won and lost, parlays still open, and the profit over all of them and over the last 24 hours; null = not read. */
+    val settled: Int = 0,
+    val makerWon: Int = 0,
+    val makerLost: Int = 0,
+    val openParlays: Int = 0,
+    val realizedPnl: Double? = null,
+    val realizedPnl24h: Double? = null,
     /** The commonest reasons an RFQ was not priced, as `reason xN`. */
     val declines: List<String> = emptyList(),
     /** The socket's last word when it is not connected. */

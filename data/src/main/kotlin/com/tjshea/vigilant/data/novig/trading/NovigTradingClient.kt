@@ -330,6 +330,9 @@ open class NovigTradingClient(
     open suspend fun rfqCollateral(): Double? =
         ((json.parseToJsonElement(signer.call("GET", "/rfq/v3/collateral")) as? kotlinx.serialization.json.JsonObject)?.get("collateral") as? kotlinx.serialization.json.JsonPrimitive)?.content?.toDoubleOrNull()
 
+    /** The maker's own fills, newest first (`GET /rfq/v3/executions`, one page of up to 500): the raw answer for [com.tjshea.vigilant.data.rfq.RfqLedger.parse]; null when it could not be read. */
+    open suspend fun rfqExecutions(): String? = signer.call("GET", "/rfq/v3/executions", rawQuery = "limit=500").takeIf { it.isNotBlank() }
+
     /** The maker's tier, confirm standing and any lock (`GET /rfq/v3/maker`) as Novig sent it, for the status line; null when it could not be read. */
     open suspend fun rfqMakerInfo(): String? = signer.call("GET", "/rfq/v3/maker").takeIf { it.isNotBlank() }
 

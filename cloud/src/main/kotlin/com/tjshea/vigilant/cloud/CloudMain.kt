@@ -556,6 +556,8 @@ fun main(args: Array<String>) = runBlocking {
             while (isActive) {
                 if (rfqCfg.get().mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF) {
                     runCatching { tc.rfqCollateral() }.getOrNull()?.let { rfqCollateral.set(it) }
+                    // The result of the maker's real fills decides the loss stop (LIVE only: SHADOW has none).
+                    if (rfqCfg.get().mode == com.tjshea.vigilant.data.rfq.RfqConfig.Mode.LIVE) runCatching { tc.rfqExecutions() }.getOrNull()?.let { text -> rfqMaker.onLedger(com.tjshea.vigilant.data.rfq.RfqLedger.summarize(com.tjshea.vigilant.data.rfq.RfqLedger.parse(text), System.currentTimeMillis())) }
                     val now = System.currentTimeMillis()
                     if (now - logged >= 10 * 60_000L) { logged = now; log(rfqMaker.status(rfqSocket.connected) + " · maker registered ${rfqSocket.makerId ?: "no"} · open collateral $${"%.2f".format(rfqCollateral.get())}" + (if (!rfqSocket.connected) " · ${rfqSocket.lastNote}" else "")) }
                 }

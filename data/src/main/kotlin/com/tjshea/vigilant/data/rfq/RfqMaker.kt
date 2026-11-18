@@ -246,6 +246,20 @@ class RfqMaker(
 
     private fun release(rfqId: String) { synchronized(pending) { pending[rfqId]?.let { it.reserved = 0.0; it.reservedUntilMs = 0L } } }
 
+    @Volatile private var ledger: RfqLedger.Summary? = null
+
+    /**
+     * The result of the maker's real fills (read by the engine every couple of minutes while LIVE). **The loss stop:** when the last 24 hours of settled parlays have lost [RfqConfig.dayLossStop] or more, quoting stops
+     * for six hours and Tj is told; the stop is re-judged when it lapses, over a window that has moved on.
+     */
+    fun onLedger(s: RfqLedger.Summary, cfg: RfqConfig = config()) {
+        ledger = s
+        row("LEDGER", null) { put("settled", s.settled); put("makerWon", s.makerWon); put("makerLost", s.makerLost); put("open", s.open); put("pnl", s.pnlTotal); put("pnl24h", s.pnl24h) }
+        if (cfg.mode == RfqConfig.Mode.LIVE && cfg.dayLossStop > 0.0 && s.pnl24h <= -cfg.dayLossStop) {
+            halt("the maker's settled parlays lost ${"%.2f".format(-s.pnl24h)} dollars in 24 hours (the stop is ${"%.2f".format(cfg.dayLossStop)})", 6 * 3_600_000L)
+        }
+    }
+
     /** The whole state as data for the phone ([RfqStatus]). */
     fun snapshot(connected: Boolean, cfg: RfqConfig, makerId: String?, collateral: Double, note: String, now: Long = clock()): RfqStatus {
         val ms = synchronized(margins) { margins.toList() }
@@ -255,6 +269,7 @@ class RfqMaker(
             atMs = now, config = cfg, connected = connected, makerId = makerId, halted = halted, seen = seen, priceable = priceable, tradesSeen = executedSeen, pricedTrades = ms.size,
             medianGapPoints = med, wouldWin = wouldWin, wouldEarnPoints = if (wouldWin > 0) wouldEdge / wouldWin else null, quotesSent = quotesSent, won = accepted, confirmed = confirmed,
             filled = filled, openCollateral = collateral, declines = top, note = if (connected) "" else note.take(120),
+            settled = ledger?.settled ?: 0, makerWon = ledger?.makerWon ?: 0, makerLost = ledger?.makerLost ?: 0, openParlays = ledger?.open ?: 0, realizedPnl = ledger?.pnlTotal, realizedPnl24h = ledger?.pnl24h,
         )
     }
 
