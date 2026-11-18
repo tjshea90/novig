@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "20315812829a57da09d1ba1df51ad5e71db6ca48",
+ "head": "0e334bb99dac95ec314400eac9e9647d003b0b92",
  "since": 1794955330,
- "beat": 1794974396,
- "beatIso": "2026-11-18T03:59:56Z",
- "done": "Handoff manifest saved (.handoff/). The handoff tool had replaced the marked block in CLAUDE.md, which wrongly spanned ~58 lines of standing rules; restored CLAUDE.md from ckpt 4619 and moved the begin marker directly above 'Session Learnings'",
- "next": "MK5 daily catalog snapshot + grade the market's RFQ trades; MK6 coverage (maxLegs 3->6, same-game, prop ladders); LIVE only by the evidence rule; remind Tj: open the Novig app before Thu 03:00 ET"
+ "beat": 1794974434,
+ "beatIso": "2026-11-18T04:00:34Z",
+ "done": "MKV: parlay maker in the app (Engine > Parlays: status, evidence counter, OFF/SHADOW/LIVE with a confirm, limits), engine publishes status.rfq, return-on-collateral pricing (4%/1pt per leg/2% floor, 2-5 legs, stake as asked), pricing study section 9; 4309 tests green; v1.0.137",
+ "next": "ship v1.0.137: ci.yml green on the commit, ship.sh, release.yml, record-release.sh; then engine reset so the new pricing runs in SHADOW; MK5 grading; MK6 same-game"
 }
