@@ -733,7 +733,6 @@ Settings › Betting & Novig account › Profit-proven only (`ApiGates.profitPro
 **Standing instruction from Tj (2026-10-12, verbatim, shortened):** "build a live betting engine based on an average of the soft sports books offered by the boltodds socket at low latency ... Make sure the app is taking full advantage of all sockets. They shouldn't need to wait for anything or scan at intervals. They should run in real time."
 `data/boltodds/BoltLiveConsensus.kt` (pure: quorum of COMPANIES that pushed within seconds and agree, trimmed mean, else the line is closed) + `BoltLiveFeed.kt` (push: `BoltBoard.addGameListener`; speaks Pinnodds frames) make `PinnFeedChoice.BOLT` a third source for `PinnLiveRunner`, so the matcher, the 5 s rule, the taker fee, the live trader and live bids run on it unchanged. It has no scores and BoltOdds has no sharp book (BOLTODDS_API.md §9-§10): the trigger is never "after a score", the edge floor is 4%, and REAL orders need `ApiGates.boltLiveReal` (default off = paper) on top of the live switches. Never loosen those without Tj's paper results. The streaming engine and the live feed are push (`addGameListener`, Novig `BookListener`); a new reader of either socket must be push too.
 
-<!-- handoff:learnings:begin -->
 ## Claude builds and ships improvements itself, across the whole chain (Tj, 2026-10-16, permanent)
 
 **Standing instruction from Tj (2026-10-16, chat, verbatim):** "It concerns me that Claude did not auto build the prop grading support and other features from propline. Remember the standing rule: Claude has full control over updating and running the engine. It does not need to ask me. I want Claude to always update the engine to improve it and update the entire chain including the android app and the GitHub actions process to make the ui better, the code better, the profit engine better, the api usage better, etc. Claude should maintain and make this system better as much as it can"
@@ -792,6 +791,7 @@ Study, evidence and parlay findings: **`research/ncaab_ats_2026-11-05.md`**; bac
 **Standing instruction from Tj (2026-10-20, chat 00:20 UTC, verbatim):** "I didn't ask for pbp on the phone. it should all run on GitHub. pbp on GitHub engine. but I can monitor and control it on my phone. I want the features, just the processing and Internet usage should be on GitHub. ideally for this entire app, my phone is just a control center and monitor of what is running on GitHub".
 So: a new feature (a feed, a stream, a scan, a check, a model) is built in the GitHub engine (`CloudSources`, `CloudEngine`, `cloud/`) with its status published in `status.json` and its switches mirrored; the phone gets a card, a switch and the numbers, never its own copy of the work, unless Tj asks for the phone to do it or it needs a phone-only thing (his own trading keys, Novig's stream under his key, the one-connection sockets). Example: ParlayAPI's play-by-play stream and the API monitor (`ApiMonitor`, `ApiState`) run on the engine only.
 
+<!-- handoff:learnings:begin -->
 ## Session Learnings (auto-updated by handoff)
 
 ### Implicit Rules
