@@ -393,6 +393,21 @@ class NovigPublicClientTest {
         assertEquals(listOf(Triple(512, 4.0, 4096)), push.tuned)
     }
 
+    /** NVR (2026-11-18): the limits answer now names the account's tier and the most open orders (changelog 2026-10-28/29/30); the account's own figures win over the key's. */
+    @Test
+    fun `the tier and the open order cap come with the schedule, the account's over the key's`() = runBlocking {
+        server.dispatcher = keyedDispatch(limitsBody.replace(""""maxWatchedMarkets":2048""", """"maxWatchedMarkets":2048,"tier":"BASE","accountTier":"TIER1","maxOpenOrders":2048,"accountMaxOpenOrders":4096"""))
+        val c = keyed(client())
+        c.books(listOf("m1"))
+        assertEquals("TIER1", c.limits?.tier)
+        assertEquals(4096, c.limits?.openOrderCap)
+        // and with no account figures the key's own stand
+        server.dispatcher = keyedDispatch(limitsBody.replace(""""maxWatchedMarkets":2048""", """"maxWatchedMarkets":2048,"tier":"BASE","maxOpenOrders":2048"""))
+        val d = keyed(client())
+        d.books(listOf("m2"))
+        assertEquals("BASE", d.limits?.tier); assertEquals(2048, d.limits?.openOrderCap)
+    }
+
     @Test
     fun `no schedule from Novig keeps the documented pace, and books still come`() = runBlocking {
         server.dispatcher = object : Dispatcher() {
