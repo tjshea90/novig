@@ -50,8 +50,8 @@ class RfqSocketTest {
     private fun client() = NovigTradingClient(NovigSignedClient(OkHttpClient(), json, PemSigningKey("kid-1", pem), server.url("").toString().trimEnd('/')), json)
 
     private fun legs() = listOf(
-        LegFair("a", "e1", "A", 0.5, 5, now - 60_000L, now + 3 * 3_600_000L, false),
-        LegFair("b", "e2", "B", 0.4, 5, now - 60_000L, now + 3 * 3_600_000L, false),
+        LegFair("a", "e1", "A", 0.5, 5, now - 60_000L, now + 3 * 3_600_000L, false, "MONEY"),
+        LegFair("b", "e2", "B", 0.4, 5, now - 60_000L, now + 3 * 3_600_000L, false, "SPREAD"),
     )
 
     private fun novigSide(rfq: Boolean) = object : WebSocketListener() {
@@ -63,7 +63,7 @@ class RfqSocketTest {
             if (msg["subscribe"] != null && rfq) {
                 webSocket.send("""{"nonce":${msg["nonce"]!!.jsonPrimitive.content},"subscribed":["rfq"]}""")
                 webSocket.send("""{"ts":${now},"type":"rfq_created","rfqId":"r-1","outcomeIds":["a","b"],"expiresTs":${now + 3_000L},"minWager":"10"}""")
-                webSocket.send("""{"ts":${now},"type":"executed","offset":1,"rfqId":"r-1","wager":"20","price":"0.24"}""")
+                webSocket.send("""{"ts":${now},"type":"executed","offset":1,"rfqId":"r-1","wager":"20","price":"0.26"}""")
             }
         }
     }
@@ -102,7 +102,7 @@ class RfqSocketTest {
         assertTrue("without the quotes channel a won quote is never seen", "quotes" in sub)
         withTimeout(5_000) { while (received.none { it.contains("\"quote\"") }) delay(25) }
         val q = json.parseToJsonElement(received.first { it.contains("\"quote\"") }).jsonObject["quote"]!!.jsonObject
-        assertEquals("r-1", q["rfqId"]!!.jsonPrimitive.content); assertEquals("fair 0.20: (0.20 + 0.04)/1.04 rounded up", "0.2308", q["price"]!!.jsonPrimitive.content)
+        assertEquals("r-1", q["rfqId"]!!.jsonPrimitive.content); assertEquals("fair 0.20: (0.20 + 0.06)/1.06 rounded up", "0.2453", q["price"]!!.jsonPrimitive.content)
         assertTrue(rows.any { it.kind == "QUOTE_SENT" })
         socket.stop()
     }

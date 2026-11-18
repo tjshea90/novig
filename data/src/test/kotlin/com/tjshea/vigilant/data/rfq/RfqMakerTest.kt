@@ -50,8 +50,8 @@ class RfqMakerTest {
     }
 
     // ---- the pricing rule ----
-    private fun leg(id: String, event: String, p: Double, books: Int = 5, ageMs: Long = 60_000L, startsInMs: Long = 3 * 3_600_000L, live: Boolean = false) =
-        LegFair(id, event, "label $id", p, books, now - ageMs, now + startsInMs, live)
+    private fun leg(id: String, event: String, p: Double, books: Int = 5, ageMs: Long = 60_000L, startsInMs: Long = 3 * 3_600_000L, live: Boolean = false, type: String = "MONEY") =
+        LegFair(id, event, "label $id", p, books, now - ageMs, now + startsInMs, live, type)
 
     private fun fairs(vararg l: LegFair) = LegFairs { id -> l.firstOrNull { it.outcomeId == id } }
     private fun created(vararg ids: String, minWager: Double = 10.0) = RfqProtocol.Created(now, "rfq-1", ids.toList(), now + 3_000L, minWager)
@@ -162,7 +162,7 @@ class RfqMakerTest {
         r.maker.onEvent(created("a", "b"))
         assertTrue("halted: priced and journaled, not quoted", r.sent.isEmpty() && r.rows.any { it.kind == "CREATED" })
         r.clock += 6 * 60_000L                                                          // the 5-minute lock has lifted
-        r.legs = listOf(LegFair("a", "e1", "label a", 0.5, 5, r.clock - 60_000L, r.clock + 3 * 3_600_000L, false), LegFair("b", "e2", "label b", 0.4, 5, r.clock - 60_000L, r.clock + 3 * 3_600_000L, false))   // fresh fair at the later time
+        r.legs = listOf(LegFair("a", "e1", "label a", 0.5, 5, r.clock - 60_000L, r.clock + 3 * 3_600_000L, false, "MONEY"), LegFair("b", "e2", "label b", 0.4, 5, r.clock - 60_000L, r.clock + 3 * 3_600_000L, false, "SPREAD"))   // fresh fair at the later time
         r.maker.onEvent(RfqProtocol.Created(r.clock, "rfq-9", listOf("a", "b"), r.clock + 3_000L, 10.0))
         assertNull(r.maker.halted); assertEquals(1, r.sent.size)
         r.maker.onEvent(RfqProtocol.QuoteUnfilled(now, "rfq-9", "q", "maker_insolvent"))
@@ -240,5 +240,18 @@ class RfqMakerTest {
         val five = fairs(*(1..5).map { leg("l$it", "e$it", 0.8) }.toTypedArray())
         assertTrue(RfqPricer.decide(created("l1", "l2", "l3", "l4", "l5"), now, roc, five, 0.0) is RfqDecision.Quote)
         assertTrue((RfqPricer.decide(created("l1", "l2", "l3", "l4", "l5", "l6"), now, roc, five, 0.0) as RfqDecision.Decline).reason.contains("6 legs"))
+    }
+
+    // ---- game lines only (the first shadow day: 0.94 points over our fair on game lines, +6.0 points / +38% on parlays with a player prop: our prop fair is the thing in doubt) ----
+    @Test fun aParlayWithAPlayerPropIsDeclinedWithNoFairSoItNeverCountsAsEvidenceOfWhatTheMarketPays() {
+        val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4, type = "POINTS"))
+        val d = RfqPricer.decide(created("a", "b"), now, roc, f, 0.0) as RfqDecision.Decline
+        assertTrue(d.reason, d.reason.contains("not a game line")); assertNull("no fair: the trade is not compared with a fair we do not trust", d.fair)
+        val on = RfqPricer.decide(created("a", "b"), now, roc.copy(allowProps = true), f, 0.0)
+        assertTrue("allowProps lets the study see them", on is RfqDecision.Quote)
+        val unknown = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4, type = ""))
+        assertTrue("a leg whose market type is not known is not a game line", RfqPricer.decide(created("a", "b"), now, roc, unknown, 0.0) is RfqDecision.Decline)
+        val halves = fairs(leg("a", "e1", 0.5, type = "SPREAD_1H"), leg("b", "e2", 0.4, type = "TEAM_TOTAL"))
+        assertTrue(RfqPricer.decide(created("a", "b"), now, roc, halves, 0.0) is RfqDecision.Quote)
     }
 }

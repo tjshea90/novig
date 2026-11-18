@@ -525,7 +525,7 @@ fun main(args: Array<String>) = runBlocking {
                 for (o in list) {
                     val p = o.fairProbability ?: continue
                     val asOf = o.fairAsOfMs ?: o.fairUpdatedMs ?: continue
-                    m[o.outcome.outcomeId] = com.tjshea.vigilant.data.rfq.LegFair(o.outcome.outcomeId, o.market.eventId, "${o.marketLabel} ${o.selection}", p, o.fair?.booksUsed?.size ?: 0, asOf, o.event.startsTs, o.event.isLive)
+                    m[o.outcome.outcomeId] = com.tjshea.vigilant.data.rfq.LegFair(o.outcome.outcomeId, o.market.eventId, "${o.marketLabel} ${o.selection}", p, o.fair?.booksUsed?.size ?: 0, asOf, o.event.startsTs, o.event.isLive, o.market.marketType)
                 }
                 index = m; indexedFor = list
             }
