@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "21bd5babd87e764cfcb73df971fd2d9ad2d24917",
+ "head": "b2e2a0f37b3de3c0b19914c8572231b7b4b2b61a",
  "since": 1794955330,
- "beat": 1794973173,
- "beatIso": "2026-11-18T03:39:33Z",
- "done": "MK3: warm-run read (TALLY rows + 164 priced trades): market pays median +1.06 pts of pot over our fair, an 8% quote would win 37%; wallet-limited (~$5-15/day at best); catalog snapshot saved; MK5/MK6/MK7 queued",
- "next": "MK5: daily catalog snapshot + grade the market's trades; MK6 coverage (maxLegs, same-game, prop ladders); LIVE only by the evidence rule"
+ "beat": 1794973208,
+ "beatIso": "2026-11-18T03:40:08Z",
+ "done": "MK3: research index rebuilt for the RFQ leg/catalog studies (index test green)",
+ "next": "same as before: MK5 daily catalog snapshot + grade the market's RFQ trades; MK6 coverage; LIVE only by the evidence rule"
 }
