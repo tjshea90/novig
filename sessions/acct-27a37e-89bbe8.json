@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "c855ae799749384001736ae5e1ab7a43e22a421c",
+ "head": "d15c145fe0d2fa7277caf2f5c2ec5da589fa5fbb",
  "since": 1794955330,
- "beat": 1794971760,
- "beatIso": "2026-11-18T03:16:00Z",
- "done": "MK3: first real SHADOW run read: production serves RFQ v3, maker registered, socket live; flow ~60 RFQs/s and ~1.7 trades/s, 0.4% priceable. Journal sampled + 5-min TALLY + leg classes + 2-min pending window; data+cloud suites green",
- "next": "reset the engine so the sampled journal runs; read the first rfq-<day> journal from cloud-archive (every 20 min) with tools/rfq_summary.py; resolve unscanned legs; tell Tj"
+ "beat": 1794971844,
+ "beatIso": "2026-11-18T03:17:24Z",
+ "done": "MK3: CHANGES.md line for the sampled RFQ journal; engine reset issued (cc b1e61380f) so the new job runs the sampling+tally",
+ "next": "when the old job's full journal and the new job's sampled one reach cloud-archive-2026-11-18: python3 -I tools/rfq_summary.py run; resolve unscanned leg ids; then tell Tj"
 }
