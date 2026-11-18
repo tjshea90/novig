@@ -777,7 +777,8 @@ enum class OddsFeed(
 
     /** How this feed's scans spend a key's credits ([CreditPace]); null: as they come. [background]: auto-scan's, which leave half a day's share. */
     fun pace(policy: QuotaPolicy, background: Boolean = false): CreditPace? =
-        if (reserve > 0) CreditPace(policy, reserve, freeLimit, keepOfDay = if (background) BACKGROUND_KEEP else 0.0) else null
+        // The Odds API is never day-paced (Tj, 2026-11-18: "it should only use one key at a time"): key 1 is used down to its reserve, then key 2, so the keys are not all spent equally.
+        if (reserve > 0 && this != ODDS_API) CreditPace(policy, reserve, freeLimit, keepOfDay = if (background) BACKGROUND_KEEP else 0.0) else null
 
     companion object {
         /** The part of a day's share background auto-scans leave for the scans Tj starts himself. */
