@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "35ad0dbb15b348022d20d3dce9854141d0c03095",
+ "head": "20315812829a57da09d1ba1df51ad5e71db6ca48",
  "since": 1794955330,
- "beat": 1794974181,
- "beatIso": "2026-11-18T03:56:21Z",
+ "beat": 1794974396,
+ "beatIso": "2026-11-18T03:59:56Z",
  "done": "Handoff manifest saved (.handoff/). The handoff tool had replaced the marked block in CLAUDE.md, which wrongly spanned ~58 lines of standing rules; restored CLAUDE.md from ckpt 4619 and moved the begin marker directly above 'Session Learnings'",
  "next": "MK5 daily catalog snapshot + grade the market's RFQ trades; MK6 coverage (maxLegs 3->6, same-game, prop ladders); LIVE only by the evidence rule; remind Tj: open the Novig app before Thu 03:00 ET"
 }
