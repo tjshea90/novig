@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "f70eb18820532bb3d04768f27925229f236480f0",
+ "head": "09268ea2ceddd4c782f3a4ebf2cc690980074f0e",
  "since": 1794955330,
- "beat": 1794975317,
- "beatIso": "2026-11-18T04:15:17Z",
- "done": "MKV2: parlays with a player prop are not quoted or counted (market pays +6.0 pts/+38% on those vs +0.94/+2.6% on game lines: our prop fair is the doubt), minReturn default 6%, section 10 of the research file",
- "next": "land; engine reset so the engine runs game-lines-only; ship the release build already running (1.0.137); then the LIVE question for Tj"
+ "beat": 1794975478,
+ "beatIso": "2026-11-18T04:17:58Z",
+ "done": "MKV: v1.0.137 released (recorded); MKV2 game-lines-only maker + 6% return default, 4310 tests green on the exact tree",
+ "next": "engine reset so the engine runs game-lines-only pricing; then ask Tj about LIVE at small caps"
 }
