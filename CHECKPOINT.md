@@ -1,22 +1,24 @@
-# CHECKPOINT 4643 — read me first, then TASKS.md
+# CHECKPOINT 4644 — read me first, then TASKS.md
 
-**Written:** 2026-11-18T04:58:59Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-0tpsr1` · **builds on:** `a23a545ca` (this checkpoint is the commit after it)
+**Written:** 2026-11-18T05:02:19Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-0tpsr1` · **builds on:** `18de9f0ac` (this checkpoint is the commit after it)
 
 ## Just done
-DG2 logged
+DG2: PropLine EV sweep on, phone bets kept 8 days
 
 ## Do this next
-investigate startup crash, ime bug, PropLine EV compare
+land on main, engine reset, check propLineEvRows, then chat keyboard bug + startup crash
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M app/src/main/kotlin/com/tjshea/vigilant/app/CloudLink.kt
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  363ba23cc ckpt 4643: DG2 logged
   a23a545ca ckpt 4642: chat: triaged diagnostics report DG1
   3891f24bb ckpt 4641: MKV3: LIVE prerequisites: 24 h realized-loss stop from Novig's executions (
   09268ea2c ckpt 4640: MKV: v1.0.137 released (recorded); MKV2 game-lines-only maker + 6% return d
@@ -26,5 +28,7 @@ investigate startup crash, ime bug, PropLine EV compare
   65a5e2f60 ckpt 4636: MKV: app suite green on the exact tree (v1.0.137 bump)
   0e334bb99 ckpt 4635: MKV: parlay maker in the app (Engine > Parlays: status, evidence counter, O
   35071ac65 ckpt 4634: PLQ: answered Tj PropLine health+feature list
-  3b6279c74 ckpt 4633: Handoff manifest saved (.handoff/). The handoff tool had replaced the marke
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)

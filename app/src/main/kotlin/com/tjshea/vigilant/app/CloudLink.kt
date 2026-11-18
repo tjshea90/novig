@@ -1177,12 +1177,12 @@ class CloudLink(private val c: AppContainer) {
             c.betArchive.markMirrored(f, "github"); sent++
             delay(1_200L)
         }
-        // DG3: GitHub holds the history; the phone keeps open bets and the last 35 days (the Tracker's 30-day view), never a day GitHub has not got.
+        // DG3: GitHub holds the history; the phone keeps open bets and the last 8 days (DG2, Tj 2026-11-18: "just get rid of the phone bets.json if it isnt needed"; older days live on GitHub as daily numbers), never a day GitHub has not got.
         // DG5: slimming needs only that the day is on GitHub, so it runs even when this pass's uploads failed.
         runCatching { c.tracker.slimArchived(System.currentTimeMillis(), 3) { day -> c.betArchive.dayOnChannel(day) } }
         if (failed == null) runCatching {
             // DG6: the days that go are kept as daily numbers worked out from Novig's own money; with the wallet files not read yet nothing goes.
-            c.tracker.dropArchived(System.currentTimeMillis(), 35, withMoney = { going ->
+            c.tracker.dropArchived(System.currentTimeMillis(), 8, withMoney = { going ->
                 val l = c.walletLedger.value; val f = c.walletFills.value
                 if (l == null || f == null) null else com.tjshea.vigilant.data.tracker.WalletBetMoney.apply(going, l.rows, f.fills)
             }) { day -> c.betArchive.dayOnChannel(day) }
