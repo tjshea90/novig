@@ -37,6 +37,7 @@ object RfqProtocol {
     data class Other(override val ts: Long, val type: String) : Event
 
     private val json = Json { ignoreUnknownKeys = true }
+    private val IDS_REQUIRED = setOf("rfq_created", "rfq_closed", "quote_created", "quote_accepted", "quote_executed", "quote_unfilled", "quote_dropped", "executed")
     private val ACKS = setOf("subscribed", "unsubscribed", "quoted", "superseded", "declined", "confirmed")
 
     private fun JsonObject.text(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.content
@@ -59,7 +60,8 @@ object RfqProtocol {
             val rfqId = (body as? JsonObject)?.text("rfqId")
             return Ack(ts, nonce, key, rfqId)
         }
-        fun id(k: String) = o.text(k) ?: return Other(ts, type)
+        fun id(k: String): String = o.text(k) ?: ""
+        if (type in IDS_REQUIRED && o.text("rfqId").isNullOrEmpty()) return Other(ts, type)
         return when (type) {
             "rfq_created" -> Created(ts, id("rfqId"), (o["outcomeIds"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content } ?: return Other(ts, type), o.long("expiresTs") ?: return Other(ts, type), o.num("minWager") ?: 10.0)
             "rfq_closed" -> Closed(ts, id("rfqId"))
