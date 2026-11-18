@@ -6746,7 +6746,10 @@ Recipes saved: `research/propline/docs_2026-11-17/recipes(.txt)`. New since 10-2
 
 ## NVR (Tj typed 2026-11-18 ~00:30 UTC): Novig API + socket and PropLine API + socket review, Novig docs changes
 Tj, verbatim: "Review that both novig api and socket and propline api and socket are used correctly and to their full potential by the app and github engine and look for any changes or updates in novig api docs".
-- [ ] NVR1 fetch Novig's current API docs, diff against the saved copies / NOVIG_API.md, list every change.
-- [ ] NVR2 audit the app + engine's Novig REST, stream (bbo/book), order socket, limits against the docs; fix what is wrong or unused.
-- [ ] NVR3 re-check the PropLine API + sockets as running now (engine log/status after last night's reset); fix what is wrong.
-- [ ] NVR4 write research/novig_propline_review_2026-11-18.md, CHANGES.md line, ship the code, tell Tj.
+- [x] NVR1 (docs mirror diff 10-25 -> 11-18; NOVIG_API.md section 32) fetch Novig's current API docs, diff against the saved copies / NOVIG_API.md, list every change.
+- [x] NVR2 (built: GeoWatch, NovigLocks, unsubscribed notice, tier fields; tests green) audit the app + engine's Novig REST, stream (bbo/book), order socket, limits against the docs; fix what is wrong or unused.
+- [x] NVR3 (healthy: both sockets live, 11 games' scores, 1 connect each) re-check the PropLine API + sockets as running now (engine log/status after last night's reset); fix what is wrong.
+- [~] NVR4 (doc written; land + engine reset + verify geoNote/locksNote in status pending) write research/novig_propline_review_2026-11-18.md, CHANGES.md line, ship the code, tell Tj.
+- [ ] NVR5 `GET /v3/catalog/consensus` (a family's main line) as the exact main-number pick for the NCAAB board instead of the 30-70 cent heuristic.
+- [ ] NVR6 RFQ v3 maker (Tj's decision): read `propline-sgp-summary` across the 2026-11-19 parlay fee change first.
+- [ ] NVR7 re-run `propline.yml` task `trial` on 11-19/20 and compare Novig's parlay quote EV with 11-17 (-4.3% to -8.4%).
