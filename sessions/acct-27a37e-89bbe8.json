@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "9495a33ba96b85026a0576fab2dc10d4684425ed",
+ "head": "751ec8c9796e867b2c9852d82a6a0dadf18fd16b",
  "since": 1794955330,
- "beat": 1794963401,
- "beatIso": "2026-11-18T00:56:41Z",
+ "beat": 1794963419,
+ "beatIso": "2026-11-18T00:56:59Z",
  "done": "PLR: SGP logger+grader live-tested with the key (344 quotes, Novig best on 26/40; settle 5/5 + 12/12 parlays), workflow propline-sgp.yml, docs and results",
  "next": "dispatch propline-sgp.yml log to verify on a runner; final report to Tj"
 }
