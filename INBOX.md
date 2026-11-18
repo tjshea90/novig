@@ -1591,3 +1591,8 @@ Review that both novig api and socket and propline api and socket are used corre
 ```
 Does this mean I can bet parlays inside vigilant
 ```
+
+## 2026-11-18T02:28:52Z
+```
+I want to become a parlay maker and try to profit from it. Research and build it
+```
