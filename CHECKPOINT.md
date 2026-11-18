@@ -1,13 +1,13 @@
-# CHECKPOINT 4654 — read me first, then TASKS.md
+# CHECKPOINT 4655 — read me first, then TASKS.md
 
-**Written:** 2026-11-18T16:21:45Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-6qt6ud` · **builds on:** `b439cfc27` (this checkpoint is the commit after it)
+**Written:** 2026-11-18T19:47:34Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-jy7pvb` · **builds on:** `5a632908e` (this checkpoint is the commit after it)
 
 ## Just done
-chat: answered Tj on wallet drop/P&L; TR3 logged (equity 109 vs cash+positions 182 gap)
+TR3: all-time headline now Novig ledger profit (ProfitChart.kt); test running
 
 ## Do this next
-TR3: find which wallet figure WalletProfit uses, make one source; check parlay tile 'won' vs open
+finish ProfitChartTest, daily-from-ledger, ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ TR3: find which wallet figure WalletProfit uses, make one source; check parlay t
 
 ## Last ten checkpoints
 ```
+  2dec3398f ckpt 4654: chat: answered Tj on wallet drop/P&L; TR3 logged (equity 109 vs cash+positi
   163d77ceb ckpt 4653: ENGINEER 11-18: watch ok, MK8 evidence logged, no ship
   73a87d1fe ckpt 4652: replied to Tj on parlay wins
   012de2559 ckpt 4651: MK8 written: parlay coverage evidence, replied to Tj
@@ -25,7 +26,6 @@ TR3: find which wallet figure WalletProfit uses, make one source; check parlay t
   7b408180b ckpt 4647: MK7: parlay maker LIVE since 04:50 UTC 2026-11-18 (Tj: 'Live, small limits'
   b8e884a27 ckpt 4646: engine reset for PropLine EV sweep; DG3 live lag not yet diagnosed
   4c681795a ckpt 4645: DG2 tests green; DG3 logged
-  4f9d09d60 ckpt 4644: DG2: PropLine EV sweep on, phone bets kept 8 days
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
