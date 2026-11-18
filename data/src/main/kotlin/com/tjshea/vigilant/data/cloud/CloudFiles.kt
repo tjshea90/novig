@@ -239,6 +239,13 @@ data class CloudStatus(
     val walletPositionsCost: Double = -1.0,
     val walletPnlAtMs: Long = 0L,
     /**
+     * Novig's device-location check read before it bites ([GeoWatch], `GET /v3/account/geolocation`, 2026-10-27): the pass's expiry (0 = none on record or not read), in words, and the engine's view of Novig's
+     * order locks ([NovigLocks], `GET /v3/exchange/locks`, 2026-11-10).
+     */
+    val geoExpiresAtMs: Long = 0L,
+    val geoNote: String = "",
+    val locksNote: String = "",
+    /**
      * The engine subaccount's all-time betting profit from its own ledger (CH87c, [com.tjshea.vigilant.data.tracker.WalletProfit.fromLedger]): payouts and credits less stakes and fees, open bets at
      * cost; null = not read. [ledgerDetail]: each kind's net and count. Read at [ledgerAtMs] (every 30 minutes).
      */
