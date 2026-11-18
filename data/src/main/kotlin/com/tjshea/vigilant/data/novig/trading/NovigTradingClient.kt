@@ -310,7 +310,7 @@ open class NovigTradingClient(
      */
     open suspend fun locks(): Locks? {
         val o = json.parseToJsonElement(signer.call("GET", "/v3/exchange/locks")) as? kotlinx.serialization.json.JsonObject ?: return null
-        fun ids(k: String) = (o[k] as? kotlinx.serialization.json.JsonArray)?.mapNotNull { (it as? kotlinx.serialization.json.JsonPrimitive)?.content?.takeIf { s -> s.isNotBlank() } }?.toSet() ?: return null
+        fun ids(k: String): Set<String>? = (o[k] as? kotlinx.serialization.json.JsonArray)?.mapNotNull { (it as? kotlinx.serialization.json.JsonPrimitive)?.content?.takeIf { s -> s.isNotBlank() } }?.toSet()
         return Locks(ids("eventIds") ?: return null, ids("marketIds") ?: return null)
     }
 
