@@ -2752,6 +2752,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** The college basketball tab is on screen (NC1): read its files from GitHub now and keep them current while it stays open; [force] on a pull to refresh. */
     fun wantNcaab(force: Boolean = false) { viewModelScope.launch(Dispatchers.IO) { c.cloud.wantNcaab(force) } }
     fun resetEngine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.resetEngine() } }
+    /** Sets the GitHub engine's parlay maker (MKV): `rfq-maker.json` on `cloud-config`; [done] gets null when saved, else why not. */
+    fun setParlayMaker(cfg: com.tjshea.vigilant.data.rfq.RfqConfig, done: (String?) -> Unit) { viewModelScope.launch(Dispatchers.IO) { val why = c.cloud.putRfqConfig(cfg); withContext(Dispatchers.Main) { done(why) } } }
     fun stopCloudUntilNextOpening() { viewModelScope.launch(Dispatchers.IO) { c.cloud.stopUntilNextOpening() } }
     fun sendCloudKeys() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendKeys() } }
     fun restoreCloudKeys(passphrase: String) { viewModelScope.launch(Dispatchers.IO) { c.cloud.restoreKeys(passphrase) } }

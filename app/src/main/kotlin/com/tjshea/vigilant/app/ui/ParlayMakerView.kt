@@ -1,0 +1,92 @@
+package com.tjshea.vigilant.app.ui
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.tjshea.vigilant.data.rfq.ParlayView
+import com.tjshea.vigilant.data.rfq.RfqConfig
+import com.tjshea.vigilant.data.rfq.RfqStatus
+import java.util.Locale
+
+/**
+ * The Engine tab's Parlays view (MKV, Tj 2026-11-18: "I want it in vigilant"): the Novig parlay maker that runs on the GitHub engine, as a monitor (what it has seen, what the market pays, what it would
+ * earn, in LIVE its quotes and collateral) and a control (OFF / SHADOW / LIVE and the caps, written to `rfq-maker.json` on `cloud-config`, which the engine reads within seconds). LIVE asks for a second
+ * tap with what is at stake in words. The phone does none of the work.
+ */
+@Composable
+fun ParlayMakerView(rfq: RfqStatus?, onSet: (RfqConfig, (String?) -> Unit) -> Unit, modifier: Modifier = Modifier) {
+    val v = remember(rfq) { ParlayView.of(rfq) }
+    val cfg = rfq?.config ?: RfqConfig()
+    var note by remember { mutableStateOf<String?>(null) }
+    var confirmLive by remember { mutableStateOf(false) }
+    fun apply(c: RfqConfig) { note = "Saving…"; onSet(c) { why -> note = if (why == null) "Saved: the engine applies it within seconds." else "Not saved: $why" } }
+
+    Column(modifier.testTag("parlayMaker"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        SectionHeader("Parlay maker")
+        Text(v.headline, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = toneColor(v.tone), modifier = Modifier.testTag("parlayHeadline"))
+        Text(v.explain, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        v.warning?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("parlayWarning")) }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().testTag("parlayModes")) {
+            RfqConfig.Mode.entries.forEach { m ->
+                FilterChip(
+                    selected = cfg.mode == m, enabled = rfq != null,
+                    onClick = { if (m == cfg.mode) Unit else if (m == RfqConfig.Mode.LIVE) confirmLive = true else apply(cfg.copy(mode = m)) },
+                    label = { Text(m.name.lowercase().replaceFirstChar { it.uppercase() }) }, modifier = Modifier.testTag("parlayMode-${m.name}"),
+                )
+            }
+        }
+        v.tiles.chunked(2).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) { row.forEach { t -> TileCard(t, Modifier.weight(1f)) } }
+        }
+        Text(v.evidence, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("parlayEvidence"))
+        if (rfq != null && rfq.declines.isNotEmpty()) Text("Not priced because: " + rfq.declines.joinToString("; "), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        if (rfq != null) {
+            SectionHeader("Limits")
+            Text(v.rule, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Stepper("Return asked on the collateral", "%.0f%%".format(Locale.US, cfg.minReturn * 100), "parlayReturn", { apply(cfg.copy(minReturn = (cfg.minReturn - 0.01).coerceAtLeast(0.01))) }, { apply(cfg.copy(minReturn = (cfg.minReturn + 0.01).coerceAtMost(0.2))) })
+            Stepper("Most collateral in one parlay", "\$%.0f".format(Locale.US, cfg.maxCollateral), "parlayCollateral", { apply(cfg.copy(maxCollateral = (cfg.maxCollateral - 10.0).coerceAtLeast(20.0))) }, { apply(cfg.copy(maxCollateral = (cfg.maxCollateral + 10.0).coerceAtMost(250.0))) })
+            Stepper("Most collateral in all parlays", "\$%.0f".format(Locale.US, cfg.maxOpenCollateral), "parlayOpen", { apply(cfg.copy(maxOpenCollateral = (cfg.maxOpenCollateral - 10.0).coerceAtLeast(20.0))) }, { apply(cfg.copy(maxOpenCollateral = (cfg.maxOpenCollateral + 10.0).coerceAtMost(500.0))) })
+            Stepper("Most legs", "${cfg.maxLegs}", "parlayLegs", { apply(cfg.copy(maxLegs = (cfg.maxLegs - 1).coerceAtLeast(2))) }, { apply(cfg.copy(maxLegs = (cfg.maxLegs + 1).coerceAtMost(6))) })
+        }
+        note?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("parlayNote")) }
+        Text("Processing and Internet use are on the GitHub engine; this view only monitors and sets it.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+
+    if (confirmLive) AlertDialog(
+        onDismissRequest = { confirmLive = false },
+        title = { Text("Start live quoting?") },
+        text = { Text(ParlayView.liveWarning(rfq)) },
+        confirmButton = { TextButton(onClick = { confirmLive = false; apply(cfg.copy(mode = RfqConfig.Mode.LIVE)) }, modifier = Modifier.testTag("parlayLiveConfirm")) { Text("Start live") } },
+        dismissButton = { TextButton(onClick = { confirmLive = false }) { Text("Not yet") } },
+    )
+}
+
+@Composable
+private fun Stepper(label: String, value: String, tag: String, onMinus: () -> Unit, onPlus: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        OutlinedButton(onClick = onMinus, modifier = Modifier.testTag("$tag-minus")) { Text("−") }
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, modifier = Modifier.testTag("$tag-value"))
+        OutlinedButton(onClick = onPlus, modifier = Modifier.testTag("$tag-plus")) { Text("+") }
+    }
+}

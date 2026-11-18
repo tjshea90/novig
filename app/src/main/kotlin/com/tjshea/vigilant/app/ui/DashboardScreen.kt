@@ -51,21 +51,21 @@ private const val DASHBOARD_URL = "https://github.com/tjshea90/novig/blob/cloud-
  * [DashboardContent] takes plain values and no app objects, so it renders from sample data.
  */
 @Composable
-fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Modifier = Modifier, section: EngineSection? = null, kalshi: com.tjshea.vigilant.app.kalshi.KalshiMoney? = null, onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}) {
+fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Modifier = Modifier, section: EngineSection? = null, kalshi: com.tjshea.vigilant.app.kalshi.KalshiMoney? = null, onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}, onSetParlay: (com.tjshea.vigilant.data.rfq.RfqConfig, (String?) -> Unit) -> Unit = { _, _ -> }) {
     val now = rememberNow(com.tjshea.vigilant.app.CloudLink.paced(5_000L))
     val meters = remember(state.usage, state.cloudUsage, state.settings.sgoPro, state.settings.gates.useBoltOdds, state.settings.oddsPapiFree, now / 30_000L) {
         meterViews(state, now)
     }
     val u = state.cloudUi
     val board = remember(u.trades, u.desk, u.status, now / 15_000L) { EngineBoard.of(u.trades, u.desk, u.status, now) }
-    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours, section = section, refreshedAtMs = u.refreshedAtMs, refreshNote = u.refreshNote, kalshi = kalshi, testing = state.apiBusy, checks = state.apiChecks, checkedAt = state.apiCheckedAt, onTestApi = onTestApi, onRetryApi = onRetryApi)
+    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours, section = section, refreshedAtMs = u.refreshedAtMs, refreshNote = u.refreshNote, kalshi = kalshi, testing = state.apiBusy, checks = state.apiChecks, checkedAt = state.apiCheckedAt, onTestApi = onTestApi, onRetryApi = onRetryApi, onSetParlay = onSetParlay)
 }
 
 /**
  * The Engine tab's views (Tj, 2026-10-18, TCL122-7: "keep this section simple and easy to read. organize it. maybe tabs for different data views, like a tab for api usage"): what it is doing now, the
  * money (counts and the latest bets, never the long list of resting bids), the APIs with their usage meters, and the graphs.
  */
-enum class EngineSection(val label: String) { OVERVIEW("Overview"), MONEY("Money"), APIS("APIs"), TRENDS("Trends") }
+enum class EngineSection(val label: String) { OVERVIEW("Overview"), MONEY("Money"), PARLAYS("Parlays"), APIS("APIs"), TRENDS("Trends") }
 
 @Composable
 fun DashboardContent(
@@ -95,6 +95,7 @@ fun DashboardContent(
     checkedAt: Map<String, Long> = emptyMap(),
     onTestApi: (String) -> Unit = {},
     onRetryApi: (String) -> Unit = {},
+    onSetParlay: (com.tjshea.vigilant.data.rfq.RfqConfig, (String?) -> Unit) -> Unit = { _, _ -> },
 ) {
     val uri = LocalUriHandler.current
     fun show(x: EngineSection) = section == null || section == x
@@ -106,6 +107,7 @@ fun DashboardContent(
             if (board != null) EngineMoneyCard(board, status, now) else if (section != null) Text("The engine's bets and bids appear here once it has placed any.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (kalshi != null && kalshi.kalshiOn) KalshiMoneyCard(kalshi)
         }
+        if (show(EngineSection.PARLAYS)) ParlayMakerView(status?.rfq, onSetParlay)
         if (show(EngineSection.APIS)) ApisSection(status, meters, now, testing, checks, checkedAt, onTestApi, onRetryApi)
         if (show(EngineSection.TRENDS)) TrendsSection(history)
         if (show(EngineSection.OVERVIEW)) {
@@ -237,7 +239,7 @@ private fun lightOrder(l: com.tjshea.vigilant.data.cloud.ApiState.Light?): Int =
 }
 
 @Composable
-private fun toneColor(t: Tone): Color = when (t) {
+internal fun toneColor(t: Tone): Color = when (t) {
     Tone.GOOD -> Edge.colors.positive
     Tone.WARN -> Edge.colors.warning
     Tone.BAD -> Edge.colors.negative
@@ -263,7 +265,7 @@ private fun HeadlineCard(status: CloudStatus?, now: Long, cloudOn: Boolean, hour
 }
 
 @Composable
-private fun TileCard(t: DashboardModel.Tile, modifier: Modifier) {
+internal fun TileCard(t: DashboardModel.Tile, modifier: Modifier) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(14.dp), modifier = modifier) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(t.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -350,7 +352,7 @@ private fun adviceAge(status: CloudStatus?, now: Long, running: Boolean): String
 }
 
 @Composable
-private fun SectionHeader(text: String) {
+internal fun SectionHeader(text: String) {
     Text(text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
 }
 

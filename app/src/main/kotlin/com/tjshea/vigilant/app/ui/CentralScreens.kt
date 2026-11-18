@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 /** The home: what the GitHub engine is doing, live from GitHub (state, readings, APIs, bets, bids, trends). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EngineScreen(state: com.tjshea.vigilant.app.UiState, onOpenCloudSettings: () -> Unit, onRefresh: () -> Unit = {}, onRefreshApis: () -> Unit = {}, onReset: () -> Unit = {}, onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}, kalshi: com.tjshea.vigilant.app.kalshi.KalshiMoney? = null) {
+fun EngineScreen(state: com.tjshea.vigilant.app.UiState, onOpenCloudSettings: () -> Unit, onRefresh: () -> Unit = {}, onRefreshApis: () -> Unit = {}, onReset: () -> Unit = {}, onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}, kalshi: com.tjshea.vigilant.app.kalshi.KalshiMoney? = null, onSetParlay: (com.tjshea.vigilant.data.rfq.RfqConfig, (String?) -> Unit) -> Unit = { _, _ -> }) {
     var section by rememberSaveable { mutableStateOf(EngineSection.OVERVIEW) }
     Scaffold(topBar = { TopAppBar(title = { Text("Engine", fontWeight = FontWeight.Bold) }) }) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
@@ -50,7 +50,7 @@ fun EngineScreen(state: com.tjshea.vigilant.app.UiState, onOpenCloudSettings: ()
                 val scroll = androidx.compose.runtime.key(section) { rememberScrollState() }
                 Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(horizontal = 16.dp, vertical = 8.dp).testTag("engineScreen")) {
                     if (section == EngineSection.APIS) RefreshApisButton(busy = state.apiBusy.isNotEmpty() || state.cloudUi.refreshStep == com.tjshea.vigilant.app.CloudLink.API_CHECK_STEP, onRefreshApis)
-                    DashboardPage(state, onOpenCloudSettings, section = section, kalshi = kalshi, onTestApi = onTestApi, onRetryApi = onRetryApi)
+                    DashboardPage(state, onOpenCloudSettings, section = section, kalshi = kalshi, onTestApi = onTestApi, onRetryApi = onRetryApi, onSetParlay = onSetParlay)
                     if (section == EngineSection.OVERVIEW) ResetEngineButton(onReset)
                 }
             }

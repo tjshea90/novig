@@ -639,6 +639,13 @@ class CloudLink(private val c: AppContainer) {
         return client.putFile(com.tjshea.vigilant.data.kalshitrade.KalshiEngineConfig.BRANCH, com.tjshea.vigilant.data.kalshitrade.KalshiEngineConfig.FILE, text.toByteArray(Charsets.UTF_8), "kalshi engine config")
     }
 
+    /** Tells the GitHub engine how the Novig parlay maker runs (MKV): `rfq-maker.json` on `cloud-config`, one small commit; the engine reads it within seconds. Null when it was saved, else why not. */
+    suspend fun putRfqConfig(cfg: com.tjshea.vigilant.data.rfq.RfqConfig): String? {
+        if (!hasToken()) return "no GitHub token saved (Settings › Cloud scan)"
+        val text = kotlinx.serialization.json.Json { encodeDefaults = true }.encodeToString(com.tjshea.vigilant.data.rfq.RfqConfig.serializer(), cfg)
+        return client.putFile(CloudClient.CONFIG_BRANCH, "rfq-maker.json", text.toByteArray(Charsets.UTF_8), "rfq maker config from the app: ${cfg.mode}")
+    }
+
     /** The engine's Kalshi lane status (`kalshi-status.json` on `cloud-feed`), or null when there is none. */
     suspend fun readKalshiStatus(): com.tjshea.vigilant.data.kalshitrade.KalshiEngineStatus? =
         (client.readText("cloud-feed", com.tjshea.vigilant.data.kalshitrade.KalshiEngineStatus.FILE, null) as? CloudClient.Poll.Fresh)?.value?.let(com.tjshea.vigilant.data.kalshitrade.KalshiEngineStatus::parse)
