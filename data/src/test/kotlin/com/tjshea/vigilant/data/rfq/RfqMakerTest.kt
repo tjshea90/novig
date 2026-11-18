@@ -55,24 +55,24 @@ class RfqMakerTest {
 
     private fun fairs(vararg l: LegFair) = LegFairs { id -> l.firstOrNull { it.outcomeId == id } }
     private fun created(vararg ids: String, minWager: Double = 10.0) = RfqProtocol.Created(now, "rfq-1", ids.toList(), now + 3_000L, minWager)
-    private val cfg = RfqConfig(mode = RfqConfig.Mode.LIVE, margin = 0.08, maxStake = 12.0, maxCollateral = 45.0, maxOpenCollateral = 90.0)
+    private val cfg = RfqConfig(mode = RfqConfig.Mode.LIVE, margin = 0.08, minReturn = 0.0, minPoints = 0.0, maxLegs = 3, maxStake = 12.0, maxCollateral = 45.0, maxOpenCollateral = 90.0)   // the old flat-margin rule; the new terms are tested apart
 
     @Test fun twoLegsFromDifferentGamesArePricedAtTheFairProductPlusTheMargin() {
         val d = RfqPricer.decide(created("a", "b"), now, cfg, fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4)), 0.0) as RfqDecision.Quote
         assertEquals(0.2, d.fair, 1e-12)
         assertEquals("fair 0.20 x 1.08, rounded UP to a ten-thousandth", 0.216, d.price, 1e-12)
         assertEquals(0.016, d.edge, 1e-12)
-        // collateral for a stake w is w (1-P)/P = w x 3.63: the $45 cap allows $12.39, the $12 stake cap binds
-        assertEquals(12.0, d.maxWager, 1e-9)
+        // the quote covers the stake the RFQ asked for ($10 here), not the largest the caps allow
+        assertEquals(10.0, d.maxWager, 1e-9)
     }
 
     @Test fun theCollateralCapsShrinkTheStakeAndAStakeUnderTheMinimumIsDeclined() {
         val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4))
         val tight = cfg.copy(maxCollateral = 36.0)             // $36 / 3.63 = $9.9: under the $10 minimum
-        assertTrue((RfqPricer.decide(created("a", "b"), now, tight, f, 0.0) as RfqDecision.Decline).reason.contains("under the minimum"))
+        assertTrue((RfqPricer.decide(created("a", "b"), now, tight, f, 0.0) as RfqDecision.Decline).reason.contains("asked"))
         val used = RfqPricer.decide(created("a", "b"), now, cfg, f, 80.0)       // $10 of the $90 total left: $2.75 of stake
-        assertTrue((used as RfqDecision.Decline).reason.contains("under the minimum"))
-        assertTrue("the user's own minimum above $10 counts", (RfqPricer.decide(created("a", "b", minWager = 13.0), now, cfg, f, 0.0) as RfqDecision.Decline).reason.contains("minimum"))
+        assertTrue((used as RfqDecision.Decline).reason.contains("asked"))
+        assertTrue("the user's own minimum above $10 counts", (RfqPricer.decide(created("a", "b", minWager = 13.0), now, cfg, f, 0.0) as RfqDecision.Decline).reason.contains("asked"))
     }
 
     @Test fun everythingItCannotPriceIsDeclinedWithAReason() {
@@ -126,13 +126,13 @@ class RfqMakerTest {
         r.legs = r.legs + listOf(leg("c", "e3", 0.5), leg("d", "e4", 0.4))
         r.maker.onEvent(created("a", "b"))
         val q = json.parseToJsonElement(r.sent.single()).jsonObject["quote"]!!.jsonObject
-        assertEquals("0.2160", q["price"]!!.jsonPrimitive.content); assertEquals("12.00", q["maxWager"]!!.jsonPrimitive.content)
+        assertEquals("0.2160", q["price"]!!.jsonPrimitive.content); assertEquals("10.00", q["maxWager"]!!.jsonPrimitive.content)
         assertEquals(1L, r.maker.quotesSent)
-        // $12 x 3.63 = $43.56 reserved: a second quote sees $46.44 of the $90 left and still fits; a third and fourth are cut back, then declined
+        // $10 x 3.63 = $36.30 reserved each: the second still fits under the $90 total, the third has $17 of room, under the $10 stake's $36 of collateral
         r.maker.onEvent(created("c", "d").copy(rfqId = "rfq-2"))
         r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-3"))
         assertEquals("the third RFQ does not fit under the $90 total and is not quoted", 2, r.sent.size)
-        assertTrue(r.maker.inFlight() > 80.0)
+        assertTrue(r.maker.inFlight() > 70.0)
     }
 
     @Test fun aWonQuoteIsConfirmedOnlyIfItIsTheOneWeQuotedAndTheLastLookNeverSecondGuessesTheMarket() {
@@ -209,5 +209,36 @@ class RfqMakerTest {
         repeat(3_000) { i -> maker.onEvent(RfqProtocol.Created(clock, "n$i", listOf("p$i", "q$i"), clock + 3_000L, 10.0)) }       // 5 seconds of the real flow
         maker.onEvent(RfqProtocol.Executed(clock, 1, "rfq-1", 40.0, 0.23))
         assertTrue("the old 600-entry window had forgotten it", rows.last { it.kind == "EXECUTED" }.data.contains("\"seenHere\":true"))
+    }
+
+    // ---- pricing by what the quote ties up (first shadow day, 188 priced trades: a relative margin tied $22,000 of collateral for $50 of EV, a 4% return on collateral $2,700 for $82) ----
+    private val roc = RfqConfig(mode = RfqConfig.Mode.LIVE, margin = 0.02, minReturn = 0.04, minPoints = 0.01, maxLegs = 5)
+
+    @Test fun theQuoteAsksAReturnOnTheCollateralAndMoreForLongerLockUpsAndMoreLegs() {
+        val h = 3_600_000L
+        // fair 0.40, a game in 3 h: (0.40 + 0.04)/1.04 = 0.4231 (2.3 points); the 2% relative floor (0.408) and the 1-point floor (0.41) are lower
+        assertEquals(0.4231, RfqPricer.quotePrice(0.40, 2, 3 * h, roc), 1e-9)
+        // the same parlay two days out ties the collateral up 2.25 days: r = 9%, (0.40 + 0.09)/1.09 = 0.4495
+        assertEquals(0.4495, RfqPricer.quotePrice(0.40, 2, 48 * h, roc), 1e-9)
+        // a favourite pair at 0.9: the points floor binds nothing, the return gives (0.94)/1.04 = 0.9038
+        assertEquals(0.9038, RfqPricer.quotePrice(0.90, 2, 3 * h, roc), 1e-9)
+        // five legs of a 0.5 parlay: the points floor (4 x 1 point) beats the return term (0.5385 -> 3.85 points)
+        assertEquals(0.5385, RfqPricer.quotePrice(0.50, 5, 3 * h, roc), 1e-9)
+        assertEquals("with no return and no points asked only the relative floor is left", 0.2040, RfqPricer.quotePrice(0.20, 2, 3 * h, roc.copy(minReturn = 0.0, minPoints = 0.0)), 1e-9)
+    }
+
+    @Test fun theQuoteCoversTheStakeTheRfqAskedForAndLongshotsThatTieUpTooMuchAreDeclined() {
+        val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                                  // fair 0.20, price (0.20 + 0.04)/1.04 = 0.2308
+        val d = RfqPricer.decide(created("a", "b", minWager = 10.0), now, roc, f, 0.0) as RfqDecision.Quote
+        assertEquals(0.2308, d.price, 1e-9); assertEquals(10.0, d.maxWager, 1e-9)
+        // $10 x (1 - 0.2308)/0.2308 = $33.3 of collateral: a $25 per-parlay cap cannot cover the stake asked for
+        val tight = (RfqPricer.decide(created("a", "b"), now, roc.copy(maxCollateral = 25.0), f, 0.0) as RfqDecision.Decline).reason
+        assertTrue(tight, tight.contains("asked"))
+        // a stake the RFQ asks for above our stake cap is declined, never cut down
+        assertTrue((RfqPricer.decide(created("a", "b", minWager = 25.0), now, roc, f, 0.0) as RfqDecision.Decline).reason.contains("asked"))
+        // five legs at 0.8 each (fair 0.328): quoted now that the leg limit is 5; six legs are not
+        val five = fairs(*(1..5).map { leg("l$it", "e$it", 0.8) }.toTypedArray())
+        assertTrue(RfqPricer.decide(created("l1", "l2", "l3", "l4", "l5"), now, roc, five, 0.0) is RfqDecision.Quote)
+        assertTrue((RfqPricer.decide(created("l1", "l2", "l3", "l4", "l5", "l6"), now, roc, five, 0.0) as RfqDecision.Decline).reason.contains("6 legs"))
     }
 }

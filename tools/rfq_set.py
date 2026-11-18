@@ -16,8 +16,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from tell_tj import git, me, BRANCH  # noqa
 
 FIELDS = {"mode": str, "margin": float, "maxStake": float, "maxCollateral": float, "maxOpenCollateral": float, "minBooks": int, "maxFairAgeMs": int,
-          "maxLegs": int, "minLeadMs": int, "maxDaysAhead": int, "minFair": float, "maxFair": float, "dayLossStop": float}
-LIMITS = {"margin": (0.0, 0.5), "maxStake": (10.0, 100.0), "maxCollateral": (10.0, 250.0), "maxOpenCollateral": (10.0, 500.0), "maxLegs": (2, 4)}
+          "maxLegs": int, "minReturn": float, "minPoints": float, "minLeadMs": int, "maxDaysAhead": int, "minFair": float, "maxFair": float, "dayLossStop": float}
+LIMITS = {"margin": (0.0, 0.5), "maxStake": (10.0, 100.0), "maxCollateral": (10.0, 250.0), "maxOpenCollateral": (10.0, 500.0), "maxLegs": (2, 6), "minReturn": (0.0, 0.5), "minPoints": (0.0, 0.1)}
 
 
 def main(argv):
