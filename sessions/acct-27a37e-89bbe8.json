@@ -8,8 +8,8 @@
  "branch": "ccr-f4518318-aidjgt",
  "head": "0f0039298712630afbd90f566f9f2c13bc54d501",
  "since": 1794955330,
- "beat": 1794971112,
- "beatIso": "2026-11-18T03:05:12Z",
+ "beat": 1794971316,
+ "beatIso": "2026-11-18T03:08:36Z",
  "done": "MK: maker landed 02:48, runner replaced again (the 02:46 job predated it); SHADOW file set",
  "next": "read rfq: lines in engine-log: registered? socket live? RFQs seen? then tell Tj"
 }
