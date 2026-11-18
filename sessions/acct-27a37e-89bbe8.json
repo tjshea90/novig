@@ -8,8 +8,8 @@
  "branch": "ccr-f4518318-aidjgt",
  "head": "eb20821993204f951922dfa276e5316d178088d0",
  "since": 1794955330,
- "beat": 1794972065,
- "beatIso": "2026-11-18T03:21:05Z",
+ "beat": 1794973068,
+ "beatIso": "2026-11-18T03:37:48Z",
  "done": "MK3: rfq_legs.py (what the legs of RFQs are, via Novig's public catalog) + first-10-min leg findings in the research file: 45% in play, props ~40% of legs, 55% of trades are 4-20 legs, coverage unmeasured (cold window)",
  "next": "read the warm job's sampled journal (run 44229304633, uploads ~03:37 UTC) with rfq_summary.py + TALLY rows; decide coverage work (props ladder, fair-age rule) from it; tell Tj what runs"
 }
