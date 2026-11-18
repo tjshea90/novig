@@ -1,13 +1,13 @@
-# CHECKPOINT 4620 — read me first, then TASKS.md
+# CHECKPOINT 4621 — read me first, then TASKS.md
 
-**Written:** 2026-11-18T00:26:00Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-7isr42` · **builds on:** `f80bb4d6a` (this checkpoint is the commit after it)
+**Written:** 2026-11-18T01:06:32Z · **tests:** all 10 fast checks green
+**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `d407728eb` (this checkpoint is the commit after it)
 
 ## Just done
-ENGINEER 11-17 slot2: watch ok, PLR4 ticked, no ship
+NVR: Novig geolocation status (GeoWatch + message), locks (NovigLocks into CloudSources.unavailable), limits tier/open-order cap; tests green
 
 ## Do this next
-PLR7/PLS6 only if live trading funded; HB2 needs Tj to fund wallet
+diff newest docs mirror vs 11-16; route-by-route unused list; write research/novig_propline_review_2026-11-18.md; full test; land; engine_set --reset
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ PLR7/PLS6 only if live trading funded; HB2 needs Tj to fund wallet
 
 ## Last ten checkpoints
 ```
+  9495a33ba ckpt 4620: ENGINEER 11-17 slot2: watch ok, PLR4 ticked, no ship
   4c096d534 ckpt 4619: PLR: SGP logger+grader live-tested with the key (344 quotes, Novig best on 
   9749ec207 ckpt 4618: PLR trial fixes from the first real run: SGP needs a total point, ev/calc n
   d941c0de1 ckpt 4617: TASKS: PLS/PLR status after landing; trial + engine reset in flight
@@ -25,8 +26,7 @@ PLR7/PLS6 only if live trading funded; HB2 needs Tj to fund wallet
   94eb2c719 ckpt 4613: PLS1 plan watch + PLS3 PropLine game_state socket (steam/ev/resolution + li
   2600e036d ckpt 4612: PLS: logged Tj's request, saved PropLine docs 2026-11-17, diagnosed: ledger
   c401c0f14 ckpt 4611: BV3 logged: SharpAPI no-start-time drop is the concrete lever
-  29dfa661e ckpt 4610: BV2: bid volume cause = feeds (ParlayAPI 0, PropLine spent, SGO silent), we
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(7 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
