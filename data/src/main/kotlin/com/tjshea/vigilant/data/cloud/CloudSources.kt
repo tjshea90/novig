@@ -249,6 +249,8 @@ class CloudSources(
     /** PropLine's per-book freshness (`/v1/freshness`, free, no key): read every minute by the engine while PropLine is on. */
     val propLineFreshness = com.tjshea.vigilant.data.reference.PropLineFreshness(http, json)
     fun propLineOn(s: ScanSettings) = s.usePropLine && has(CloudKeys.PROPLINE)
+    /** The events and markets Novig has locked against new orders (NVR, changelog 2026-11-10): read every 30 s by the engine, consulted by [unavailable]. */
+    val novigLocks = NovigLocks()
     fun propLineNote(): String = "PropLine stream: " + propLineStream.health() + " · " + propLineStream.gameState.describe() + " · " + propLineStream.counts.entries.sortedBy { it.key }.joinToString(", ") { "${it.key} ${it.value}" }.ifBlank { "no events yet" } + " · " + propLineLive.describe() + " · " + propLineLive.heartbeatNote() + " · " + propLineLive.pushNote()
     /** The BoltOdds key the sockets use: its plan and open connections (`/api/odds/user`, free), and whether the feed runs in one-connection mode (CH76). */
     suspend fun boltPlanNote(): String {
@@ -425,7 +427,8 @@ class CloudSources(
      * Why a side must not be bid on: its player is out ([PlayerOut]; the reports are the props answers' own, and ParlayAPI's injury list for the prop players no report covers). The phone's own
      * [com.tjshea.vigilant.data.novig.trading.maker.MakerLines] gets the same answer from the app's index; the candidate lines are made here, so the engine asks.
      */
-    fun unavailable(o: com.tjshea.vigilant.data.scanner.Opportunity, now: Long): String? = PlayerOut.forOpportunity(injuries.book.value, o, now)
+    fun unavailable(o: com.tjshea.vigilant.data.scanner.Opportunity, now: Long): String? = novigLocks.reason(o.market.eventId, o.market.marketId, now)
+        ?: PlayerOut.forOpportunity(injuries.book.value, o, now)
         // A late scratch PropLine's stream heard (3+ books pulled the player's props on his game, PSL), minutes before a report lists it.
         ?: o.lineKey?.subject?.takeIf { o.kind == com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP }?.let { p -> propLineLive.scratched(o.league.oddsApiSportKey, p, now) }
 

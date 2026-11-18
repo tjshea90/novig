@@ -292,6 +292,31 @@ open class NovigTradingClient(
     }
 
     /**
+     * The key holder's DEVICE geolocation as the placement gate judges it now (`GET /v3/account/geolocation`, changelog 2026-10-27; any key, throttle `account`, 1 token; the route answers even while the check
+     * refuses everything else). [Geo.expiresAtMs] is when the newest device pass runs out and a placement starts to answer `451 GEOLOCATION_EXPIRED` (null when no pass is on record); [Geo.code] the 451 code a
+     * placement gets right now (null while placements pass). Null when the answer is not the documented object.
+     */
+    open suspend fun geolocation(): Geo? {
+        val o = json.parseToJsonElement(signer.call("GET", "/v3/account/geolocation")) as? kotlinx.serialization.json.JsonObject ?: return null
+        fun text(k: String) = (o[k] as? kotlinx.serialization.json.JsonPrimitive)?.takeIf { it !is kotlinx.serialization.json.JsonNull }?.content
+        return Geo(text("expiresAt")?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }, text("code"))
+    }
+
+    data class Geo(val expiresAtMs: Long?, val code: String?)
+
+    /**
+     * The events and markets that refuse new orders (`GET /v3/exchange/locks`, changelog 2026-11-10; any key, throttle `read`, 1 token): a new order in a locked event answers `423 EVENT_LOCKED`, in a locked
+     * market `MARKET_LOCKED`; cancels still work. Null when the answer is not the documented object.
+     */
+    open suspend fun locks(): Locks? {
+        val o = json.parseToJsonElement(signer.call("GET", "/v3/exchange/locks")) as? kotlinx.serialization.json.JsonObject ?: return null
+        fun ids(k: String) = (o[k] as? kotlinx.serialization.json.JsonArray)?.mapNotNull { (it as? kotlinx.serialization.json.JsonPrimitive)?.content?.takeIf { s -> s.isNotBlank() } }?.toSet() ?: return null
+        return Locks(ids("eventIds") ?: return null, ids("marketIds") ?: return null)
+    }
+
+    data class Locks(val eventIds: Set<String>, val marketIds: Set<String>)
+
+    /**
      * Ledger rows of [kind] (every kind when null) for [subaccountKeyId] in ([startsAfterMs], [startsBeforeMs]) (both exclusive; the 2026-10-12 docs call them bounds on the row's time, older pages
      * on the event's scheduled start), paged until [maxRows].
      */
