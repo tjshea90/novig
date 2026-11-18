@@ -116,7 +116,10 @@ class NovigGeoLocksTest {
         assertNull("over half of 40+ questions hit: ignored", bad.reason("e7", "m7", now))
         assertTrue(bad.suspicious)
         assertTrue(bad.describe(now).contains("ignored for now"))
-        // The next window starts clean.
-        assertTrue(bad.reason("e7", "m7", now + NovigLocks.WINDOW_MS + 1) == null || true)
+        // The next window starts clean: the list is read again, and a lock that is real and rare is obeyed once more.
+        val later = now + NovigLocks.WINDOW_MS + 1
+        bad.update(setOf("e7"), emptySet(), later)
+        assertTrue(bad.reason("e7", "m7", later) != null)
+        assertTrue(!bad.suspicious)
     }
 }
