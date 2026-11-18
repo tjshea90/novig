@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-jy7pvb",
  "head": "55b8981cdb50220ee55a60e26265b711f869e399",
  "since": 1794983019,
- "beat": 1795031381,
- "beatIso": "2026-11-18T19:49:41Z",
+ "beat": 1795032865,
+ "beatIso": "2026-11-18T20:14:25Z",
  "done": "TR3: ledger headline, ProfitChartTest 13 green",
  "next": "daily P/L from ledger by game day; ship with next release"
 }
