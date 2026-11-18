@@ -1,7 +1,7 @@
 package com.tjshea.vigilant.data.tracker
 
 import com.tjshea.vigilant.data.reference.PropLineClient
-import com.tjshea.vigilant.data.scanner.TeamMatcher
+import com.tjshea.vigilant.data.match.TeamMatcher
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
