@@ -6766,3 +6766,4 @@ Tj, verbatim: "I want to become a parlay maker and try to profit from it. Resear
 - [~] MK4 (landed, SHADOW running; Tj told 2026-11-18) tests, land, engine reset; tell Tj exactly what runs, what it risks and how to switch it.
 
 - [x] PLQ (Tj typed 2026-11-18 03:49): check PropLine API+socket health and list every PropLine feature with how Vigilant can use it. Answered in chat from research/propline_unused_features_2026-11-17.md + live status.json (stream live, 0s behind).
+- [ ] DG1 (Tj chat 04:52 UTC 2026-11-18, diagnostics report from phone 23:52 UTC 11-17, no words): triage: ParlayAPI free key ...10d2 refused (Tj to replace/remove it); phone notifications off for Vigilant (Tj: Android Settings); CNO CLV -0.6% on 106 bets (watch); coldstart 5.2 s, bets.json 8 MB rewritten whole (prune/journal; ties PF11); wallet $81.84 with $0 in bids (ties BD1/BV1); results 4.0 sd below edges (-$110 vs +$44 expected: check fair-odds optimism vs grading).
