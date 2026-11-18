@@ -12,6 +12,7 @@ import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.tracker.AtBet
 import com.tjshea.vigilant.data.tracker.AtBets
+import com.tjshea.vigilant.data.tracker.BetGrader
 import com.tjshea.vigilant.data.tracker.BetSettler
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.BetTracker
