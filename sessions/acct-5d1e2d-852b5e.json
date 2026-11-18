@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-jy7pvb",
- "head": "f3b94e9381b8dd08dda5a36d6e69b13bb4bbcbc8",
+ "head": "55b8981cdb50220ee55a60e26265b711f869e399",
  "since": 1794983019,
- "beat": 1795031254,
- "beatIso": "2026-11-18T19:47:34Z",
- "done": "TR3: all-time headline now Novig ledger profit (ProfitChart.kt); test running",
- "next": "finish ProfitChartTest, daily-from-ledger, ship"
+ "beat": 1795031381,
+ "beatIso": "2026-11-18T19:49:41Z",
+ "done": "TR3: ledger headline, ProfitChartTest 13 green",
+ "next": "daily P/L from ledger by game day; ship with next release"
 }
