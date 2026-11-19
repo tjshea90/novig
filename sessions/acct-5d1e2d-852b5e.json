@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "2da22662c178ce31ee65cc557dbbd8f62fdb9a5c",
+ "head": "87e289ffee8c2179f87f5097e13e032290eb03f9",
  "since": 1795047736,
- "beat": 1795077466,
- "beatIso": "2026-11-19T08:37:46Z",
- "done": "MK10h: rfq minReturn 0.006",
- "next": "check wins; if none after 200 more quotes inspect quote timing/last look"
+ "beat": 1795077521,
+ "beatIso": "2026-11-19T08:38:41Z",
+ "done": "MK10 08:37 check: no change, evidence logged",
+ "next": "next check 09:07: wins at 0.006 floor; if 0 of 200+ inspect timing"
 }
