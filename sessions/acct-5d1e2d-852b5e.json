@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "852b5e",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-yvknhs",
+ "branch": "claude/optimistic-curie-y0og68",
  "head": "e406844fcb87a60db6565bb1bc8db19c236d800f",
  "since": 1795047736,
- "beat": 1795047736,
- "beatIso": "2026-11-19T00:22:16Z",
+ "beat": 1795048531,
+ "beatIso": "2026-11-19T00:35:31Z",
  "done": "WATCH 11-18 slot2: engine idle, wallet $0.03; Tj notified",
  "next": "ANALYST cover skipped (no new evidence); resume when wallet funded"
 }
