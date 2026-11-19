@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "87d2b487802aa8d73460d1b94fcac6a37b32da12",
+ "head": "12977b6ebd8bc40be5c643bcb72072fe1b8c1323",
  "since": 1795103757,
- "beat": 1795106638,
- "beatIso": "2026-11-19T16:43:58Z",
- "done": "MK12d: SHADOW judges RFQs as if the wallet were free (capital cap only in LIVE), tools/rfq_market.py (probe demand table + rule-vs-model on executed trades) + tools/test_rfq.sh fast check, NOVIG_API.md 33.2; engine reset onto main done: new job 16:36 UTC has probe + copula (sameGamePremium 0.02)",
- "next": "after the new job warms (~10 min cold scan): read status.rfq.probe/market, download the next journal and run rfq_market.py; land the SHADOW capital fix with the next deploy"
+ "beat": 1795106747,
+ "beatIso": "2026-11-19T16:45:47Z",
+ "done": "MK12e: SHADOW capital fix, propPairsFromMarket (OFF), Parlays-view probe/model tiles, rfq_set fields, LIVE runbook + outside context in the research doc; FULL suite green (4421 tests)",
+ "next": "relative-error floor for the model path (fairErrorRel), xs band (<3%), exclude via-quotes from evidence counters, then land and redeploy once the first hour of probe data is read"
 }
