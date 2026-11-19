@@ -1826,3 +1826,8 @@ PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 mi
 ```
 Why were more fair odds being found before now 
 ```
+
+## 2026-11-19T23:03:23Z
+```
+Parlayapi should be on a much higher Paid plan 
+```
