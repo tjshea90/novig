@@ -40,10 +40,10 @@ class RfqMakerTest {
     }
 
     @Test fun theMessagesWeSendCarryStringDecimalsAndANonce() {
-        val q = json.parseToJsonElement(RfqProtocol.quote(3, "r1", 0.4512, 250.0, "c1")).jsonObject
+        val q = json.parseToJsonElement(RfqProtocol.quote(3, "r1", 0.451, 250.0, "c1")).jsonObject
         assertEquals("3", q["nonce"]!!.jsonPrimitive.content)
         val body = q["quote"]!!.jsonObject
-        assertEquals("0.4512", body["price"]!!.jsonPrimitive.content); assertTrue(body["price"]!!.jsonPrimitive.isString)
+        assertEquals("a price travels on Novig's thousandth grid", "0.451", body["price"]!!.jsonPrimitive.content); assertTrue(body["price"]!!.jsonPrimitive.isString)
         assertEquals("250.00", body["maxWager"]!!.jsonPrimitive.content); assertEquals("c1", body["clientId"]!!.jsonPrimitive.content)
         assertEquals(listOf("rfq", "quotes"), json.parseToJsonElement(RfqProtocol.subscribe(1, listOf("rfq", "quotes"))).jsonObject["subscribe"]!!.jsonArray.map { it.jsonPrimitive.content })
         val c = json.parseToJsonElement(RfqProtocol.confirm(5, "r1", "q1", true)).jsonObject["confirm"]!!.jsonObject
@@ -178,7 +178,7 @@ class RfqMakerTest {
         r.legs = r.legs + listOf(leg("c", "e3", 0.5), leg("d", "e4", 0.4))
         r.maker.onEvent(created("a", "b"))
         val q = json.parseToJsonElement(r.sent.single()).jsonObject["quote"]!!.jsonObject
-        assertEquals("0.2160", q["price"]!!.jsonPrimitive.content); assertEquals("10.00", q["maxWager"]!!.jsonPrimitive.content)
+        assertEquals("0.216", q["price"]!!.jsonPrimitive.content); assertEquals("10.00", q["maxWager"]!!.jsonPrimitive.content)
         assertEquals(1L, r.maker.quotesSent)
         // $10 x 3.63 = $36.30 reserved each: the second still fits under the $90 total, the third has $17 of room, under the $10 stake's $36 of collateral
         r.maker.onEvent(created("c", "d").copy(rfqId = "rfq-2"))
@@ -286,8 +286,8 @@ class RfqMakerTest {
 
     @Test fun theQuoteAsksAReturnOnTheCollateralAndMoreForLongerLockUpsAndMoreLegs() {
         val h = 3_600_000L
-        // fair 0.40, a game in 3 h: (0.40 + 0.04)/1.04 = 0.4231 (2.3 points); the 2% relative floor (0.408) and the 1-point floor (0.41) are lower
-        assertEquals(0.4231, RfqPricer.quotePrice(0.40, 2, 3 * h, roc), 1e-9)
+        // fair 0.40, a game in 3 h: (0.40 + 0.04)/1.04 = 0.4231, rounded UP to Novig's thousandth grid 0.424 (2.4 points); the 2% relative floor (0.408) and the 1-point floor (0.41) are lower
+        assertEquals(0.424, RfqPricer.quotePrice(0.40, 2, 3 * h, roc), 1e-9)
         // the same parlay two days out ties the collateral up 2.25 days: r = 9%, (0.40 + 0.09)/1.09 = 0.44954, rounded up to 0.4496
         assertEquals(0.4496, RfqPricer.quotePrice(0.40, 2, 48 * h, roc), 1e-9)
         // a favourite pair at 0.9: the 2% relative floor binds (0.918, 1.8 points); the return term gives 0.9039 and the 1-point floor 0.91
@@ -298,9 +298,9 @@ class RfqMakerTest {
     }
 
     @Test fun theQuoteCoversTheStakeTheRfqAskedForAndLongshotsThatTieUpTooMuchAreDeclined() {
-        val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                                  // fair 0.20, price (0.20 + 0.04)/1.04 = 0.2308
+        val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                                  // fair 0.20, price (0.20 + 0.04)/1.04 = 0.2308, up to 0.231
         val d = RfqPricer.decide(created("a", "b", minWager = 10.0), now, roc, f, 0.0) as RfqDecision.Quote
-        assertEquals(0.2308, d.price, 1e-9); assertEquals(10.0, d.maxWager, 1e-9)
+        assertEquals(0.231, d.price, 1e-9); assertEquals(10.0, d.maxWager, 1e-9)
         // $10 x (1 - 0.2308)/0.2308 = $33.3 of collateral: a $25 per-parlay cap cannot cover the stake asked for
         val tight = (RfqPricer.decide(created("a", "b"), now, roc.copy(maxCollateral = 25.0), f, 0.0) as RfqDecision.Decline).reason
         assertTrue(tight, tight.contains("asked"))

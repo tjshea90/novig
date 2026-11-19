@@ -102,7 +102,7 @@ class RfqSocketTest {
         assertTrue("without the quotes channel a won quote is never seen", "quotes" in sub)
         withTimeout(5_000) { while (received.none { it.contains("\"quote\"") }) delay(25) }
         val q = json.parseToJsonElement(received.first { it.contains("\"quote\"") }).jsonObject["quote"]!!.jsonObject
-        assertEquals("r-1", q["rfqId"]!!.jsonPrimitive.content); assertEquals("fair 0.20: (0.20 + 0.06)/1.06 rounded up", "0.2453", q["price"]!!.jsonPrimitive.content)
+        assertEquals("r-1", q["rfqId"]!!.jsonPrimitive.content); assertEquals("fair 0.20: (0.20 + 0.06)/1.06 = 0.24528 rounded up to the thousandth", "0.246", q["price"]!!.jsonPrimitive.content)
         assertTrue(rows.any { it.kind == "QUOTE_SENT" })
         socket.stop()
     }
