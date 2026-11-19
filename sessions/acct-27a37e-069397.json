@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "31210cf531b4cb348a4a0dac986a3b31a26b6148",
+ "head": "f6a8cf9c284b1233297f7a4c52167e842512bce3",
  "since": 1795103757,
- "beat": 1795109406,
- "beatIso": "2026-11-19T17:30:06Z",
+ "beat": 1795109589,
+ "beatIso": "2026-11-19T17:33:09Z",
  "done": "MK12 round 2 complete and deployed in SHADOW: last-look fix, SameGame copula, RfqProbe+RfqMarketModel (probe on, marketPricing OFF), prop pairs from market ratio (SHADOW on), fairErrorRel floor, min-support, rfq-market.yml, rfq_market.py; job 17:10 UTC runs all of it (priceable 100 -> 1290 per 5 min, probe 0.6/s, 0 failures); Tj told via Messages",
  "next": "about 2026-11-20 17:00 UTC: read Release rfq-market SUMMARY.md (rfq-market.yml) / python3 -I tools/rfq_market.py run <journals>: per-class demand, rule vs model on executed trades; if the evidence rule (research/novig_parlay_maker_2026-11-19.md s8) holds set marketPricing=true (never LIVE without Tj's money); read via=market ratio rows before propPairsFromMarket goes near LIVE; first settled live parlays (13 filled) still pending"
 }
