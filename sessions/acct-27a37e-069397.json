@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "344b5e7cb09d14ecc69ce71e43212fb44027fb33",
  "since": 1795123003,
- "beat": 1795128260,
- "beatIso": "2026-11-19T22:44:20Z",
+ "beat": 1795128265,
+ "beatIso": "2026-11-19T22:44:25Z",
  "done": "pre-ship: MK18: parlay controls show your change at once and confirm when the engine has it; faster engine config read; coverage study",
  "next": "ship.sh gates and releases this"
 }
