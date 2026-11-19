@@ -1,13 +1,13 @@
-# CHECKPOINT 4705 — read me first, then TASKS.md
+# CHECKPOINT 4706 — read me first, then TASKS.md
 
-**Written:** 2026-11-19T20:16:22Z · **tests:** all 11 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `3641c1a9a` (this checkpoint is the commit after it)
+**Written:** 2026-11-19T20:27:22Z · **tests:** all 11 fast checks green
+**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `903a24486` (this checkpoint is the commit after it)
 
 ## Just done
-MK15 part 1: ParlayBook/FillBook/ParlayHub (data), engine keeps each fill's legs + publishes parlays.json (cloud), rfq_fills_seed.json; app side next
+MK15: parlay hub built (engine parlays.json + fills memory + seed, phone hub screen, tests); FULL suite green (4464)
 
 ## Do this next
-MK15: CloudClient.fetchParlays + CloudLink loop + Ui.parlays + ParlayHub screen in the Engine > Parlays section + tests (ParlayBookTest, ParlayHubTest, UI test); then full suite, land, engine picks up at handover (or one coordinated reset)
+land (push.sh), post board note, ONE engine reset so parlays.json publishes (confirm startedAtMs + parlays.json on cloud-feed), then ship.sh + release.yml for the app, send Tj the link
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ MK15: CloudClient.fetchParlays + CloudLink loop + Ui.parlays + ParlayHub screen 
 
 ## Last ten checkpoints
 ```
+  f76746de7 ckpt 4705: MK15 part 1: ParlayBook/FillBook/ParlayHub (data), engine keeps each fill's
   dbea1c1c9 ckpt 4704: MK14: LIVE capital hurdle liveMinReturn .03 (+ paper journaling), leg + EXE
   b6e0f5569 ckpt 4703: MK13 verified live: standing read 6/6 confirmed, 1 socket no reconnects, ex
   a78018e3f ckpt 4702: MK13c: per-outcome collateral cap (maxLegCollateral $30, LIVE), executions 
@@ -25,8 +26,7 @@ MK15: CloudClient.fetchParlays + CloudLink loop + Ui.parlays + ParlayHub screen 
   5ca44ed7e ckpt 4698: MK11 17:38: ladder lifts priced trades 0.5% -> 19% on paper
   5517a1085 ckpt 4697: MK12 round 2 complete and deployed in SHADOW: last-look fix, SameGame copul
   36e09e625 ckpt 4696: MK11: ladder live in shadow; engine outage 16:59-17:10 repaired (dispatch),
-  076fb99a1 ckpt 4695: MK12h: rfq-market.yml retries refused calls (the workflow token's 1,000 an 
 ```
 
-(12 automatic checkpoint(s) since the last deliberate one — the
+(13 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
