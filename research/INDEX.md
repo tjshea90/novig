@@ -8,7 +8,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
-| 2026-11-19 | `parlay_expected_profit_2026-11-19.md` | Parlay maker: what it should earn when money goes in (MK14, Tj 2026-11-19) - Tj (verbatim): "Make sure it can price as much as possible. Make sure it is within the api limits and docs. Tune it for volume and profitability. Log ... | APPLIED LEVER WATCH |
+| 2026-11-19 | `parlay_expected_profit_2026-11-19.md` | Parlay maker: what it should earn when money goes in (MK14, Tj 2026-11-19) - Tj (verbatim): "Make sure it can price as much as possible. Make sure it is within the api limits and docs. Tune it for volume and profitability. Log ... | APPLIED LEVER WATCH CODE |
 | 2026-11-19 | `novig_rfq_docs_audit_2026-11-19.md` | Novig docs audit for the parlay maker: every rule against the code (MK13, Tj 2026-11-19) - Tj (2026-11-19, tj Gmail session): "very carefully review the novig docs. Make sure the parlay system is correctly and accurately using ... | APPLIED LEVER |
 | 2026-11-19 | `novig_parlay_maker_2026-11-19.md` | The parlay maker, round 2: pricing, coverage, same-game legs and the quote that fills (MK12, Tj 2026-11-19) - Tj (2026-11-19, tj Gmail session, six asks): deep research online for everything the parlay system needs (pricing, ho... | APPLIED LEVER CODE |
 | 2026-11-18 | `novig_rfq_maker_2026-11-18.md` | Becoming a Novig parlay maker: how it works, what it can earn, what it risks, the plan (MK, Tj 2026-11-18) - Tj: "I want to become a parlay maker and try to profit from it. Research and build it." | APPLIED LEVER WATCH CODE |
