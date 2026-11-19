@@ -74,3 +74,20 @@ and not yet evidence. The ledger (`status.rfq.settled/makerWon/makerLost/realize
 1. Prefer a **dedicated maker subaccount** (docs: separate wallet and throttles; the management key opens and funds it: Tj's step) and send `NOVIG_MAKER_KEY_ID/PEM`. 2. Start with the config as it is
 (`maxStake` 12, `maxOpenCollateral` 80, per-outcome cap 30, hurdle 3%) and `rfq_set.py mode=LIVE`. 3. After about 100 settled fills read `OUTCOMES.md` and the ledger; scale the caps only when the
 realized/expected line is at or above half. 4. The day-loss stop (`dayLossStop` $20) stays.
+
+## 7. Too easy to win: a cap on the parlay and on any one leg (MK16, Tj 2026-11-19 ~21:00 UTC)
+
+Tj: "do not allow parlays that are too easy to win. For example, some parlays are over 90% chance of winning. Set a reasonable cap where parlays are not accepted by the system if they are too likely to win."
+`maxFair` was 0.85 (no parlay the market traded ever reached it) and there was no limit on a single leg. Paper journals of 11-19 (769 quoteable trades, 132 our rule would have won), by how likely the parlay is to win by OUR fair:
+
+| our fair for the parlay | quoteable trades | our price would have won | paper EV | collateral | mean edge |
+|--:|--:|--:|--:|--:|--:|
+| under 20% | 162 | 4% | $2.67 | $229 | 1.07 pts |
+| 20-40% | 476 | 9% | $10.66 | $734 | 0.98 |
+| 40-55% | 100 | 59% | $9.21 | $474 | 1.01 |
+| 55-70% | 24 | 71% | $2.17 | $80 | 1.02 |
+| 70-85% | 7 | **100%** | $0.73 | $12 | 1.34 |
+
+The more likely the parlay, the more often our price beats the market's best quote (above 60%: 18 of 19, against 17% overall) and the smaller the edge is against our own error. A maker that wins almost every trade in a class is mis-pricing it (the winner's curse), and the leg-level grading agrees: our 70-85% legs won 82% of the time against a 76% fair (111 legs), the favourite-longshot bias again. Trades with a leg over 90% were won by our price 42% of the time (14 of 33), also against 17%.
+Decision (class B in the sense of ROUTINE.md: two independent pieces of evidence, no money rule loosened, paper only): **`maxFair` 0.85 -> 0.60** and a new **`maxLegFair` 0.90**, both applied in SHADOW and LIVE with their own decline reasons ("the parlay is too likely to win (64% against the 60% cap)", "a leg is too likely to win (95% against the 90% cap)"), both steppers on the Maker page. Cost on paper: 2.5% of the quoteable trades and 8% of the expected profit for the parlay cap, 5% of the trades and about 14% of the expected profit for both together (the profit that goes is the part most likely to be our fair being low). Revert: `rfq_set.py maxFair=0.85 maxLegFair=1.0`. Test: `RfqMakerTest.aParlayTooLikelyToWinIsNeverQuotedAndNeitherIsOneWithANearCertainLeg`. `maxFair` takes effect in the running job at once (config); `maxLegFair` with the next job (the 6 h handover).
+
