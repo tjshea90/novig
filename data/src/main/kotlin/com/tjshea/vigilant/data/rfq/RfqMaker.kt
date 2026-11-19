@@ -108,7 +108,10 @@ class RfqMaker(
         runCatching { journal(RfqRow(clock(), kind, rfqId, buildJsonObject(build).toString())) }
     }
 
+    private var haltIsLossStop = false
+
     private fun halt(why: String, forMs: Long?) {
+        haltIsLossStop = false
         if (halted == null) { log("RFQ maker halted: $why"); tell("The parlay maker stopped quoting", why) }
         halted = why
         haltedUntilMs = if (forMs == null) Long.MAX_VALUE else clock() + forMs
@@ -385,6 +388,11 @@ class RfqMaker(
         val stop = lossStop(cfg)
         if (cfg.mode == RfqConfig.Mode.LIVE && stop > 0.0 && s.pnl24h <= -stop) {
             halt("the maker's settled parlays lost ${"%.2f".format(-s.pnl24h)} dollars in 24 hours (the stop is ${"%.2f".format(stop)})", 6 * 3_600_000L)
+            haltIsLossStop = true
+        } else if (halted != null && haltIsLossStop && (stop <= 0.0 || s.pnl24h > -stop)) {
+            // MK17d (Tj: "turn the stop loss off"): a halt that the loss stop made ends when the stop is switched off (or raised above the loss), not six hours later.
+            halted = null; haltedUntilMs = 0L; haltIsLossStop = false
+            log("RFQ maker resumes: the loss stop is ${if (stop <= 0.0) "off" else "no longer reached"}")
         }
     }
 

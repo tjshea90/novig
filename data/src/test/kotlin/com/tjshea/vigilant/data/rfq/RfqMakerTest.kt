@@ -251,6 +251,25 @@ class RfqMakerTest {
         assertEquals(200.0, s.walletCash!!, 1e-9); assertEquals(60.0, s.walletParlayCap!!, 1e-9); assertEquals(100.0, s.walletLegCap!!, 1e-9); assertEquals(40.0, s.lossStopNow!!, 1e-9)
     }
 
+    // ---- MK17d (Tj: "Turn the stop lots off. It can lose everything"): the loss stop can be switched off, and doing so ends a halt it made ----
+    @Test fun switchingTheLossStopOffEndsTheHaltItMadeButNotOtherHalts() {
+        val rows = ArrayList<RfqRow>()
+        val live = cfg.copy(mode = RfqConfig.Mode.LIVE, dayLossStop = 20.0, walletCollateral = false)
+        val maker = RfqMaker({ live }, { null }, { 0.0 }, { true }, { rows += it }, { _, _ -> }, { now }, cash = { 100.0 })
+        val lost = RfqLedger.Summary(settled = 3, makerWon = 0, makerLost = 3, open = 5, openCollateral = 50.0, pnlTotal = -26.0, pnl24h = -26.0)
+        maker.onLedger(lost, live)
+        assertTrue(maker.halted!!, maker.halted!!.contains("lost 26.00"))
+        // the stop is switched off: the next ledger read lifts the halt
+        maker.onLedger(lost, live.copy(dayLossStop = 0.0))
+        assertNull(maker.halted)
+        // another kind of halt is not ours to lift
+        val locked = RfqMaker({ live }, { null }, { 0.0 }, { true }, { rows += it }, { _, _ -> }, { now }, cash = { 100.0 })
+        locked.onEvent(RfqProtocol.Refused(now, "MAKER_LOCKED", "locked", 1L))
+        val before = locked.halted
+        locked.onLedger(lost, live.copy(dayLossStop = 0.0))
+        assertEquals(before, locked.halted)
+    }
+
     // ---- MK15: the parlay hub keeps each fill's legs ----
     @Test fun aFilledQuoteIsHandedToTheParlayHubOnceWithItsLegsEvenWhenTheFillArrivesOnTwoSockets() {
         val fills = ArrayList<FillRecord>(); val rows = ArrayList<RfqRow>()
