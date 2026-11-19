@@ -215,6 +215,20 @@ class SgoClientTest {
         assertEquals("espn:1", chain.games("NFL", LocalDate.of(2026, 10, 11))!!.single().id)
     }
 
+    @Test fun chainAddsTheSecondFeedsGameWhenTheFirstListsOthersButNotThisOne() = runTest {
+        fun src(vararg g: GameScore) = object : ScoreSource {
+            override suspend fun games(league: String, date: LocalDate) = g.toList()
+            override suspend fun players(game: GameScore): List<PlayerLine>? = null
+            override fun covers(league: String) = true
+        }
+        val t = 1_800_000_000_000L
+        val a = GameScore("a:1", "NBA", "Detroit Pistons", "Orlando Magic", t, true, false, 100, 90)
+        val b = GameScore("b:1", "NBA", "Detroit Pistons", "Charlotte Hornets", t + 3_600_000L, true, false, 110, 104)
+        val a2 = a.copy(id = "b:2")
+        val ids = ChainedScores(src(a), src(b, a2)).games("NBA", LocalDate.of(2026, 10, 28))!!.map { it.id }
+        assertEquals(listOf("a:1", "b:1"), ids)
+    }
+
     // ---- the docs' error rules (SPORTSGAMEODDS_API.md §2) ------------------------------------------------------------------------
 
     @Test fun a403IsThatCallsFailureAndDoesNotRefuseTheKeyForTheCallsItCanMake() = runTest {
