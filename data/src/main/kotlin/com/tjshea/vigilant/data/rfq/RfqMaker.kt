@@ -166,7 +166,7 @@ class RfqMaker(
                 val first = synchronized(filledIds) { filledIds.add(e.rfqId).also { if (filledIds.size > 5_000) filledIds.remove(filledIds.first()) } }
                 if (first) filled++
                 val p = synchronized(pending) { pending[e.rfqId] }
-                release(e.rfqId)
+                holdUntilBalanceCatchesUp(e.rfqId)
                 row("QUOTE_EXECUTED", e.rfqId) { put("wager", e.wager); put("price", e.price); put("quoteId", e.quoteId) }
                 if (first) (p?.decision as? RfqDecision.Quote)?.let { q ->
                     runCatching {
@@ -368,6 +368,9 @@ class RfqMaker(
         }
     }
 
+    /** A fill locked the collateral at Novig, but the balance we read does not show it until the next reading: keep counting it for [BALANCE_CATCHUP_MS] instead of freeing it at once (which let a second quote spend the same cash). */
+    private fun holdUntilBalanceCatchesUp(rfqId: String) { synchronized(pending) { pending[rfqId]?.let { if (it.reserved > 0.0) it.reservedUntilMs = clock() + BALANCE_CATCHUP_MS } } }
+
     private fun release(rfqId: String) { synchronized(pending) { pending[rfqId]?.let { it.reserved = 0.0; it.reservedUntilMs = 0L } } }
 
     @Volatile private var ledger: RfqLedger.Summary? = null
@@ -435,7 +438,13 @@ class RfqMaker(
         const val PRICE_ECHO_TOLERANCE = 6e-4
         /** After the last quote sent, the maker keeps answering for this long before a job ends: users accepted 4 to 29 seconds after a quote (14 fills, 2026-11-19). */
         const val DRAIN_AFTER_QUOTE_MS = 45_000L
-        /** A quote's collateral stays reserved this long after its auction closes (the user may accept a while later). */
-        const val RESERVE_AFTER_CLOSE_MS = 120_000L
+        /**
+         * A quote's collateral stays reserved this long after its auction closes: the user accepts AFTER the 3-second auction (all 16 live fills came 6 to 29 seconds after the quote was sent, the RFQ having closed at 3 s),
+         * so the auction's close frees nothing. 45 s is 1.5 times the slowest fill seen (it was 120 s, which on a $90 wallet held two $35 longshot quotes' collateral for two minutes each and declined ~1,200
+         * affordable RFQs in 11 minutes as "cash is short": MK17c).
+         */
+        const val RESERVE_AFTER_CLOSE_MS = 45_000L
+        /** After a fill the collateral stays counted this long: the balance is read once a minute, so until the next reading the cash still shows what the fill has already locked. */
+        const val BALANCE_CATCHUP_MS = 75_000L
     }
 }
