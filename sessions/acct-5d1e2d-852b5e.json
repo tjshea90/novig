@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "ee40cd183588b980948d4d5c8023180d5b99825b",
+ "head": "bfea02df67bbfba2c85ad387a1d1f8bd38e9e8c2",
  "since": 1795047736,
- "beat": 1795065873,
- "beatIso": "2026-11-19T05:24:33Z",
+ "beat": 1795066242,
+ "beatIso": "2026-11-19T05:30:42Z",
  "done": "GD2 + TR5 shipped v1.0.140; MK10 parlay data read",
  "next": "MK10: same-game pricing in SHADOW from propline-sgp logs"
 }
