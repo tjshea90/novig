@@ -47,6 +47,9 @@ data class RfqStatus(
     /** MK12: of [pricedTrades], how many the market model's price would have won (it prices only classes with enough probe answers) and what each would have earned (points of pot) if our fair is true. */
     val modelWouldWin: Long = 0L,
     val modelWouldEarnPoints: Double? = null,
+    /** MK14: the trades our rule would have won at the LIVE capital hurdle (`liveMinReturn`) and their mean edge, points of pot: what LIVE would do while SHADOW quotes at the looser rule. */
+    val liveHurdleWouldWin: Long = 0,
+    val liveHurdleEarnPoints: Double? = null,
     /** MK13: Novig's own view of the maker (`GET /rfq/v3/maker`): tier, the confirm rate it is judged by, and any lock with its end. */
     val makerTier: String? = null,
     val confirmCounted: Long? = null,
