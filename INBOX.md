@@ -1836,3 +1836,8 @@ Parlayapi should be on a much higher Paid plan
 ```
 Turn the stop lots off. It can lose everything 
 ```
+
+## 2026-11-19T23:08:53Z
+```
+Parlayapi also has a socket. Use it 
+```
