@@ -178,18 +178,19 @@ class RfqMakerTest {
 
     // ---- MK17 (Tj 2026-11-19: tonight's options): only today's slate, longshots only, the wallet as the collateral limit, and a quote that is positive EV with a margin for our own error ----
     @Test fun onlyTodayQuotesOnlyParlaysWhoseLastLegStartsBeforeTheSlateEnds() {
-        // `now` is 04:26 ET: today's slate ends at 05:00 ET, 33 minutes away
+        // `now` is 05:06 ET: today's slate (5 am to 5 am Eastern) ends tomorrow at 05:00 ET, 23 h 53 min away
+        val h = 3_600_000L
         val today = cfg.copy(onlyToday = true)
-        val ok = RfqPricer.decide(created("a", "b"), now, today, fairs(leg("a", "e1", 0.5, startsInMs = 25 * 60_000L), leg("b", "e2", 0.4, startsInMs = 25 * 60_000L)), 0.0)
+        val ok = RfqPricer.decide(created("a", "b"), now, today, fairs(leg("a", "e1", 0.5, startsInMs = 3 * h), leg("b", "e2", 0.4, startsInMs = 23 * h)), 0.0)
         assertTrue("both legs start inside the slate: $ok", ok is RfqDecision.Quote)
-        val late = (RfqPricer.decide(created("a", "b"), now, today, fairs(leg("a", "e1", 0.5, startsInMs = 25 * 60_000L), leg("b", "e2", 0.4, startsInMs = 3 * 3_600_000L)), 0.0) as RfqDecision.Decline)
-        assertTrue(late.reason, late.reason.startsWith("its last leg starts after today's slate ends"))
+        val late = (RfqPricer.decide(created("a", "b"), now, today, fairs(leg("a", "e1", 0.5, startsInMs = 3 * h), leg("b", "e2", 0.4, startsInMs = 26 * h)), 0.0) as RfqDecision.Decline)
+        assertTrue(late.reason, late.reason == "its last leg starts after today's slate ends (2 h later)")
         assertEquals("the decline still carries our fair", 0.2, late.fair!!, 1e-9)
-        assertTrue("off: the same parlay is quoted", RfqPricer.decide(created("a", "b"), now, cfg, fairs(leg("a", "e1", 0.5, startsInMs = 25 * 60_000L), leg("b", "e2", 0.4, startsInMs = 3 * 3_600_000L)), 0.0) is RfqDecision.Quote)
+        assertTrue("off: the same parlay is quoted", RfqPricer.decide(created("a", "b"), now, cfg, fairs(leg("a", "e1", 0.5, startsInMs = 3 * h), leg("b", "e2", 0.4, startsInMs = 26 * h)), 0.0) is RfqDecision.Quote)
         // the slate: 5 am to 5 am Eastern (EDT, UTC-4 in September)
-        assertEquals("04:26 ET: this morning's 5 am", now + 33 * 60_000L + 20_000L, RfqSlate.endMs(now))
-        val afternoon = 1_790_535_000_000L                                     // 2026-09-28 18:10 UTC = 14:10 ET
-        assertEquals("14:10 ET: tomorrow's 5 am = 09:00 UTC", 1_790_586_000_000L - 0L, RfqSlate.endMs(afternoon) + 0L)
+        assertEquals("05:06 ET: tomorrow's 5 am = 09:00 UTC", 1_790_586_000_000L, RfqSlate.endMs(now))
+        assertEquals("14:50 ET: the same 5 am", 1_790_586_000_000L, RfqSlate.endMs(1_790_535_000_000L))
+        assertEquals("04:00 ET: this morning's 5 am", 1_790_586_000_000L, RfqSlate.endMs(1_790_586_000_000L - 3_600_000L))
     }
 
     @Test fun longshotsOnlyQuotesOnlyParlaysWeGiveAtMostTheLimitToWin() {
