@@ -56,6 +56,22 @@ class ParlayViewTest {
         assertTrue(ParlayView.liveWarning(shadow.copy(pricedTrades = 250)).contains("200+ priced trades"))
     }
 
+    @Test fun theMarketProbeAndTheModelsRecordShowAsTilesOnlyOnceTheyHaveSomethingToSay() {
+        assertTrue("no probe data: no tiles", ParlayView.of(shadow).tiles.none { it.title.startsWith("Other makers") || it.title.startsWith("Market model") })
+        val withProbe = shadow.copy(
+            probe = "probe: 120 sent, 100 priced, 15 nobody quoted, 0 refused, 0 limited, 5 failed",
+            market = listOf("2|gl|ATP|mid n=88 nobody=3% median +1.27pts (p25 +0.74, p75 +1.81)", "2|gl|NBA|mid n=240 nobody=1% median +0.31pts (p25 +0.09, p75 +0.62)"),
+            modelWouldWin = 31, modelWouldEarnPoints = 1.4,
+        )
+        val tiles = ParlayView.of(withProbe).tiles
+        val other = tiles.single { it.title.startsWith("Other makers") }
+        assertEquals("2 classes", other.value)
+        assertTrue(other.sub, other.sub.contains("ATP") && other.sub.contains("median +1.27pts") && !other.sub.contains("p25") && other.sub.contains("120 sent"))
+        val model = tiles.single { it.title.startsWith("Market model") }
+        assertTrue(model.value + " " + model.sub, model.value == "31 of ${withProbe.pricedTrades}" && model.sub.contains("+1.40") && model.sub.contains("not used yet"))
+        assertTrue(ParlayView.of(withProbe.copy(config = withProbe.config.copy(marketPricing = true))).tiles.single { it.title.startsWith("Market model") }.sub.contains("pricing from it"))
+    }
+
     @Test fun theStatusRoundTripsThroughTheEnginesJson() {
         val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; encodeDefaults = true }
         val text = json.encodeToString(RfqStatus.serializer(), shadow)
