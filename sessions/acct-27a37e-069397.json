@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "c4ae5ea259e470ebac1e25437733eeecf822df28",
+ "head": "4d108046ad6605a6b8e0b8fb7611c695f2be98ea",
  "since": 1795103757,
- "beat": 1795106275,
- "beatIso": "2026-11-19T16:37:55Z",
+ "beat": 1795106458,
+ "beatIso": "2026-11-19T16:40:58Z",
  "done": "MK12d: SHADOW judges RFQs as if the wallet were free (capital cap only in LIVE), tools/rfq_market.py (probe demand table + rule-vs-model on executed trades) + tools/test_rfq.sh fast check, NOVIG_API.md 33.2; engine reset onto main done: new job 16:36 UTC has probe + copula (sameGamePremium 0.02)",
  "next": "after the new job warms (~10 min cold scan): read status.rfq.probe/market, download the next journal and run rfq_market.py; land the SHADOW capital fix with the next deploy"
 }
