@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "80a84c88b7032d61b56de61333f80b10775aed2d",
+ "head": "a73e68eaade3b34d3310f10eeeb743c12269405a",
  "since": 1795047736,
- "beat": 1795132276,
- "beatIso": "2026-11-19T23:51:16Z",
- "done": "MK10 23:21: loss stop tripped (-26.23), maker halted by design",
- "next": "calibrate by leg band when >=10 more settle"
+ "beat": 1795132322,
+ "beatIso": "2026-11-19T23:52:02Z",
+ "done": "MK10 23:51: loss stop set to 0 from the app by Tj; quoting again",
+ "next": "watch settlements; calibrate favourite legs at 10+ settled"
 }
