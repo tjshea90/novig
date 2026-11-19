@@ -1862,3 +1862,9 @@ PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 mi
 ```
 So you are sure that the engine only being able to price 17 rfqs out of 60000 isn't the reason
 ```
+
+## 2026-11-19T23:55:41Z
+```
+Both propline and parlayapi and also kalshi have sockets. That isn't enough to get fair odds for all these bets?
+Something is seriously wrong. The engine was able to price way more rfqs earlier 
+```
