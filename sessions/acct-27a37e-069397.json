@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "7172be49e648cb04f8962047529f317a1b0d87e9",
+ "head": "fdddd1d2c39cc63c321c42387c86a96512098b1f",
  "since": 1795103757,
- "beat": 1795105950,
- "beatIso": "2026-11-19T16:32:30Z",
- "done": "MK12c: league-aware market classes with pooled fallback, probe tests hardened, research/novig_parlay_maker_2026-11-19.md, TASKS+CHANGES entries; FULL suite green (4418 tests); probes confirmed to appear as RFQs on our maker socket",
- "next": "land on main, engine_set --reset, verify new job startedAtMs and PROBE rows; then SHADOW capital-cap fix + Novig-mid/ladder coverage"
+ "beat": 1795105991,
+ "beatIso": "2026-11-19T16:33:11Z",
+ "done": "MK12: research index rebuilt and LEVERS.md cites the new study; all 10 fast checks green",
+ "next": "engine deploy: confirm landing on main, engine_set --reset, verify job + PROBE rows"
 }
