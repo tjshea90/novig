@@ -134,7 +134,7 @@ class RfqMakerTest {
     // ---- the maker: shadow and live ----
     private class Rig(var cfg: RfqConfig, var legs: List<LegFair>, var collateral: Double = 0.0, var clock: Long = 1_790_500_000_000L) {
         val sent = ArrayList<String>(); val rows = ArrayList<RfqRow>(); val told = ArrayList<String>()
-        val maker = RfqMaker({ cfg }, { id -> legs.firstOrNull { it.outcomeId == id } }, { collateral }, { sent += it; true }, { rows += it }, { t, _ -> told += t }, { clock })
+        val maker = RfqMaker({ cfg }, { id -> legs.firstOrNull { it.outcomeId == id } }, { collateral }, { sent += it; true }, { rows += it }, { t, _ -> told += t }, { clock }, cash = { 1_000.0 })
     }
 
     private fun rig(mode: RfqConfig.Mode) = Rig(cfg.copy(mode = mode), listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4)))

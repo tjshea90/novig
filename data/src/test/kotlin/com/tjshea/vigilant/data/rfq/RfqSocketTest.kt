@@ -72,7 +72,7 @@ class RfqSocketTest {
         val rows = CopyOnWriteArrayList<RfqRow>()
         val cfg = RfqConfig(mode = mode)
         lateinit var socket: RfqSocket
-        val maker = RfqMaker({ cfg }, { id -> legs().firstOrNull { it.outcomeId == id } }, { 0.0 }, { socket.send(it) }, { rows += it })
+        val maker = RfqMaker({ cfg }, { id -> legs().firstOrNull { it.outcomeId == id } }, { 0.0 }, { socket.send(it) }, { rows += it }, cash = { 1_000.0 })
         socket = RfqSocket(OkHttpClient(), { client() }, maker, { cfg }, scope)
         server.enqueue(MockResponse().setBody("""{"makerId":"mk-1"}"""))                     // POST /rfq/v3/maker
         server.enqueue(MockResponse().withWebSocketUpgrade(novigSide(true)))                  // GET /rfq/v3/ws
