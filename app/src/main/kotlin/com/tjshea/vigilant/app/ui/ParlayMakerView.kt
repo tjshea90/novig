@@ -150,7 +150,7 @@ private fun PickingOptions(cfg: RfqConfig, rfq: RfqStatus, apply: (RfqConfig) ->
                     { apply(cfg.copy(walletShare = (cfg.walletShare - 0.05).coerceAtLeast(0.10))) }, { apply(cfg.copy(walletShare = (cfg.walletShare + 0.05).coerceAtMost(1.0))) })
                 Text(
                     "Wallet now: ${usd(rfq.walletCash)} free, ${usd(rfq.walletTotal)} with the collateral already held. One parlay up to ${usd(rfq.walletParlayCap)}, one game's legs together up to ${usd(rfq.walletLegCap)}, " +
-                        "quoting stops for six hours if a day's settled parlays lose ${usd(rfq.lossStopNow)}.",
+                        (if ((rfq.lossStopNow ?: 0.0) > 0.0) "quoting stops for six hours if a day's settled parlays lose ${usd(rfq.lossStopNow)}." else "there is NO loss stop: it keeps quoting whatever it loses (the wallet caps still limit what one parlay and one game can lock)."),
                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("optWalletNumbers"),
                 )
             }
