@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "fcbd7871935986d39e238091af407611e7578e28",
+ "head": "66b41859f8fae6c4a1ebe54f225ab8aa777b04f8",
  "since": 1795103757,
- "beat": 1795112096,
- "beatIso": "2026-11-19T18:14:56Z",
- "done": "MK13a: Novig docs audit fixes in the RFQ maker: reconnect rules (RfqReconnect: backoff on every close/refusal, 451/423/401/403 30 min, TOO_MANY_SOCKETS 30 s+, KEY_REVOKED 30 min), quiet last-look socket (quotes only, LIVE) beside the pricing socket, duplicate RFQ/last-look guards, drain before job end (45 s after the last quote), MAKER_BARRED/READ_ONLY_KEY halts, GET /rfq/v3/maker standing+lock read into status and a Parlays tile, 3-decimal price grid (ceil to thousandth, exact decimals), executions limit 100, cash-aware quote sizing (unread balance = no LIVE quote), optional dedicated maker subaccount key NOVIG_MAKER_KEY_* ; tests RfqReconnectTest RfqSocketRulesTest RfqMakerTest ParlayViewTest green",
- "next": "write research/novig_rfq_docs_audit_2026-11-19.md (rule by rule), NOVIG_API.md 33.3, CHANGES/TASKS, full suite, land, engine reset, then analyse the first probe journals"
+ "beat": 1795112126,
+ "beatIso": "2026-11-19T18:15:26Z",
+ "done": "MK13b: docs audit written (research/novig_rfq_docs_audit_2026-11-19.md), NOVIG_API.md 33.3, CHANGES/TASKS, LEVERS; cash-aware LIVE sizing + optional dedicated maker key wired in CloudMain; FULL suite green (4446 tests)",
+ "next": "land, engine reset, then: concentration cap per leg (6 of 13 live fills rode the Houston game), read executions in SHADOW for the 13 live parlays' results"
 }
