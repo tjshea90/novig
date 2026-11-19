@@ -79,7 +79,9 @@ class RfqMarketModel(private val keep: Int = 600, private val maxAgeMs: Long = 4
         while (c <= top + 1e-12) {
             val price = fair + c
             if (price >= 0.999) break
-            val win = obs.count { it.gap == null || it.gap > c + 1e-9 }.toDouble() / obs.size
+            val winN = obs.count { it.gap == null || it.gap > c + 1e-9 }
+            if (winN < MIN_SUPPORT) break                                              // a margin only a few answers support is an outlier's price (the larger c only has fewer wins)
+            val win = winN.toDouble() / obs.size
             val net = c - allowance - cfg.minReturn * hold * (1.0 - price)
             if (net > 0.0 && win * net > bestScore + 1e-12) { bestScore = win * net; bestC = c }
             c += 0.0005
@@ -88,6 +90,9 @@ class RfqMarketModel(private val keep: Int = 600, private val maxAgeMs: Long = 4
     }
 
     companion object {
+        /** A candidate margin needs this many answers above it: the argmax of a noisy empirical curve otherwise lands on one or two outliers (walk-forward on the NHL's 826 trades: 3% won in training, 0% on the test). */
+        const val MIN_SUPPORT = 5
+
         /**
          * The class a parlay belongs to for the market's answers: legs, kind of legs, the league and the size of our fair, as `legs|mix|league|band`. The league matters most: on 7,626 priced game-line parlays the
          * market paid a median 0.31 points over our fair in the NBA, 0.35 in the NHL, 0.45 in NCAAB, 1.27 in ATP tennis (a quote 1 point over won 13%, 4%, 26% and 61% of them).

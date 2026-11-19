@@ -82,6 +82,16 @@ class RfqMarketTest {
         assertNull(low.best("c", 0.30, 2, 1.0, 0.0005, 0.0035, cfg))
     }
 
+    @Test fun aMarginOnlyAFewAnswersSupportIsNotPriced() {
+        val m = RfqMarketModel()
+        repeat(40) { m.observe("c", 0.30, 0.305, 1L) }                                  // the market pays 0.5 point: too little to clear the allowance and the collateral
+        repeat(4) { m.observe("c", 0.30, 0.34, 1L) }                                    // four answers at 4 points: one price an outlier set
+        assertNull("four answers do not make a price", m.best("c", 0.30, 2, 1.0, 0.0005, 0.0035, cfg))
+        m.observe("c", 0.30, 0.34, 1L)                                                  // a fifth
+        val c = m.best("c", 0.30, 2, 1.0, 0.0005, 0.0035, cfg)!!
+        assertTrue("five answers at 4 points support a margin just under 4 points (was $c)", c in 0.035..0.04)
+    }
+
     @Test fun thePricerQuotesTheModelsPriceOnlyWhenTheConfigSaysSoAndNeverBelowTheFloors() {
         val m = RfqMarketModel()
         val legs = listOf(leg("e1"), leg("e2"))
