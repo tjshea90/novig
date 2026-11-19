@@ -130,9 +130,26 @@ object ProfitText {
 
     /** The all-time figure's sum (Tj, 2026-10-25: winnings on final bets and bids minus their cost; no wallet, deposits or withdrawals; open bets left out). */
     fun allTimeHow(book: SlateProfit.Book, w: WalletMoneyUi, now: Long): String =
-        if (book.settled == 0) "No settled bets yet."
-        else "From the ${book.settled} bets and bids with a final result: ${Format.money(book.settledStaked)} cost, ${Format.money(book.returned)} paid back. Deposits and withdrawals are not used; " +
+        walletLine(w) + if (book.settled == 0) "No settled bets yet."
+        else " Detail, the bets' own sum (not the headline): from the ${book.settled} bets and bids with a final result: ${Format.money(book.settledStaked)} cost, ${Format.money(book.returned)} paid back. Deposits and withdrawals are not used; " +
             "${bets(book.open)} not final yet (${Format.money(book.openStaked)} at stake) are left out." + ledgerLine(w, now)
+
+    private fun walletLine(w: WalletMoneyUi): String = w.money?.let {
+        "Headline = the Vigilant wallet: cash ${Format.money(it.cash)} + ${Format.money(it.openCost)} on open bets at cost - ${Format.money(it.netIn)} put in net of withdrawals (${Format.money(it.putIn)} in, ${Format.money(it.takenOut)} out). "
+    }.orEmpty()
+
+    /** The one all-time figure and its percent: wallet, else Novig's ledger, else the bets' sum (Tj, 2026-11-19, TR5). */
+    fun headline(book: SlateProfit.Book, w: WalletMoneyUi): Pair<Double, Double?> = when {
+        w.money != null -> w.money.profit to w.money.pct
+        w.ledgerProfit != null -> w.ledgerProfit to null
+        else -> book.profit to book.pct
+    }
+
+    fun headlineBasis(book: SlateProfit.Book, w: WalletMoneyUi): String = when {
+        w.money != null -> "wallet now less ${Format.money(w.money.netIn)} put in"
+        w.ledgerProfit != null -> "Novig's ledger"
+        else -> "on ${Format.money(book.settledStaked)} staked"
+    }
 
     /**
      * CH87c (Tj 2026-10-24: "all-time profit from the Vigilant subaccount ledger only ... show on the Tracker card"): Novig's own record of the Vigilant subaccount beside the bets' sum, so a gap between the
@@ -218,8 +235,11 @@ fun ProfitChartCard(bets: List<TrackedBet>, period: TrackerPeriod, wallet: Walle
 
 @Composable
 private fun AllTime(book: SlateProfit.Book, wallet: WalletMoneyUi, now: Long) {
-    val profit = book.profit
-    val pct = book.pct
+    // Tj, 2026-11-19 (TR5/TR6: "wildly different numbers every time"): ONE headline, the real money. Wallet now (cash + open at cost) less net money put in; Novig's ledger when there is no wallet
+    // reading; the bets' sum only when neither exists. The bets' sum is shown beneath as detail, never as the headline.
+    val headline = ProfitText.headline(book, wallet)
+    val profit = headline.first
+    val pct = headline.second
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
         Column(Modifier.weight(1f)) {
             Text("All-time profit", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
@@ -227,7 +247,7 @@ private fun AllTime(book: SlateProfit.Book, wallet: WalletMoneyUi, now: Long) {
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(pct?.let(ProfitText::pct) ?: "—", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = moneyColor(profit))
-            Text("on ${Format.money(book.settledStaked)} staked", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(ProfitText.headlineBasis(book, wallet), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
     Text(ProfitText.allTimeHow(book, wallet, now), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitAllTimeHow"))
