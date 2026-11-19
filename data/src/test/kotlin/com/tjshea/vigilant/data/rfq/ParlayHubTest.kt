@@ -100,6 +100,18 @@ class ParlayHubTest {
         assertEquals("+\$0.00 so far on 3 settled · 2 open".replace("+", ""), ParlayHub.headline(hub.summary).replace("+", "").replace("-", ""))
     }
 
+    @Test fun withTheWalletAsTheLimitTheTilesShowTheWholeWalletAndWhatIsFreeNotAFixedCap() {
+        val rfq = RfqStatus(config = RfqConfig(mode = RfqConfig.Mode.LIVE, maxOpenCollateral = 80.0, walletCollateral = true), walletCash = 93.72, walletTotal = 162.47)
+        val s = ParlayHub.of(book, rfq, now, utc).summary
+        assertEquals("the limit is the whole wallet (cash + posted), not the fixed $80", 162.47, s.maxOpenCollateral!!, 1e-9)
+        assertEquals(93.72, s.walletFree!!, 1e-9)
+        assertEquals("off: the fixed cap, no wallet", 80.0, ParlayHub.of(book, rfq.copy(config = rfq.config.copy(walletCollateral = false)), now, utc).summary.maxOpenCollateral!!, 1e-9)
+        val tile = ParlayView.of(rfq).tiles.single { it.label == "Collateral tied up" }
+        assertTrue(tile.sub, tile.sub.contains("of your \$162 wallet") && tile.sub.contains("\$94 still free to post"))
+        assertTrue(ParlayView.of(rfq).rule, ParlayView.of(rfq).rule.contains("the wallet is the collateral limit"))
+        assertTrue(ParlayView.liveWarning(rfq), ParlayView.liveWarning(rfq).contains("of the Vigilant wallet (everything posted together up to the cash in it)"))
+    }
+
     @Test fun timesReadInPlainWords() {
         assertEquals("Today 9:40 PM", ParlayHub.clock(now + (1.667 * h).toLong(), now, utc))
         assertEquals("Tomorrow 1:00 AM", ParlayHub.clock(now + 5 * h, now, utc))
