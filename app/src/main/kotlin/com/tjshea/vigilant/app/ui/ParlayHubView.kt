@@ -125,7 +125,7 @@ private fun hubTiles(hub: ParlayHub.Hub, now: Long): List<DashboardModel.Tile> {
     val tiles = ArrayList<DashboardModel.Tile>()
     tiles += DashboardModel.Tile(
         "Money tied up now", usd(s.collateral), if (s.open == 0) "no open parlays" else "${s.open} open parlays" + (s.maxOpenCollateral?.let { " · limit ${"\$%.0f".format(Locale.US, it)}" } ?: ""),
-        if (s.maxOpenCollateral != null && s.collateral > s.maxOpenCollateral * 0.9) Tone.WARN else Tone.NEUTRAL,
+        s.maxOpenCollateral.let { lim -> if (lim != null && s.collateral > lim * 0.9) Tone.WARN else Tone.NEUTRAL },
     )
     tiles += DashboardModel.Tile("If every open parlay loses", ParlayHub.signed(s.ifAllBuyersLose), "the buyers' stakes are yours, and your ${usd(s.collateral)} comes back", if (s.ifAllBuyersLose > 0.005) Tone.GOOD else Tone.NEUTRAL)
     tiles += DashboardModel.Tile("Worst case", ParlayHub.signed(s.worstCase), "if every parlay still alive wins for its buyer", if (s.worstCase < -0.005) Tone.BAD else Tone.NEUTRAL)
