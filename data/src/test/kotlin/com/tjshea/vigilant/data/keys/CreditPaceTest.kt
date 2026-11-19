@@ -179,7 +179,7 @@ class CreditPaceTest {
         val m = meterAt { now }
         val business = CreditPace(QuotaPolicy.PARLAY, reserve = 300, freeLimit = 1_000, zone = { ZoneId.of("America/New_York") })
         // The account read set the month: Nov 1 to Dec 1, 1,000,000 credits, 344,000 used.
-        m.recordBalance(QuotaPolicy.PARLAY, "biz", 656_000, 344_000, resetAtMs = Instant.parse("2026-12-01T00:00:00Z").toEpochMilli(), periodStartMs = Instant.parse("2026-11-01T00:00:00Z").toEpochMilli())
+        m.recordBalance(QuotaPolicy.PARLAY, "biz", remaining = 656_000, limit = 1_000_000, used = 344_000, resetAtMs = Instant.parse("2026-12-01T00:00:00Z").toEpochMilli(), periodStartMs = Instant.parse("2026-11-01T00:00:00Z").toEpochMilli())
         suspend fun answer(used: Int, cost: Int) = m.recordCall(QuotaPolicy.PARLAY, "biz", cost, serverRemaining = 1_000_000 - used, serverUsed = used)
         // A big props reply (hundreds of credits) lands after calls that already recorded a higher count, several seconds in a busy scan, and a quiet gap of three minutes before the next one.
         answer(344_100, 3); now += 800; answer(344_900, 3); now += 800; answer(344_300, 3)
@@ -192,7 +192,7 @@ class CreditPaceTest {
         // a real reset (the count falls to almost nothing) is still followed
         now += 6 * 3_600_000L; answer(40, 3)
         assertEquals(now, m.flow.value.providers.getValue("parlay").keys.getValue("biz").periodStart)
-        assertEquals(5_000, QuotaPolicy.let { UsageMeter.staleSlack(1_000_000) })
+        assertEquals(5_000, UsageMeter.staleSlack(1_000_000))
         assertEquals(100, UsageMeter.staleSlack(1_000))
     }
 
