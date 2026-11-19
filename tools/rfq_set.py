@@ -15,9 +15,15 @@ import json, os, sys, tempfile, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from tell_tj import git, me, BRANCH  # noqa
 
-FIELDS = {"mode": str, "margin": float, "maxStake": float, "maxCollateral": float, "maxOpenCollateral": float, "minBooks": int, "maxFairAgeMs": int,
+def _bool(v):
+    if v.lower() in ("true", "1", "yes", "on"): return True
+    if v.lower() in ("false", "0", "no", "off"): return False
+    raise ValueError("not a boolean: %r" % v)
+
+
+FIELDS = {"sameGamePremium": float, "propPremium": float, "allowProps": _bool, "probe": _bool, "marketPricing": _bool, "probeMinSamples": int, "mode": str, "margin": float, "maxStake": float, "maxCollateral": float, "maxOpenCollateral": float, "minBooks": int, "maxFairAgeMs": int,
           "maxLegs": int, "minReturn": float, "minPoints": float, "minLeadMs": int, "maxDaysAhead": int, "minFair": float, "maxFair": float, "dayLossStop": float}
-LIMITS = {"margin": (0.0, 0.5), "maxStake": (10.0, 100.0), "maxCollateral": (10.0, 250.0), "maxOpenCollateral": (10.0, 500.0), "maxLegs": (2, 10), "minReturn": (0.0, 0.5), "minPoints": (0.0, 0.1)}
+LIMITS = {"sameGamePremium": (-1.0, 0.5), "propPremium": (0.0, 1.0), "probeMinSamples": (10, 2000), "margin": (0.0, 0.5), "maxStake": (10.0, 100.0), "maxCollateral": (10.0, 250.0), "maxOpenCollateral": (10.0, 500.0), "maxLegs": (2, 10), "minReturn": (0.0, 0.5), "minPoints": (0.0, 0.1)}
 
 
 def main(argv):
@@ -56,6 +62,7 @@ def main(argv):
 
 def selftest():
     assert FIELDS["mode"]("SHADOW") == "SHADOW" and FIELDS["margin"]("0.08") == 0.08 and FIELDS["maxLegs"]("3") == 3
+    assert FIELDS["marketPricing"]("true") is True and FIELDS["probe"]("off") is False and FIELDS["sameGamePremium"]("0.02") == 0.02
     print("rfq_set selftest ok"); return 0
 
 
