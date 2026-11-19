@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-y0og68",
- "head": "e406844fcb87a60db6565bb1bc8db19c236d800f",
+ "head": "324d343f0fb456c512331c3ac61694696835fdae",
  "since": 1795047736,
- "beat": 1795048679,
- "beatIso": "2026-11-19T00:37:59Z",
- "done": "WATCH 11-18 slot2: engine idle, wallet $0.03; Tj notified",
- "next": "ANALYST cover skipped (no new evidence); resume when wallet funded"
+ "beat": 1795048726,
+ "beatIso": "2026-11-19T00:38:46Z",
+ "done": "chat: TR3/TR4 audited: Tracker daily+all-time already ledger-based (LedgerDays); equity vs positions are different measures on Engine card, not a Tracker bug; no ship",
+ "next": "ask Tj for a concrete wrong Tracker figure if he still sees one"
 }
