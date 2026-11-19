@@ -37,6 +37,13 @@ object ParlayView {
             if ((r.medianGapPoints ?: 0.0) > 0.0) Tone.GOOD else Tone.NEUTRAL,
         )
         tiles += DashboardModel.Tile("Our rule would have won", if (r.pricedTrades > 0) "${100 * r.wouldWin / r.pricedTrades}%" else "—", r.wouldEarnPoints?.let { "${r.wouldWin} of ${r.pricedTrades} trades, ${pts(it)} pts each if our fair is true" } ?: "of the trades it could price")
+        // MK12: what the other makers charge (the probe's answers per class of parlay) and how the market model's price would have done on the same trades.
+        if (r.market.isNotEmpty()) {
+            tiles += DashboardModel.Tile("Other makers (probe)", "${r.market.size} classes", r.market.take(3).joinToString(" · ") { it.replace(Regex(" \\(p25.*$"), "") } + (if (r.probe.isNotBlank()) " · ${r.probe.removePrefix("probe: ")}" else ""))
+        }
+        if (r.modelWouldWin > 0 || (r.market.isNotEmpty() && r.pricedTrades > 0)) {
+            tiles += DashboardModel.Tile("Market model would have won", if (r.pricedTrades > 0) "${r.modelWouldWin} of ${r.pricedTrades}" else "—", r.modelWouldEarnPoints?.let { "earning ${pts(it)} pts of pot each if our fair is true" + (if (c.marketPricing) " · pricing from it" else " · not used yet") } ?: "needs probe answers per class first")
+        }
         if (c.mode == RfqConfig.Mode.LIVE) {
             tiles += DashboardModel.Tile("Quotes", "${r.quotesSent}", "${r.won} won · ${r.confirmed} confirmed · ${r.filled} filled")
             val d24 = r.realizedPnl24h
