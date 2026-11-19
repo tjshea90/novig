@@ -39,6 +39,8 @@ class RfqMaker(
     private val cash: () -> Double? = { null },
     /** The collateral each outcome carries across the maker's open parlays (`GET /rfq/v3/executions`, [RfqLedger.exposure]); empty when not read. */
     private val exposure: () -> Map<String, Double> = { emptyMap() },
+    /** Called once for each quote of ours that is filled, with what the parlay hub needs to show its legs later (MK15). */
+    private val onFill: (FillRecord) -> Unit = {},
 ) {
     private class Pending(val created: RfqProtocol.Created, val decision: RfqDecision, val seenMs: Long, val journaled: Boolean, val classes: List<String>) {
         var quotePrice: Double? = null
@@ -50,6 +52,7 @@ class RfqMaker(
 
     private val nonce = AtomicLong(0)
     private val pending = LinkedHashMap<String, Pending>()
+    private val filledIds = LinkedHashSet<String>()
 
     // ---- what the status says ----
     @Volatile var seen = 0L; private set
@@ -159,9 +162,19 @@ class RfqMaker(
             is RfqProtocol.QuoteAccepted -> accepted(e, cfg, reply ?: send)
             is RfqProtocol.QuoteCreated -> synchronized(pending) { pending[e.rfqId]?.quoteId = e.quoteId }
             is RfqProtocol.QuoteExecuted -> {
-                filled++
+                // A fill is delivered to every socket of the maker that listens to `quotes`: it counts and is recorded once.
+                val first = synchronized(filledIds) { filledIds.add(e.rfqId).also { if (filledIds.size > 5_000) filledIds.remove(filledIds.first()) } }
+                if (first) filled++
+                val p = synchronized(pending) { pending[e.rfqId] }
                 release(e.rfqId)
                 row("QUOTE_EXECUTED", e.rfqId) { put("wager", e.wager); put("price", e.price); put("quoteId", e.quoteId) }
+                if (first) (p?.decision as? RfqDecision.Quote)?.let { q ->
+                    runCatching {
+                        onFill(FillRecord(e.rfqId, clock(), e.price, q.fair, e.wager, q.legs.map { l ->
+                            FillLeg(l.outcomeId, l.marketId, l.label, l.eventDesc, l.league, l.marketType, l.startsMs, l.probability)
+                        }))
+                    }
+                }
             }
             is RfqProtocol.QuoteUnfilled -> {
                 release(e.rfqId)
@@ -291,7 +304,7 @@ class RfqMaker(
     /** One leg as journaled: the fair and what is needed to grade the leg later from the final score (the outcome's name, its event's "Away @ Home", the market type and league): MK14. */
     private fun legJson(l: LegFair) = buildJsonObject {
         put("label", l.label); put("p", l.probability); put("books", l.books); put("startsMs", l.startsMs)
-        put("type", l.marketType); put("league", l.league); put("name", l.outcomeName); put("desc", l.eventDesc); put("event", l.eventId); put("outcome", l.outcomeId)
+        put("type", l.marketType); put("league", l.league); put("name", l.outcomeName); put("desc", l.eventDesc); put("event", l.eventId); put("outcome", l.outcomeId); put("market", l.marketId)
     }
 
     private fun executed(e: RfqProtocol.Executed) {

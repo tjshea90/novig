@@ -140,6 +140,8 @@ data class LegFair(
     /** The outcome's own name ("MIL +31.5", "Over 234.5", "MIL") and its event's "Away @ Home": journaled with the quote so the parlay can be graded from the final score later, whatever has left the catalog (MK14). */
     val outcomeName: String = "",
     val eventDesc: String = "",
+    /** The market the outcome belongs to: the parlay hub reads the leg's result from it once the game is over (MK15). */
+    val marketId: String = "",
 )
 
 fun interface LegFairs { fun leg(outcomeId: String): LegFair? }

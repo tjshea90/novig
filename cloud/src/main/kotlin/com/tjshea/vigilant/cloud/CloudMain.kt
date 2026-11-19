@@ -549,7 +549,7 @@ fun main(args: Array<String>) = runBlocking {
                         kind = o.kind, side = (o.target as? com.tjshea.vigilant.data.scanner.OutcomeTarget.Is)?.side, period = key?.period ?: 0,
                         homeLine = if (o.kind == com.tjshea.vigilant.data.reference.LineKind.SPREAD) key?.line else null,
                         awayTeam = o.kind == com.tjshea.vigilant.data.reference.LineKind.TEAM_TOTAL && key?.subject == com.tjshea.vigilant.data.reference.RefBookMarket.AWAY,
-                        league = o.event.league, outcomeName = o.outcome.name, eventDesc = o.event.description,
+                        league = o.event.league, outcomeName = o.outcome.name, eventDesc = o.event.description, marketId = o.market.marketId,
                     )
                 }
                 index = m; indexedFor = list
