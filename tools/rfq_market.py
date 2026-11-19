@@ -7,12 +7,12 @@
 The maker asks Novig's keyless parlay price (`RfqProbe`) for a class-balanced sample of the RFQs it prices; each answer is a `PROBE` row {cls, fair, mkt | NO_PRICE}. A class is `legs|mix|league|band`
 (mix: gl game lines, sg same game, prop, psg props in one game). This prints, per class with enough answers: how many nobody quoted, the quartiles of (market price - our fair) in points of pot, the share a
 quote that many points over our fair would have beaten (strictly lower wins), and the margin that maximises win share x net edge on the collateral (the engine's `RfqMarketModel.best`, same formula, defaults
-minPoints 0.7, minReturn 0.4% a day, one day to the games). Then, from EXECUTED rows, how the rule's price and the model's price would each have done on the trades that really happened.
+fairErrorRel 2% so a 0.7 point floor at two legs and fair 0.25, minReturn 0.4% a day, one day to the games). Then, from EXECUTED rows, how the rule's price and the model's price would each have done on the trades that really happened.
 `marketPricing=true` (tools/rfq_set.py) is judged by this table: evidence rule in the research file, section 8. Nothing here sends anything anywhere.
 """
 import collections, glob, gzip, json, sys
 
-MIN_POINTS = 0.007
+FAIR_ERROR_REL = 0.02          # RfqConfig.fairErrorRel: the model's floor under a quote is fair x this x sqrt(legs); half of it is the allowance for our fair's error
 MIN_RETURN = 0.004
 GRID = [0.0025, 0.005, 0.0075, 0.01, 0.0125, 0.015, 0.02, 0.025, 0.03]
 
@@ -39,14 +39,15 @@ def pct(xs, p):
     return xs[min(len(xs) - 1, int(len(xs) * p))] if xs else None
 
 
-def best_margin(gaps, fair, n_legs, lead_days=1.0, min_points=MIN_POINTS, min_return=MIN_RETURN):
+def best_margin(gaps, fair, n_legs, lead_days=1.0, rel=FAIR_ERROR_REL, min_return=MIN_RETURN):
     """The margin (probability) maximising win share x net edge, like RfqMarketModel.best; gaps: probabilities or None (nobody quoted)."""
     if not gaps:
         return None, 0.0
-    allowance = 0.5 * min_points * max(1, n_legs - 1)
+    floor = fair * rel * (n_legs ** 0.5)
+    allowance = 0.5 * floor
     hold = max(1.0, lead_days + 0.25)
     best, score = None, 0.0
-    c = 0.0005
+    c = max(floor, 0.0005)
     while c <= 0.06:
         win = sum(1 for g in gaps if g is None or g > c + 1e-9) / len(gaps)
         net = c - allowance - min_return * hold * (1.0 - (fair + c))

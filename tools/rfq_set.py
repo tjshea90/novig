@@ -21,9 +21,9 @@ def _bool(v):
     raise ValueError("not a boolean: %r" % v)
 
 
-FIELDS = {"sameGamePremium": float, "propPremium": float, "allowProps": _bool, "probe": _bool, "marketPricing": _bool, "probeMinSamples": int, "propPairsFromMarket": _bool, "mode": str, "margin": float, "maxStake": float, "maxCollateral": float, "maxOpenCollateral": float, "minBooks": int, "maxFairAgeMs": int,
+FIELDS = {"sameGamePremium": float, "propPremium": float, "allowProps": _bool, "probe": _bool, "marketPricing": _bool, "probeMinSamples": int, "propPairsFromMarket": _bool, "fairErrorRel": float, "mode": str, "margin": float, "maxStake": float, "maxCollateral": float, "maxOpenCollateral": float, "minBooks": int, "maxFairAgeMs": int,
           "maxLegs": int, "minReturn": float, "minPoints": float, "minLeadMs": int, "maxDaysAhead": int, "minFair": float, "maxFair": float, "dayLossStop": float}
-LIMITS = {"sameGamePremium": (-1.0, 0.5), "propPremium": (0.0, 1.0), "probeMinSamples": (10, 2000), "margin": (0.0, 0.5), "maxStake": (10.0, 100.0), "maxCollateral": (10.0, 250.0), "maxOpenCollateral": (10.0, 500.0), "maxLegs": (2, 10), "minReturn": (0.0, 0.5), "minPoints": (0.0, 0.1)}
+LIMITS = {"fairErrorRel": (0.0, 0.2), "sameGamePremium": (-1.0, 0.5), "propPremium": (0.0, 1.0), "probeMinSamples": (10, 2000), "margin": (0.0, 0.5), "maxStake": (10.0, 100.0), "maxCollateral": (10.0, 250.0), "maxOpenCollateral": (10.0, 500.0), "maxLegs": (2, 10), "minReturn": (0.0, 0.5), "minPoints": (0.0, 0.1)}
 
 
 def main(argv):
