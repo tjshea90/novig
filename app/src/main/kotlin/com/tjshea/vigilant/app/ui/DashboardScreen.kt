@@ -58,7 +58,7 @@ fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Mod
     }
     val u = state.cloudUi
     val board = remember(u.trades, u.desk, u.status, now / 15_000L) { EngineBoard.of(u.trades, u.desk, u.status, now) }
-    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours, section = section, refreshedAtMs = u.refreshedAtMs, refreshNote = u.refreshNote, kalshi = kalshi, testing = state.apiBusy, checks = state.apiChecks, checkedAt = state.apiCheckedAt, onTestApi = onTestApi, onRetryApi = onRetryApi, onSetParlay = onSetParlay)
+    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours, section = section, refreshedAtMs = u.refreshedAtMs, refreshNote = u.refreshNote, kalshi = kalshi, testing = state.apiBusy, checks = state.apiChecks, checkedAt = state.apiCheckedAt, onTestApi = onTestApi, onRetryApi = onRetryApi, onSetParlay = onSetParlay, parlays = u.parlays)
 }
 
 /**
