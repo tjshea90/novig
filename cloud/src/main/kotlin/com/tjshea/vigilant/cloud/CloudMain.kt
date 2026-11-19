@@ -153,6 +153,9 @@ fun main(args: Array<String>) = runBlocking {
     }
     // Every line the last finished scan priced (not only the listed ones): the PropLine +EV rows are matched to them so the phone can open the Bet sheet on the same Novig bet.
     val latestPriced = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.scanner.Opportunity>>(emptyList())
+    // Every outcome with a books' fair, whether or not Novig shows an ask for it (MK10, Tj 2026-11-19: "I want more parlay action"): the parlay maker needs a leg's fair, not its take price, and 11,254 of its declines
+    // were "a leg has no fair line here" while the scan held the fair of any side nobody was offering.
+    val latestFair = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.scanner.Opportunity>>(emptyList())
     // Novig markets Vigilant had no fair odds for (a ladder, no quote): PropLine's +EV rows on them get a Bet button priced from PropLine's own fair (TCL88).
     val engineHolder = java.util.concurrent.atomic.AtomicReference<CloudEngine?>(null)
     val latestUnpriced = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.scanner.Opportunity>>(emptyList())
@@ -519,7 +522,7 @@ fun main(args: Array<String>) = runBlocking {
         private var indexedFor: List<com.tjshea.vigilant.data.scanner.Opportunity>? = null
         private var index: Map<String, com.tjshea.vigilant.data.rfq.LegFair> = emptyMap()
         @Synchronized override fun leg(outcomeId: String): com.tjshea.vigilant.data.rfq.LegFair? {
-            val list = latestPriced.get()
+            val list = latestFair.get()
             if (list !== indexedFor) {
                 val m = HashMap<String, com.tjshea.vigilant.data.rfq.LegFair>(list.size * 2)
                 for (o in list) {
@@ -858,7 +861,7 @@ fun main(args: Array<String>) = runBlocking {
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
         onApiQuality = { cards, now -> for (c in cards) apiqJournal.append(com.tjshea.vigilant.data.cloud.ApiScorecard.QualityRow(now, c)) },
         // Every priced line within 2 points of break-even is logged, shown or not, with why it was not shown (Tj, 2026-10-16, TCL33).
-        onResult = { result, s -> runCatching { com.tjshea.vigilant.data.cloud.CrossExchange.find(result.opportunities + result.games.flatMap { it.outcomes }, System.currentTimeMillis()).forEach { crossJournal.append(it) } }; latestPriced.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.quote != null }.distinctBy { it.key }); outcomeIndex.set(HashMap<String, CloudTrader.OutcomeInfo>(result.opportunities.size * 2).also { m -> for (o in result.opportunities) m[o.outcome.outcomeId] = CloudTrader.OutcomeInfo(o.market.eventId, o.eventName, o.event.startsTs, o.marketLabel, o.selection) }); latestUnpriced.set(result.opportunities.filter { it.quote == null && it.ladder.isNotEmpty() && !it.event.isLive }.distinctBy { it.key }); study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush(); runCatching { kalshiLane.onNovigScan(result, s) } },
+        onResult = { result, s -> runCatching { com.tjshea.vigilant.data.cloud.CrossExchange.find(result.opportunities + result.games.flatMap { it.outcomes }, System.currentTimeMillis()).forEach { crossJournal.append(it) } }; latestPriced.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.quote != null }.distinctBy { it.key }); latestFair.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.fairProbability != null && !it.event.isLive }.distinctBy { it.outcome.outcomeId }); outcomeIndex.set(HashMap<String, CloudTrader.OutcomeInfo>(result.opportunities.size * 2).also { m -> for (o in result.opportunities) m[o.outcome.outcomeId] = CloudTrader.OutcomeInfo(o.market.eventId, o.eventName, o.event.startsTs, o.marketLabel, o.selection) }); latestUnpriced.set(result.opportunities.filter { it.quote == null && it.ladder.isNotEmpty() && !it.event.isLive }.distinctBy { it.key }); study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush(); runCatching { kalshiLane.onNovigScan(result, s) } },
         trade = { rows, s, now ->
             val mode = s.gates.cloudTrading
             if (mode == CloudTradeMode.OFF) null else {
