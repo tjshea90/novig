@@ -37,10 +37,18 @@ import java.util.Locale
 @Composable
 fun ParlayMakerView(rfq: RfqStatus?, onSet: (RfqConfig, (String?) -> Unit) -> Unit, modifier: Modifier = Modifier) {
     val v = remember(rfq) { ParlayView.of(rfq) }
-    val cfg = rfq?.config ?: RfqConfig()
+    val applied = rfq?.config ?: RfqConfig()
+    // MK18 (Tj: "the controls take a long time to change"): the page used to show only what the ENGINE says it applied (its status, every 10 s or so), so a tap looked like nothing happened and two quick taps on a
+    // stepper overwrote each other. What was tapped is now shown at once and built on by the next tap, until the engine's own status says it applied exactly that.
+    var pending by remember { mutableStateOf<RfqConfig?>(null) }
+    val cfg = pending ?: applied
+    androidx.compose.runtime.LaunchedEffect(applied) { if (pending != null && pending == applied) pending = null }
     var note by remember { mutableStateOf<String?>(null) }
     var confirmLive by remember { mutableStateOf(false) }
-    fun apply(c: RfqConfig) { note = "Saving…"; onSet(c) { why -> note = if (why == null) "Saved: the engine applies it within seconds." else "Not saved: $why" } }
+    fun apply(c: RfqConfig) {
+        pending = c; note = "Saving…"
+        onSet(c) { why -> note = if (why == null) "Sent to GitHub. The engine applies it in a few seconds; this page shows your change now and confirms when the engine reports it." else { pending = null; "Not saved: $why" } }
+    }
 
     Column(modifier.testTag("parlayMaker"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SectionHeader("Parlay maker")
@@ -77,7 +85,7 @@ fun ParlayMakerView(rfq: RfqStatus?, onSet: (RfqConfig, (String?) -> Unit) -> Un
             Stepper("Skip any leg likelier than", "%.0f%%".format(Locale.US, cfg.maxLegFair * 100), "parlayMaxLegFair", { apply(cfg.copy(maxLegFair = (cfg.maxLegFair - 0.02).coerceAtLeast(0.70))) }, { apply(cfg.copy(maxLegFair = (cfg.maxLegFair + 0.02).coerceAtMost(0.99))) })
             Stepper("Most legs", "${cfg.maxLegs}", "parlayLegs", { apply(cfg.copy(maxLegs = (cfg.maxLegs - 1).coerceAtLeast(2))) }, { apply(cfg.copy(maxLegs = (cfg.maxLegs + 1).coerceAtMost(6))) })
         }
-        note?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("parlayNote")) }
+        note?.let { Text(if (pending == null && it.startsWith("Sent to GitHub")) "Saved: the engine confirmed it." else it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("parlayNote")) }
         Text("Processing and Internet use are on the GitHub engine; this view only monitors and sets it.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 
