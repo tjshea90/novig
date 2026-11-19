@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "698a37e432690d721ae3525303b82b6d12ae95b6",
+ "head": "13579fe766dd9d878a57ce96efc9cf2f6b6b6f56",
  "since": 1795047736,
- "beat": 1795064316,
- "beatIso": "2026-11-19T04:58:36Z",
- "done": "pre-ship: GD1: grade games the first score feed lacks via the other feeds",
- "next": "ship.sh gates and releases this"
+ "beat": 1795064456,
+ "beatIso": "2026-11-19T05:00:56Z",
+ "done": "pre-release: GD1: grade games the first score feed lacks via the other feeds (versionCode 479, v1.0.139)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.139), then run: bash tools/record-release.sh v1.0.139 479 \"GD1: grade games the first score feed lacks via the other feeds\""
 }
