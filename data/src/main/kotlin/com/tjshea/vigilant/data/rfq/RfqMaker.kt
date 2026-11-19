@@ -146,7 +146,10 @@ class RfqMaker(
         if (cfg.mode == RfqConfig.Mode.OFF) return
         seen++
         val now = clock()
-        val d = RfqPricer.decide(e, now, cfg, fairs, openCollateral() + inFlight(), market)
+        // SHADOW sends nothing, so the capital the live parlays hold is no limit on what it prices: it judges every RFQ as if the wallet were free (the per-parlay cap still binds), and the evidence (what the market
+        // paid over our fair, what our rule would have won) is about PRICES. With the wallet nearly all in open collateral (2026-11-19: $7 cash, $73 held) 14% of RFQs declined for "the caps allow a $# stake".
+        val capital = if (cfg.mode == RfqConfig.Mode.SHADOW) 0.0 else openCollateral() + inFlight()
+        val d = RfqPricer.decide(e, now, cfg, fairs, capital, market)
         offerProbe(e, d, cfg)
         when (d) {
             is RfqDecision.Quote -> priceable++

@@ -157,6 +157,16 @@ class RfqMakerTest {
         assertTrue(r.rows.last().data.contains("\"wouldWin\":false"))
     }
 
+    @Test fun shadowJudgesEveryRfqAsIfTheWalletWereFreeButLiveDoesNot() {
+        val shadow = Rig(cfg.copy(mode = RfqConfig.Mode.SHADOW), listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4)), collateral = 500.0)        // the open parlays hold far more than the $90 cap
+        shadow.maker.onEvent(created("a", "b"))
+        assertTrue("SHADOW prices it: the capital held is no limit on paper", shadow.rows.single { it.kind == "CREATED" }.data.contains("\"decision\":\"quote\""))
+        val live = Rig(cfg.copy(mode = RfqConfig.Mode.LIVE), listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4)), collateral = 500.0)
+        live.maker.onEvent(created("a", "b"))
+        assertTrue("LIVE is held back by the open collateral", live.rows.single { it.kind == "CREATED" }.data.contains("the caps allow"))
+        assertTrue(live.sent.isEmpty())
+    }
+
     @Test fun offDoesNothing() {
         val r = rig(RfqConfig.Mode.OFF)
         r.maker.onEvent(created("a", "b"))
