@@ -544,12 +544,21 @@ fun main(args: Array<String>) = runBlocking {
             return index[outcomeId]
         }
     }
+    // What the other makers charge (MK12): a sample of the RFQs the maker prices is put to Novig's keyless parlay-price route (a real 3-second auction, at most ~0.9 requests a second); the answers are the demand curve the
+    // maker's price is judged against (SHADOW journals both the rule's price and the model's; `marketPricing` in rfq-maker.json switches the model on).
+    val rfqMarket = com.tjshea.vigilant.data.rfq.RfqMarketModel()
+    val rfqProbe = com.tjshea.vigilant.data.rfq.RfqProbe(
+        scope, rfqMarket, journal = { runCatching { rfqJournal.append(it) } },
+        enabled = { rfqCfg.get().let { it.probe && it.mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF } },
+        ask = { ids -> com.tjshea.vigilant.data.novig.NovigParlay.quote(http, ids) },
+    )
     val rfqMaker = com.tjshea.vigilant.data.rfq.RfqMaker(
         config = { rfqCfg.get() }, fairs = rfqLegFairs, openCollateral = { rfqCollateral.get() }, send = { rfqSocketRef.get()?.send(it) == true },
         journal = { runCatching { rfqJournal.append(it) } },
         tell = { title, body -> scope.launch { runCatching { postMessage(CloudMessages.Message("rfq-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title.take(90), body.take(400), 1, "CLOUD")) } } },
         log = { log("RFQ maker: $it") },
         legInfo = { id -> outcomeIndex.get()[id]?.marketLabel },
+        market = rfqMarket, probe = rfqProbe,
     )
     val rfqSocket = com.tjshea.vigilant.data.rfq.RfqSocket(http, { tradingClient }, rfqMaker, { rfqCfg.get() }, scope, log = { log(it) }).also { rfqSocketRef.set(it) }
     scope.launch {
