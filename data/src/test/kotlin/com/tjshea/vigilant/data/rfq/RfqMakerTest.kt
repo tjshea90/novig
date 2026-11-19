@@ -225,6 +225,75 @@ class RfqMakerTest {
         assertEquals("false", json.parseToJsonElement(r.sent.single()).jsonObject["confirm"]!!.jsonObject["confirmed"]!!.jsonPrimitive.content)
     }
 
+    @Test fun anRfqDeliveredTwiceIsPricedAndQuotedOnce() {
+        val r = rig(RfqConfig.Mode.LIVE)
+        r.maker.onEvent(created("a", "b")); r.maker.onEvent(created("a", "b"))                  // the same rfqId on two sockets
+        assertEquals(1L, r.maker.quotesSent); assertEquals(1, r.sent.size); assertEquals(1L, r.maker.seen)
+        assertEquals("one CREATED row", 1, r.rows.count { it.kind == "CREATED" })
+    }
+
+    @Test fun aLastLookAnsweredOnTheSocketItArrivedOnIsAnsweredOnce() {
+        val r = rig(RfqConfig.Mode.LIVE)
+        r.maker.onEvent(created("a", "b")); r.sent.clear()
+        val viaQuiet = ArrayList<String>(); val viaPricing = ArrayList<String>()
+        val look = RfqProtocol.QuoteAccepted(now, "rfq-1", "q1", 10.0, 0.216, "rfq-1")
+        r.maker.onEvent(look) { viaQuiet += it; true }                                              // the quiet last-look socket got it first
+        r.maker.onEvent(look) { viaPricing += it; true }                                            // the busy pricing socket delivers it late
+        assertEquals(1, viaQuiet.size); assertTrue(json.parseToJsonElement(viaQuiet.single()).jsonObject["confirm"]!!.jsonObject["confirmed"]!!.jsonPrimitive.content == "true")
+        assertTrue("one answer only: a second would get CONFIRM_ALREADY_DECIDED", viaPricing.isEmpty() && r.sent.isEmpty())
+        assertEquals(1L, r.maker.confirmed); assertTrue(r.rows.any { it.kind == "CONFIRM" && it.data.contains("\"dup\":true") })
+        // an answer that could not be sent does not count as answered: the other socket may still make the 1-second window
+        val r2 = rig(RfqConfig.Mode.LIVE)
+        r2.maker.onEvent(created("a", "b"))
+        val look2 = RfqProtocol.QuoteAccepted(now, "rfq-1", "q2", 10.0, 0.216, "rfq-1"); val second = ArrayList<String>()
+        r2.maker.onEvent(look2) { false }
+        r2.maker.onEvent(look2) { second += it; true }
+        assertEquals(1, second.size)
+    }
+
+    @Test fun drainingStopsNewQuotesAndSaysHowLongTheLastOnesNeed() {
+        val r = rig(RfqConfig.Mode.LIVE)
+        r.maker.onEvent(created("a", "b"))
+        assertEquals("nothing to wait for before a draining job quoted", 0L, RfqMaker.DRAIN_AFTER_QUOTE_MS.coerceAtMost(0L) + RfqMaker(RfqConfig.copy0(), { null }, { 0.0 }, { true }, { }).drainRemainingMs())
+        r.maker.beginDrain()
+        assertEquals(RfqMaker.DRAIN_AFTER_QUOTE_MS, r.maker.drainRemainingMs())
+        r.clock += 20_000L
+        assertEquals(RfqMaker.DRAIN_AFTER_QUOTE_MS - 20_000L, r.maker.drainRemainingMs())
+        r.sent.clear(); r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-2"))
+        assertTrue("a draining maker quotes nothing new", r.sent.isEmpty())
+        r.clock += 30_000L
+        assertEquals(0L, r.maker.drainRemainingMs())
+    }
+
+    @Test fun makerBarredAndAReadOnlyKeyStopTheQuotingForGood() {
+        val r = rig(RfqConfig.Mode.LIVE)
+        r.maker.onEvent(RfqProtocol.Refused(now, 3, "MAKER_BARRED", "Your maker can't quote right now."))
+        assertNotNull(r.maker.halted); assertTrue(r.told.single().contains("stopped quoting"))
+        r.clock += 24 * 3_600_000L
+        r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-9"))
+        assertNotNull("no end: Novig says contact them", r.maker.halted)
+        assertTrue(r.maker.status(true).contains("MAKER_BARRED") || r.maker.snapshot(true, r.cfg, "m", 0.0, "").refusals.any { it.startsWith("MAKER_BARRED") })
+        val ro = rig(RfqConfig.Mode.LIVE)
+        ro.maker.onEvent(RfqProtocol.Refused(now, 4, "READ_ONLY_KEY", null)); assertNotNull(ro.maker.halted)
+    }
+
+    @Test fun aLockNovigReportsStopsQuotingUntilItsStatedEndAndTheStandingIsPublished() {
+        val r = rig(RfqConfig.Mode.LIVE)
+        val standing = RfqStanding.parse("""{"makerId":"m","tier":"basic","confirmStanding":{"lookbackMinutes":1440,"counted":0,"confirmed":0,"threshold":"0.99","minSample":10},"lock":{"source":"confirm_rate","untilTs":${r.clock + 240_000L}}}""")!!
+        assertTrue(standing.locked)
+        r.maker.onStanding(standing)
+        assertNotNull(r.maker.halted)
+        r.maker.onEvent(created("a", "b")); assertTrue("locked: no quote", r.sent.isEmpty())
+        r.clock += 241_000L
+        r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-2")); assertNull("the stated end has passed", r.maker.halted); assertEquals(1, r.sent.size)
+        val s = r.maker.snapshot(true, r.cfg, "m", 0.0, "")
+        assertEquals("basic", s.makerTier); assertEquals(10, s.confirmMinSample); assertEquals("confirm_rate", s.lockSource)
+        // a lock by hand with no end stays until Novig lifts it
+        val admin = RfqStanding.parse("""{"makerId":"m","tier":"basic","confirmStanding":{"lookbackMinutes":1440,"counted":3,"confirmed":3,"threshold":"0.99","minSample":10},"lock":{"source":"admin"}}""")!!
+        val r2 = rig(RfqConfig.Mode.LIVE); r2.maker.onStanding(admin); assertNotNull(r2.maker.halted); r2.clock += 7 * 24 * 3_600_000L
+        r2.maker.onEvent(created("a", "b")); assertNotNull(r2.maker.halted)
+    }
+
     @Test fun faultsStopTheQuotingAndTellTj() {
         val r = rig(RfqConfig.Mode.LIVE)
         r.maker.onEvent(RfqProtocol.Refused(now, 7, "MAKER_LOCKED", null))
@@ -288,8 +357,8 @@ class RfqMakerTest {
         val h = 3_600_000L
         // fair 0.40, a game in 3 h: (0.40 + 0.04)/1.04 = 0.4231, rounded UP to Novig's thousandth grid 0.424 (2.4 points); the 2% relative floor (0.408) and the 1-point floor (0.41) are lower
         assertEquals(0.424, RfqPricer.quotePrice(0.40, 2, 3 * h, roc), 1e-9)
-        // the same parlay two days out ties the collateral up 2.25 days: r = 9%, (0.40 + 0.09)/1.09 = 0.44954, rounded up to 0.4496
-        assertEquals(0.4496, RfqPricer.quotePrice(0.40, 2, 48 * h, roc), 1e-9)
+        // the same parlay two days out ties the collateral up 2.25 days: r = 9%, (0.40 + 0.09)/1.09 = 0.44954, rounded up to the thousandth 0.450
+        assertEquals(0.450, RfqPricer.quotePrice(0.40, 2, 48 * h, roc), 1e-9)
         // a favourite pair at 0.9: the 2% relative floor binds (0.918, 1.8 points); the return term gives 0.9039 and the 1-point floor 0.91
         assertEquals(0.918, RfqPricer.quotePrice(0.90, 2, 3 * h, roc), 1e-9)
         // five legs of a 0.5 parlay: the points floor (4 x 1 point = 0.54) beats the return term (0.5192, 1.9 points)
