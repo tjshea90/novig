@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "8879ffba9001dfdfc39e698d2e110ec65f6e373f",
+ "head": "b61cb3d8b8db2c939194ee1a704bc4d6d00e3e60",
  "since": 1795123003,
- "beat": 1795127666,
- "beatIso": "2026-11-19T22:34:26Z",
+ "beat": 1795127922,
+ "beatIso": "2026-11-19T22:38:42Z",
  "done": "pre-release: MK17b: Parlays tiles show the whole wallet and the cash free to post when the wallet is the collateral limit (not the old fixed 80 dollars); parlay options; parlay hub (versionCode 483, v1.0.143)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.143), then run: bash tools/record-release.sh v1.0.143 483 \"MK17b: Parlays tiles show the whole wallet and the cash free to post when the wallet is the collateral limit (not the old fixed 80 dollars); parlay options; parlay hub\""
 }
