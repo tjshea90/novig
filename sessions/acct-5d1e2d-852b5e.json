@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "36e09e625a9bead9c706ac75e685e125763d8cf7",
+ "head": "5ca44ed7e4e515a5521c785e08e3a5a6ee588995",
  "since": 1795047736,
- "beat": 1795109866,
- "beatIso": "2026-11-19T17:37:46Z",
- "done": "MK11: ladder live in shadow; engine outage 16:59-17:10 repaired (dispatch), coord note posted",
- "next": "next check 17:38: warm ladder numbers"
+ "beat": 1795109912,
+ "beatIso": "2026-11-19T17:38:32Z",
+ "done": "MK11 17:38: ladder lifts priced trades 0.5% -> 19% on paper",
+ "next": "next: premium vs win rate by prop legs; LIVE only after Tj adds money"
 }
