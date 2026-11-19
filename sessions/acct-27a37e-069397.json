@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "fa74d7d08b89737a94d3a2542ccc567e4b47c6a1",
+ "head": "a4d62498cb7444013933ea1e100c1da627ce6ceb",
  "since": 1795121558,
- "beat": 1795122515,
- "beatIso": "2026-11-19T21:08:35Z",
- "done": "",
- "next": ""
+ "beat": 1795122543,
+ "beatIso": "2026-11-19T21:09:03Z",
+ "done": "MK16: cap on parlays too likely to win (maxFair .85->.60) and on any one leg (maxLegFair .90), steppers on the maker page, test, study section 7; applied via rfq_set (maxFair live now); FULL suite green (4465)",
+ "next": "no reset: maxLegFair arrives with the next job (6 h handover); watch status.rfq.declines for 'too likely to win'; MK14 follow-ups 00:40 / 14:00 UTC and coverage follow-up 14:30 UTC 11-20; ship the app (steppers) with the next release batch"
 }
