@@ -1808,3 +1808,8 @@ switch it to live
 ```
 Make sure to raise the allowed collateral to include my full wallet, and exclude collateral already up. I think right now it won't go past 80 dollars but it is already counting the  collateral already posted 
 ```
+
+## 2026-11-19T22:31:23Z
+```
+Why is the engine pricing almost nothing 
+```
