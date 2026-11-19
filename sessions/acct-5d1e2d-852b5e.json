@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "8c27468c7556ba82fcec998850cb123fe82acd2c",
+ "head": "135bf46a5ca6f675633edea08d20ea1093c9a915",
  "since": 1795047736,
- "beat": 1795073866,
- "beatIso": "2026-11-19T07:37:46Z",
- "done": "MK10f: rfq maxLegs 7 minFair 0.01 (long all-priced parlays)",
- "next": "next check: quotes won, collateral use; ladder model only if props matter"
+ "beat": 1795073916,
+ "beatIso": "2026-11-19T07:38:36Z",
+ "done": "MK10g: rfq minReturn 0.01",
+ "next": "next check: quotes won vs sent"
 }
