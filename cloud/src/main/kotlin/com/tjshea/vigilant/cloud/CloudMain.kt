@@ -528,6 +528,7 @@ fun main(args: Array<String>) = runBlocking {
     val rfqKeyId = if (dedicatedMakerClient != null) makerKeyId else tradeKeyId
     if (dedicatedMakerClient != null) log("RFQ maker: quoting from its own subaccount (NOVIG_MAKER_KEY_ID ${makerKeyId.take(8)}...), not the Vigilant wallet")
     val rfqCash = java.util.concurrent.atomic.AtomicReference<Double?>(null)
+    val rfqExecs = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.rfq.RfqLedger.Exec>>(emptyList())
     val rfqSocketRef = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.rfq.RfqSocket?>(null)
     val rfqDirectFairs = object : com.tjshea.vigilant.data.rfq.LegFairs {
         private var indexedFor: List<com.tjshea.vigilant.data.scanner.Opportunity>? = null
@@ -617,7 +618,7 @@ fun main(args: Array<String>) = runBlocking {
         tell = { title, body -> scope.launch { runCatching { postMessage(CloudMessages.Message("rfq-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title.take(90), body.take(400), 1, "CLOUD")) } } },
         log = { log("RFQ maker: $it") },
         legInfo = { id -> outcomeIndex.get()[id]?.marketLabel },
-        market = rfqMarket, probe = rfqProbe, cash = { rfqCash.get() },
+        market = rfqMarket, probe = rfqProbe, cash = { rfqCash.get() }, exposure = { com.tjshea.vigilant.data.rfq.RfqLedger.exposure(rfqExecs.get()) },
     )
     val rfqSocket = com.tjshea.vigilant.data.rfq.RfqSocket(http, { rfqClient }, rfqMaker, { rfqCfg.get() }, scope, log = { log(it) }).also { rfqSocketRef.set(it) }
     // The docs allow 10 sockets per key and Novig drops event frames when a connection's 256-frame queue is full (`quote_accepted` is one, with a 1-second answer window): in LIVE a second socket on the same key

@@ -13,7 +13,7 @@ import kotlinx.serialization.json.longOrNull
  * small limits). One item: `price` (the user's win probability), `cost` (the maker's collateral), `userCost` (the user's stake), `status` open|settled, `result` win|loss|push|fmv, `fmvValue`.
  */
 object RfqLedger {
-    data class Exec(val rfqId: String, val price: Double, val cost: Double, val userCost: Double, val settled: Boolean, val result: String?, val fmv: Double?, val ts: Long, val settledTs: Long?)
+    data class Exec(val rfqId: String, val price: Double, val cost: Double, val userCost: Double, val settled: Boolean, val result: String?, val fmv: Double?, val ts: Long, val settledTs: Long?, val outcomeIds: List<String> = emptyList())
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -27,6 +27,7 @@ object RfqLedger {
                 rfqId = (o["rfqId"] as? JsonPrimitive)?.contentOrNull ?: return@mapNotNull null, price = d("price") ?: return@mapNotNull null, cost = d("cost") ?: return@mapNotNull null,
                 userCost = d("userCost") ?: return@mapNotNull null, settled = (o["status"] as? JsonPrimitive)?.contentOrNull == "settled", result = (o["result"] as? JsonPrimitive)?.contentOrNull,
                 fmv = d("fmvValue"), ts = (o["ts"] as? JsonPrimitive)?.longOrNull ?: 0L, settledTs = (o["settledTs"] as? JsonPrimitive)?.longOrNull,
+                outcomeIds = (o["outcomeIds"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }.orEmpty(),
             )
         }
     }
@@ -39,6 +40,13 @@ object RfqLedger {
         if (!e.settled) return null
         val scalar = when (e.result) { "win" -> 1.0; "loss" -> 0.0; "fmv" -> e.fmv ?: return null; "push" -> return 0.0; else -> return null }
         return (e.userCost + e.cost) * (1.0 - scalar) - e.cost
+    }
+
+    /** The collateral each outcome carries across the parlays still open (every leg of an open parlay carries the parlay's whole collateral: if that leg decides the parlay, all of it moves). */
+    fun exposure(execs: List<Exec>): Map<String, Double> {
+        val m = HashMap<String, Double>()
+        for (e in execs) if (!e.settled) for (id in e.outcomeIds) m.merge(id, e.cost, Double::plus)
+        return m
     }
 
     data class Summary(val settled: Int, val makerWon: Int, val makerLost: Int, val open: Int, val openCollateral: Double, val pnlTotal: Double, val pnl24h: Double)

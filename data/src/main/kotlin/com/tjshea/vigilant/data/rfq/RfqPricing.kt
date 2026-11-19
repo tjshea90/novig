@@ -89,6 +89,11 @@ data class RfqConfig(
     val fairErrorRel: Double = 0.02,
     /** MK13: dollars of the maker's balance a LIVE quote leaves untouched (fees, the engine's own bids); quotes are sized to the cash that is there beyond it. */
     val cashReserve: Double = 3.0,
+    /**
+     * MK13 (the 13 live parlays of 2026-11-19: 6 rode the same Houston game, about half the open collateral, and the same outcomes Shelton and Zverev in 3 more): the most collateral one OUTCOME may carry across the
+     * open parlays and the quotes still out, dollars. A new quote that would take any of its legs over it is declined ("a leg already carries..."). 0 = off. LIVE only: SHADOW judges prices.
+     */
+    val maxLegCollateral: Double = 30.0,
 ) {
     enum class Mode { OFF, SHADOW, LIVE }
 

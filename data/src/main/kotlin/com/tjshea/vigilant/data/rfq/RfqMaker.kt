@@ -37,6 +37,8 @@ class RfqMaker(
     private val probe: RfqProbe? = null,
     /** The maker's subaccount balance, dollars (read every minute by the engine), or null when unknown. Used only in LIVE: SHADOW judges prices as if the wallet were free. */
     private val cash: () -> Double? = { null },
+    /** The collateral each outcome carries across the maker's open parlays (`GET /rfq/v3/executions`, [RfqLedger.exposure]); empty when not read. */
+    private val exposure: () -> Map<String, Double> = { emptyMap() },
 ) {
     private class Pending(val created: RfqProtocol.Created, val decision: RfqDecision, val seenMs: Long, val journaled: Boolean, val classes: List<String>) {
         var quotePrice: Double? = null
@@ -184,7 +186,8 @@ class RfqMaker(
         // LIVE sizes a quote to the balance that is there: cash less the collateral of the quotes still out and the reserve (docs: an unbacked quote is passed over, an unfundable fill stops the maker).
         // A balance not read yet is no balance to quote against: LIVE waits for the first reading (within a minute).
         val cashRoom = if (cfg.mode == RfqConfig.Mode.LIVE) (cash()?.let { it - inFlight() - cfg.cashReserve } ?: -1.0) else null
-        val d = RfqPricer.decide(e, now, cfg, fairs, capital, market, cashRoom)
+        val priced = RfqPricer.decide(e, now, cfg, fairs, capital, market, cashRoom)
+        val d = if (cfg.mode == RfqConfig.Mode.LIVE && priced is RfqDecision.Quote) concentrated(e, priced, cfg, now) ?: priced else priced
         offerProbe(e, d, cfg)
         when (d) {
             is RfqDecision.Quote -> priceable++
@@ -231,6 +234,21 @@ class RfqMaker(
                 row("QUOTE_SENT", e.rfqId) { put("price", d.price); put("maxWager", d.maxWager); put("fair", d.fair); put("collateral", p.reserved) }
             }
         }
+    }
+
+    /**
+     * A decline when a quote would take any of its legs over [RfqConfig.maxLegCollateral]: the collateral that outcome already carries in open parlays and in quotes still out, plus this quote's. Null = fine.
+     * Parlays on the same favourite (or the same game) lose together, which the caps on one parlay and on the total do not see.
+     */
+    private fun concentrated(e: RfqProtocol.Created, q: RfqDecision.Quote, cfg: RfqConfig, now: Long): RfqDecision.Decline? {
+        if (cfg.maxLegCollateral <= 0.0) return null
+        val held = HashMap(exposure())
+        synchronized(pending) { for (p in pending.values) if (p.reservedUntilMs > now && p.reserved > 0.0) for (id in p.created.outcomeIds) held.merge(id, p.reserved, Double::plus) }
+        val mine = q.maxWager * (1.0 - q.price) / q.price
+        val worst = e.outcomeIds.maxByOrNull { (held[it] ?: 0.0) + mine } ?: return null
+        val total = (held[worst] ?: 0.0) + mine
+        if (total <= cfg.maxLegCollateral + 1e-9) return null
+        return RfqDecision.Decline("a leg already carries $${"%.2f".format(held[worst] ?: 0.0)} of collateral (this quote adds $${"%.2f".format(mine)}, the cap is $${"%.2f".format(cfg.maxLegCollateral)})", q.fair, q.legs)
     }
 
     /** A priced RFQ is a candidate for a market probe: SHADOW probes every priced RFQ; LIVE only those it declines (a probe of one it would quote meets its own quote). */
