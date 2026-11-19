@@ -653,6 +653,20 @@ fun main(args: Array<String>) = runBlocking {
                     if (rfqCfg.get().mode == com.tjshea.vigilant.data.rfq.RfqConfig.Mode.LIVE || cycle % 3 == 0) runCatching { tc.rfqExecutions() }.getOrNull()?.let { text ->
                         val execs = com.tjshea.vigilant.data.rfq.RfqLedger.parse(text)
                         rfqExecs.set(execs)
+                        // MK14: every fill's state is journaled when it first appears and again when it changes (open -> settled), so the realized result of each quote is kept for good and can be
+                        // joined to the quote's own fair (QUOTE_SENT) and legs (CREATED) in the study: the real test of our fair, beyond what the paper counters say.
+                        for (e in execs) {
+                            val key = "${e.rfqId}|${e.settled}|${e.result}"
+                            if (!rfqJournaledExecs.add(key)) continue
+                            runCatching {
+                                rfqJournal.append(com.tjshea.vigilant.data.rfq.RfqRow(System.currentTimeMillis(), "EXEC_RESULT", e.rfqId,
+                                    kotlinx.serialization.json.buildJsonObject {
+                                        put("price", e.price); put("cost", e.cost); put("userCost", e.userCost); put("settled", e.settled)
+                                        e.result?.let { put("result", it) }; e.fmv?.let { put("fmv", it) }; put("ts", e.ts); e.settledTs?.let { put("settledTs", it) }
+                                        put("outcomeIds", kotlinx.serialization.json.JsonArray(e.outcomeIds.map { kotlinx.serialization.json.JsonPrimitive(it) }))
+                                    }.toString()))
+                            }
+                        }
                         rfqMaker.onLedger(com.tjshea.vigilant.data.rfq.RfqLedger.summarize(execs, System.currentTimeMillis()))
                     }
                     cycle++
