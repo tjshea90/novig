@@ -4,7 +4,7 @@ Tj (2026-11-19, tj Gmail session): "very carefully review the novig docs. Make s
 Read, in full, on 2026-11-19: `api/rfq/{overview,socket,makers,confirm-rate,eligibility,executions,settlement}`, `api-reference/rfq/*` and `spec-files/openapi-rfq-v3.json` (the schemas), `api/throttling`, `api/streaming/connection`, `api/errors`, `api/signing`, `api/concepts/{account-model,money,participation-protection,fees}`, `fees.md` (RFQ section), `affiliates/parlay-pricing`, the changelog (nothing new since 2026-11-16), `openapi-v3.json` (catalog and balance routes). Verbatim copies of the RFQ pages are on the `api-docs` branch (the weekly mirror).
 
 ## 1. Verdict
-The maker's frames, signing, subscriptions and settlement maths matched the docs. **Six real gaps were found and fixed**, one rule was misread in a comment, and the docs' "10 sockets" turned out to be most useful for one thing: protecting the 1-second last look.
+The maker's frames, signing, subscriptions and settlement maths matched the docs. **Eight real gaps (and two more risks found on the way) were fixed**, one rule was misread in a comment, and the docs' "10 sockets" turned out to be most useful for one thing: protecting the 1-second last look.
 
 | # | Gap (doc rule) | What the code did | Fix (MK13) |
 |:--|:--|:--|:--|
@@ -16,6 +16,9 @@ The maker's frames, signing, subscriptions and settlement maths matched the docs
 | 6 | A quote is "passed over" when "your subaccount's balance can't cover your collateral for the full `maxWager`" (`quote_dropped: unbacked`), and a won quote the balance cannot fund fails (`quote_unfilled: maker_insolvent`) | Caps were dollar limits only; the wallet is shared with the bets and bids (2026-11-19: $7.36 of cash against $73 of parlay collateral) | LIVE quotes are sized to the cash that is there: balance (`GET /v3/account/subaccounts/{keyId}/balance`, 1 `account` token a minute) less the collateral of quotes still out less `cashReserve` ($3); **a balance not read yet quotes nothing**; SHADOW is unaffected |
 | 7 | `GET /rfq/v3/executions`: `limit` 1-500, `after` cursor, throttle `history` "charges a base plus tokens in proportion to the limit" (throttling) | one page of 500 every minute in LIVE | 100 a page (a day of a small maker), `after` supported |
 | 8 | Error codes `MAKER_BARRED` ("can't quote right now. Contact us") and `READ_ONLY_KEY` | only `MAKER_LOCKED`, `KYC_REQUIRED`, `SELF_EXCLUDED` were acted on | both stop quoting with a message; every code Novig answers a frame with is counted in `status.rfq.refusals` |
+
+| 9 | (not a docs rule; found while reading the executions) The 13 parlays filled in the first live hours: **6 rode the same Houston game (about half the open collateral)** and 3 the same two tennis outcomes; no cap saw it (one parlay and the total only) | - | `maxLegCollateral` ($30, `rfq_set.py maxLegCollateral=`, 0 = off): a quote that would take any outcome over it, counting the open parlays (`GET /rfq/v3/executions` `outcomeIds`) and the quotes still out, is declined; LIVE only |
+| 10 | (evidence) the executions were read only in LIVE, so the 13 live parlays' results (the only realized test of our fair) were never read | - | read every third minute in SHADOW too: `status.rfq` settled / makerWon / makerLost / realizedPnl and `LEDGER` journal rows |
 
 Misread rule fixed in a comment: `quote_accepted` carries "your quoted price" (not a price Novig chooses), and the 1-second window is per last look, not per connection.
 
