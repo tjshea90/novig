@@ -79,7 +79,7 @@ class RfqMarketModel(private val keep: Int = 600, private val maxAgeMs: Long = 4
             val n = legs.size.let { if (it >= 5) "5+" else it.toString() }
             val prop = legs.any { it.marketType.isBlank() || (it.marketType !in RfqPricer.GAME_LINES && !it.marketType.endsWith("_1H")) }
             val sameGame = legs.map { it.eventId }.toSet().size != legs.size
-            val mix = when { prop -> "prop"; sameGame -> "sg"; else -> "gl" }
+            val mix = when { prop && sameGame -> "psg"; prop -> "prop"; sameGame -> "sg"; else -> "gl" }
             val band = when { fair < 0.10 -> "p<10"; fair < 0.25 -> "p10-25"; fair < 0.50 -> "p25-50"; else -> "p50+" }
             return "$n|$mix|$band"
         }

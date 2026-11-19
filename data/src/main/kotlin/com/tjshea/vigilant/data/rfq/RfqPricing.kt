@@ -62,6 +62,19 @@ data class RfqConfig(
     val maxFair: Double = 0.85,
     /** The loss over the last 24 hours of SETTLED parlays (dollars, from Novig's executions) at which LIVE quoting stops for six hours ([RfqMaker.onLedger]); 0 = no stop. */
     val dayLossStop: Double = 20.0,
+    /**
+     * Ask Novig what the other makers charge for a sample of the RFQs we price (MK12, [RfqProbe]: `POST /rfq/v2/quote/unauthenticated`, keyless, at most ~0.9 requests a second, each opening a real 3-second auction
+     * whose best price is the competition's). Runs in SHADOW and, for RFQs we decline, in LIVE (a probe of an RFQ we would quote would meet our own quote). 100,000 observations a day against about 250 priced
+     * trades a day: the demand curve [marketPricing] needs.
+     */
+    val probe: Boolean = true,
+    /**
+     * Quote at the margin that maximises the expected profit on the collateral, from what the probes showed the market pays for that class of parlay ([RfqMarketModel.best]), never below the floors above. OFF by
+     * default: the model is judged in SHADOW first (each CREATED/EXECUTED row journals both the rule's price and the model's), and LIVE needs it switched on with the evidence in research/novig_parlay_maker_2026-11-19.md.
+     */
+    val marketPricing: Boolean = false,
+    /** Fewest probe answers in a class before the market model prices it. */
+    val probeMinSamples: Int = 40,
 ) {
     enum class Mode { OFF, SHADOW, LIVE }
 
@@ -103,7 +116,7 @@ fun interface LegFairs { fun leg(outcomeId: String): LegFair? }
 
 sealed interface RfqDecision {
     /** [price] is the probability the parlay wins that we quote, [maxWager] the stake we cover, [fair] the parlay's fair probability. */
-    data class Quote(val price: Double, val maxWager: Double, val fair: Double, val legs: List<LegFair>) : RfqDecision {
+    data class Quote(val price: Double, val maxWager: Double, val fair: Double, val legs: List<LegFair>, val rulePrice: Double = price, val modelPrice: Double? = null) : RfqDecision {
         /** Our EV per $1 of the pot if the fair is true: what winning the auction is worth. */
         val edge: Double get() = price - fair
     }
@@ -149,7 +162,7 @@ object RfqPricer {
         return minOf(0.999, j * (1.0 + cfg.sameGamePremium))
     }
 
-    fun decide(created: RfqProtocol.Created, now: Long, cfg: RfqConfig, fairs: LegFairs, openCollateral: Double): RfqDecision {
+    fun decide(created: RfqProtocol.Created, now: Long, cfg: RfqConfig, fairs: LegFairs, openCollateral: Double, market: RfqMarketModel? = null): RfqDecision {
         val ids = created.outcomeIds
         if (ids.size < 2 || ids.size > cfg.maxLegs) return RfqDecision.Decline("${ids.size} legs (this maker prices 2 to ${cfg.maxLegs})")
         val legs = ArrayList<LegFair>(ids.size)
@@ -182,7 +195,13 @@ object RfqPricer {
             if (now - asOf > cfg.maxFairAgeMs) return no("a leg's fair is ${(now - asOf) / 60_000L} min old")
         }
         if (p < cfg.minFair || p > cfg.maxFair) return no("the parlay's fair probability ${"%.3f".format(p)} is outside ${cfg.minFair}-${cfg.maxFair}")
-        val price = quotePrice(p, ids.size, legs.maxOf { it.startsMs } - now, cfg)
+        val leadMs = legs.maxOf { it.startsMs } - now
+        val rulePrice = quotePrice(p, ids.size, leadMs, cfg)
+        // The market model's price (MK12): the margin that maximises win share x net edge on what the collateral costs, from the probes' answers for this class; computed whenever a model exists so SHADOW journals both,
+        // used only when the config says so and never below the rule's floors.
+        val modelPrice = market?.best(RfqMarketModel.classOf(legs, p), p, ids.size, leadMs.coerceAtLeast(0L) / 86_400_000.0, (rulePrice - p).coerceAtLeast(0.0), cfg)
+            ?.let { ceil((p + it) * 10_000.0 - 1e-7) / 10_000.0 }
+        val price = if (cfg.marketPricing && modelPrice != null) maxOf(rulePrice, modelPrice) else rulePrice
         if (price > 0.999 || price < 0.001) return no("price ${"%.4f".format(price)} is outside Novig's 0.001-0.999")
         // The RFQ's minimum is the stake the user asked for (96% are the default $10; executed stakes sit just under it, the taker fee). The quote covers exactly that: more collateral than the trade needs
         // would only be tied up. The maker's collateral for a stake w is w (1 - P) / P.
@@ -193,6 +212,6 @@ object RfqPricer {
         val room = floor(minOf(cfg.maxStake, byParlay, byOpen) * 100.0) / 100.0
         if (room < want) return no("the caps allow a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked")
         val stake = ceil(want * 100.0 - 1e-7) / 100.0
-        return RfqDecision.Quote(price, stake, p, legs)
+        return RfqDecision.Quote(price, stake, p, legs, rulePrice, modelPrice)
     }
 }
