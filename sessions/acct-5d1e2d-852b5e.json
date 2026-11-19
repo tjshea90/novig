@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "2da22662c178ce31ee65cc557dbbd8f62fdb9a5c",
  "since": 1795047736,
- "beat": 1795075713,
- "beatIso": "2026-11-19T08:08:33Z",
+ "beat": 1795076057,
+ "beatIso": "2026-11-19T08:14:17Z",
  "done": "MK10h: rfq minReturn 0.006",
  "next": "check wins; if none after 200 more quotes inspect quote timing/last look"
 }
