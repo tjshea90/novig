@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "47c40085ed01a5260f406a32680dc1fbd0a2126f",
  "since": 1795047736,
- "beat": 1795090473,
- "beatIso": "2026-11-19T12:14:33Z",
+ "beat": 1795091867,
+ "beatIso": "2026-11-19T12:37:47Z",
  "done": "MK10 11:08: fills starting (9 won, 8 filled)",
  "next": "next 11:38: watch P&L of the new fills; revert floor if realized < -15"
 }
