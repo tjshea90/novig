@@ -1854,3 +1854,8 @@ Zero priced?
 ```
 The problem is the engine prices almost nothing. It doesn't have enough fair odds 
 ```
+
+## 2026-11-19T23:51:18Z
+```
+PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 minutes, price more legs, change safeguards and criteria; the maker is on PAPER (SHADOW) until Tj adds money, keep improving it). In /home/user/novig: git fetch -q origin +cloud-feed:refs/remotes/origin/cloud-feed; read status.json rfq (seen, priceable, pricedTrades, wouldWin, wouldEarnPoints, declines with shares, openCollateral, settled) and compare with the last MK10/MK11 lines in research/review/CHANGES.md. Fix the biggest decline class with evidence (journals in cloud-archive-YYYY-MM-DD Releases; tools/rfq_legs.py, tools/rfq_summary.py) via rfq_set.py or code (tests, tools/test.sh, ckpt, push, engine_set.py --reset, CONFIRM the new job's startedAtMs and that a job is running before saying it restarted). Another session (acct-27a37e, MK12) works on the same maker: read the board (tools/coord.py board) first and do not reset the engine twice. Log in CHANGES.md and tell Tj in the app chat with chat.py say, once, only what changed.
+```
