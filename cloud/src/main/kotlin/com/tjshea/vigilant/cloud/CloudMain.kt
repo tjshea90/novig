@@ -529,7 +529,15 @@ fun main(args: Array<String>) = runBlocking {
                 for (o in list) {
                     val p = o.fairProbability ?: continue
                     val asOf = o.fairAsOfMs ?: o.fairUpdatedMs ?: continue
-                    m[o.outcome.outcomeId] = com.tjshea.vigilant.data.rfq.LegFair(o.outcome.outcomeId, o.market.eventId, "${o.marketLabel} ${o.selection}", p, o.fair?.booksUsed?.size ?: 0, asOf, o.event.startsTs, o.event.isLive, o.market.marketType)
+                    val key = o.lineKey
+                    m[o.outcome.outcomeId] = com.tjshea.vigilant.data.rfq.LegFair(
+                        o.outcome.outcomeId, o.market.eventId, "${o.marketLabel} ${o.selection}", p, o.fair?.booksUsed?.size ?: 0, asOf, o.event.startsTs, o.event.isLive, o.market.marketType,
+                        // what the same-game copula needs (MK12): the kind and side of the line, its period, a spread's HOME handicap, a team total's team, and the league's calibration
+                        kind = o.kind, side = (o.target as? com.tjshea.vigilant.data.scanner.OutcomeTarget.Is)?.side, period = key?.period ?: 0,
+                        homeLine = if (o.kind == com.tjshea.vigilant.data.reference.LineKind.SPREAD) key?.line else null,
+                        awayTeam = o.kind == com.tjshea.vigilant.data.reference.LineKind.TEAM_TOTAL && key?.subject == com.tjshea.vigilant.data.reference.RefBookMarket.AWAY,
+                        league = o.event.league,
+                    )
                 }
                 index = m; indexedFor = list
             }
