@@ -83,7 +83,7 @@ object ParlayView {
             RfqConfig.Mode.LIVE -> "Quoting real prices on parlays it can price, within the caps below. A parlay it wins ties up the collateral (what it pays if the parlay hits) from the Vigilant wallet until the games settle."
         }
         val ev = "Evidence for going live: ${r.pricedTrades} of ${RfqStatus.EVIDENCE_TRADES} priced trades" + (r.medianGapPoints?.let { "; the market paid ${pts(it)} pts of pot over our fair" } ?: "") + "."
-        val rule = (if (c.allowProps) "Quote rule (player props allowed): " else "Quote rule: game-line parlays only (the market pays 38% over our fair on parlays with a player prop, 2.6% on game lines); ") + "at least ${"%.1f".format(Locale.US, c.minReturn * 100)}% return on the collateral (more for longer lock-ups), ${"%.1f".format(Locale.US, c.minPoints * 100)} pt per extra leg, ${"%.1f".format(Locale.US, c.margin * 100)}% floor; 2 to ${c.maxLegs} legs, " +
+        val rule = (if (c.allowProps) "Quote rule (player props allowed): " else "Quote rule: game-line parlays only (the market pays 38% over our fair on parlays with a player prop, 2.6% on game lines); ") + "at least ${"%.1f".format(Locale.US, c.minReturn * 100)}% return on the collateral (more for longer lock-ups), ${"%.1f".format(Locale.US, c.minPoints * 100)} pt per extra leg, ${"%.1f".format(Locale.US, c.margin * 100)}% floor; 2 to ${c.maxLegs} legs, never a parlay likelier than ${"%.0f".format(Locale.US, c.maxFair * 100)}% to win or with a leg likelier than ${"%.0f".format(Locale.US, c.maxLegFair * 100)}%, " +
             "stake as asked up to ${usd(c.maxStake)}, ${usd(c.maxCollateral)} per parlay, ${usd(c.maxOpenCollateral)} in all."
         val warning = when {
             r.halted != null -> "Stopped: ${r.halted}"
