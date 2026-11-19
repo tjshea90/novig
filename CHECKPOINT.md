@@ -1,13 +1,13 @@
-# CHECKPOINT 4673 — read me first, then TASKS.md
+# CHECKPOINT 4674 — read me first, then TASKS.md
 
-**Written:** 2026-11-19T06:41:50Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-aoglz9` · **builds on:** `ace6bacda` (this checkpoint is the commit after it)
+**Written:** 2026-11-19T06:46:50Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-aoglz9` · **builds on:** `94cbb445b` (this checkpoint is the commit after it)
 
 ## Just done
-MK10d logged
+MK10e: rfq caps 75/150 per Tj
 
 ## Do this next
-report priced share after scan
+re-measure decline classes after restart
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ report priced share after scan
 
 ## Last ten checkpoints
 ```
+  94cbb445b ckpt 4673: MK10d logged
   ace6bacda ckpt 4672: MK10d: parlay fair index keeps lines across scan passes (hot passes held a 
   a3f74b56a ckpt 4671: MK10c: same-game (side+total, 8%) and prop (20%/leg) parlay premiums
   886d58cda ckpt 4670: correct CHANGES MK10b
@@ -26,5 +27,4 @@ report priced share after scan
   ee40cd183 ckpt 4666: GD2 + TR5 shipped v1.0.140; MK10 parlay data read
   e4240e81d ckpt 4665: pre-release: GD2 grade fills with bare wording; TR5 profit headline back to
   b6e2e20cf ckpt 4664: pre-ship: GD2 grade fills with bare wording; TR5 profit headline back to be
-  a02feb62f ckpt 4663: pre-release: GD1 grading via other feeds; TR5 profit headline is the wallet
 ```
