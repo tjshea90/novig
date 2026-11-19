@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "ca18d568a8efac6b6df18d9aeb85c97eed2c2fd3",
+ "head": "2a6be887b5959f3a47f528f5036a534cd8050cad",
  "since": 1795129305,
- "beat": 1795132483,
- "beatIso": "2026-11-19T23:54:43Z",
- "done": "MK19/MK17d: app tests green; landing the engine fixes",
- "next": "graceful engine reset then verify"
+ "beat": 1795132512,
+ "beatIso": "2026-11-19T23:55:12Z",
+ "done": "MK20: same-game prop-pair model (PropPairs, upper-bound ratios from PropLine resolved props), SHADOW only (propPairsLive off); tests + research note + tools/prop_pairs.py; full suite green",
+ "next": "MK20 1b: after the engine's next natural handover, compare the model's shadow fair with the market's executed price for the same pairs in two journals (rfq_summary, OUTCOMES.md) then propPairsLive; next class: game line + prop pairs (14.5k), 3+ prop legs, 8+ legs; keep watching the live maker (halt, fills, confirm rate)"
 }
