@@ -103,8 +103,13 @@ class ChainedScores(private val primary: ScoreSource, private val secondary: Sco
 
     override suspend fun games(league: String, date: LocalDate): List<GameScore>? {
         val p = if (primary.covers(league)) primary.games(league, date) else null
-        if (!p.isNullOrEmpty()) return p
-        return secondary.games(league, date) ?: p
+        val s = secondary.games(league, date)
+        if (p.isNullOrEmpty()) return s ?: p
+        // Tj, 2026-11-19 (open bets 21 days old never graded): a primary list that is not empty but lacks the game used to end the search, so the
+        // second feed was never asked. The second feed's games that the first does not list (another start within 4 h and the same two teams) are added.
+        if (s.isNullOrEmpty()) return p
+        val extra = s.filter { g -> p.none { q -> abs(q.startMs - g.startMs) <= 4 * 3_600_000L && TeamMatcher.whichOf(g.home, q.home, q.away) != 0 && TeamMatcher.whichOf(g.away, q.home, q.away) != 0 } }
+        return if (extra.isEmpty()) p else p + extra
     }
 
     override suspend fun players(game: GameScore): List<PlayerLine>? {
