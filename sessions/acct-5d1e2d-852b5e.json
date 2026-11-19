@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "b79121acf1a49c2c1752ab8263afe1e019f837bb",
+ "head": "a02feb62f48e42ba6c75d086ce0cb80d5daf43c8",
  "since": 1795047736,
- "beat": 1795064674,
- "beatIso": "2026-11-19T05:04:34Z",
- "done": "pre-release: GD1: grade games the first score feed lacks via the other feeds (versionCode 479, v1.0.139)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.139), then run: bash tools/record-release.sh v1.0.139 479 \"GD1: grade games the first score feed lacks via the other feeds\""
+ "beat": 1795064711,
+ "beatIso": "2026-11-19T05:05:11Z",
+ "done": "pre-release: GD1 grading via other feeds; TR5 profit headline is the wallet (versionCode 479, v1.0.139)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.139), then run: bash tools/record-release.sh v1.0.139 479 \"GD1 grading via other feeds; TR5 profit headline is the wallet\""
 }
