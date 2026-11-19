@@ -217,4 +217,12 @@ class ProfitChartTest {
         val line = ProfitText.ledgerLine(com.tjshea.vigilant.app.ui.WalletMoneyUi(ledgerProfit = -12.5, ledgerOpenCost = 40.0, ledgerAtMs = now - 120_000L), now)
         assertTrue(line, line.contains("−\$12.50") && line.contains("\$40.00 on open bets counted at cost") && line.contains("ago"))
     }
+
+    @Test fun headlineIsTheWalletThenTheLedgerThenTheBetsSum() {
+        val book = com.tjshea.vigilant.data.tracker.SlateProfit.Book(emptyList())
+        val money = WalletProfit.Money(cash = 84.68, openCost = 110.82, openBets = 230, putIn = 1078.03, takenOut = 630.92, transfers = 48, atMs = 0L)
+        assertEquals(-251.61, ProfitText.headline(book, WalletMoneyUi(money = money, ledgerProfit = -255.84)).first, 0.01)
+        assertEquals(-255.84, ProfitText.headline(book, WalletMoneyUi(ledgerProfit = -255.84)).first, 0.0)
+        assertEquals(0.0, ProfitText.headline(book, WalletMoneyUi()).first, 0.0)
+    }
 }
