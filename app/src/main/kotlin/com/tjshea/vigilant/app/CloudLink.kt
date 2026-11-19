@@ -84,6 +84,9 @@ class CloudLink(private val c: AppContainer) {
         /** The engine's bids (`desk.json`) as of the phone's last read, and when (this phone's clock). */
         val desk: com.tjshea.vigilant.data.cloud.DeskFile? = null,
         val deskReadAtMs: Long = 0L,
+        /** The parlay maker's book (`parlays.json`, the Parlay hub) as of the phone's last read, and when (this phone's clock). */
+        val parlays: com.tjshea.vigilant.data.rfq.ParlayBook? = null,
+        val parlaysReadAtMs: Long = 0L,
         /** The Bids tab's presses for the engine's desk sent so far ([CloudLink.requestBid]): the tab shows the ones the engine has not answered yet. */
         val bidRequests: List<BidRequest> = emptyList(),
         /** PropLine's +EV lines at Novig, as the engine's last sweep found them (`propline-ev.json.gz`, TCL56); null = none yet. */
@@ -140,6 +143,7 @@ class CloudLink(private val c: AppContainer) {
             val offStatus = loadRaw("status.json") { com.tjshea.vigilant.data.cloud.CloudStatus.parse(it) }
             val offTrades = loadRaw("trades.json") { com.tjshea.vigilant.data.cloud.TradeLedger.parse(it) }
             val offDesk = loadRaw("desk.json") { com.tjshea.vigilant.data.cloud.DeskFile.parse(it) }
+            val offParlays = loadRaw("parlays.json") { com.tjshea.vigilant.data.rfq.ParlayBook.parse(it) }
             val offUsage = loadRaw("usage.json") { com.tjshea.vigilant.data.cloud.CloudUsage.decode(it) }
             offStatus?.let { (st, at) -> if (latest.status == null) { latest.status = st; latest.statusOkAtMs = at } }
             offUsage?.let { (u, _) -> if (c.cloudUsage.value == null) c.cloudUsage.value = u }
@@ -148,6 +152,7 @@ class CloudLink(private val c: AppContainer) {
                     status = u.status ?: offStatus?.first, statusOkAtMs = if (u.status == null) offStatus?.second ?: 0L else u.statusOkAtMs,
                     trades = u.trades ?: offTrades?.first, tradesReadAtMs = if (u.trades == null) offTrades?.second ?: 0L else u.tradesReadAtMs,
                     desk = u.desk ?: offDesk?.first, deskReadAtMs = if (u.desk == null) offDesk?.second ?: 0L else u.deskReadAtMs,
+                    parlays = u.parlays ?: offParlays?.first, parlaysReadAtMs = if (u.parlays == null) offParlays?.second ?: 0L else u.parlaysReadAtMs,
                 )
             }
         }
@@ -547,6 +552,19 @@ class CloudLink(private val c: AppContainer) {
                 nap(if (c.onScreen) paced(TRADES_POLL_MS) else TRADES_POLL_BACKGROUND_MS)
             }
         }
+        // 6c. the parlay maker's book (MK15), the same way: one small file, an unchanged one is a free 304.
+        scope.launch(Dispatchers.IO) {
+            var etag: String? = null
+            while (isActive) {
+                awake()
+                if (hasToken()) when (val p = client.fetchParlays(etag)) {
+                    is CloudClient.Poll.Fresh -> { etag = p.etag; _ui.update { it.copy(parlays = p.value, parlaysReadAtMs = System.currentTimeMillis()) } }
+                    is CloudClient.Poll.NotModified -> _ui.update { it.copy(parlaysReadAtMs = System.currentTimeMillis()) }
+                    is CloudClient.Poll.Failed -> {}
+                }
+                nap(if (c.onScreen) paced(TRADES_POLL_MS) else TRADES_POLL_BACKGROUND_MS)
+            }
+        }
         // 3. save
         scope.launch(Dispatchers.IO) {
             delay(150_000L)
@@ -828,6 +846,8 @@ class CloudLink(private val c: AppContainer) {
             runCatching { got(within { client.fetchTrades(null) })?.let { t -> _ui.update { it.copy(trades = t, tradesReadAtMs = System.currentTimeMillis()) } } }
             step("Reading bids")
             runCatching { got(within { client.fetchDesk(null) })?.let { d -> _ui.update { it.copy(desk = d, deskReadAtMs = System.currentTimeMillis()) } } }
+            step("Reading parlays")
+            runCatching { got(within { client.fetchParlays(null) })?.let { b -> _ui.update { it.copy(parlays = b, parlaysReadAtMs = System.currentTimeMillis()) } } }
             step("Reading API usage")
             runCatching { got(within { client.fetchUsage(null) })?.let { u -> c.cloudUsage.value = u } }
             step("Reading messages and chat")
