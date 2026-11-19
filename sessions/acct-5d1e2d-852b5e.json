@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "b8f1b4122fe6bdef9f3518fc10f9e56c1e7f9ce4",
  "since": 1795047736,
- "beat": 1795067043,
- "beatIso": "2026-11-19T05:44:03Z",
+ "beat": 1795068347,
+ "beatIso": "2026-11-19T06:05:47Z",
  "done": "v1.0.140 recorded; MK10 coverage shipped to engine, reset",
  "next": "next: read status.rfq priceable share; same-game pricing only with evidence"
 }
