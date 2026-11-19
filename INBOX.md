@@ -1708,3 +1708,8 @@ Without disrupting the other claude session:
 5) do any other research needed to improve the parlay system as much as possible with the goal of profit and fills 
 6) implement all findings without delay and update the engine accordingly 
 ```
+
+## 2026-11-19T16:07:46Z
+```
+PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 minutes, price more legs, change safeguards and criteria, get parlay action). In /home/user/novig: git fetch -q origin +cloud-feed:refs/remotes/origin/cloud-feed; read status.json rfq (seen, priceable, quotesSent, won, filled, settled, realizedPnl, declines with shares) and compare with the last check (research/review/CHANGES.md MK10 lines). Pick the biggest decline class and fix it with evidence (journal in the cloud-archive-YYYY-MM-DD Release: python3 -I tools/rfq_legs.py legs; tools/rfq_summary.py), via rfq_set.py (caps/margins/ages) or code (tests, tools/test.sh, ckpt, push, engine_set.py --reset and CONFIRM the new job's startedAtMs in status.json). Keep every bet's value rule: no losing-odds quotes; dayLossStop stays. Log in CHANGES.md and tell Tj in the app chat with chat.py say, once, only what changed.
+```
