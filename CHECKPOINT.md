@@ -1,21 +1,23 @@
-# CHECKPOINT 4687 — read me first, then TASKS.md
+# CHECKPOINT 4688 — read me first, then TASKS.md
 
-**Written:** 2026-11-19T16:05:33Z · **tests:** all 10 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `c7be86b23` (this checkpoint is the commit after it)
+**Written:** 2026-11-19T16:23:30Z · **tests:** all 10 fast checks green
+**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `beb2dc50e` (this checkpoint is the commit after it)
 
 ## Just done
-MK12a: fixed last-look price tolerance (Novig echoes 0.4495 as 0.450; the old 5e-4 bound rejected our own win and caused MAKER_LOCKED); RfqMakerTest covers both rounding extremes. Research so far: Novig keyless /rfq/v2/quote/unauthenticated = real 3 s auction (usable as a market-price probe), journals 11-18/11-19 downloaded to scratchpad
+MK12b: same-game copula (RfqCorrelation: Gauss+SameGame, measured rho by league NBA/NFL/NHL/NCAAF/NCAAB) wired into RfqPricer; RfqMarket (probe of Novig keyless parlay price + per-class demand model + optimal margin) wired into RfqMaker/CloudMain; tests RfqCorrelationTest, RfqMarketTest, RfqMakerTest green
 
 ## Do this next
-MK12b: analyse journals by class (volume, gap, same-game implied correlation), design RfqProbe + fitted competitor-price model + Novig-mid fallback fair + ladder + copula; then land and reset engine
+MK12c: rfq_set.py (sameGamePremium 0.02, probe, marketPricing, probeMinSamples), research doc, full test gate, land on main, engine reset + verify new job startedAtMs; then ladder/Novig-mid coverage
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M cloud/src/main/kotlin/com/tjshea/vigilant/cloud/CloudMain.kt
 
 ## Last ten checkpoints
 ```
+  42f706e6b ckpt 4687: MK12a: fixed last-look price tolerance (Novig echoes 0.4495 as 0.450; the o
   e742cad0f ckpt 4686: MK10k: rfq maker SHADOW (paper) per Tj
   b7ef6b620 ckpt 4685: TR7 logged: ledger drop = parlay collateral
   c1e50755e ckpt 4684: MK10j: open collateral cap 80 (wallet cash 12.5)
@@ -25,8 +27,7 @@ MK12b: analyse journals by class (volume, gap, same-game implied correlation), d
   87e289ffe ckpt 4680: MK10 08:37 check: no change, evidence logged
   2da22662c ckpt 4679: MK10h: rfq minReturn 0.006
   135bf46a5 ckpt 4678: MK10g: rfq minReturn 0.01
-  8c27468c7 ckpt 4677: MK10f: rfq maxLegs 7 minFair 0.01 (long all-priced parlays)
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(14 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
