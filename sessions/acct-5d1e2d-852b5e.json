@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "dfbbf7407adf21ce46a8b8297c4373e3fe1bae3c",
  "since": 1795047736,
- "beat": 1795095880,
- "beatIso": "2026-11-19T13:44:40Z",
+ "beat": 1795097267,
+ "beatIso": "2026-11-19T14:07:47Z",
  "done": "MK10j: open collateral cap 80 (wallet cash 12.5)",
  "next": "wallet: ask Tj to add money to keep quoting; watch first settlements"
 }
