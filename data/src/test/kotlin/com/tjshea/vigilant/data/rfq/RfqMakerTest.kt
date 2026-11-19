@@ -264,7 +264,7 @@ class RfqMakerTest {
         assertNull(maker.halted)
         // another kind of halt is not ours to lift
         val locked = RfqMaker({ live }, { null }, { 0.0 }, { true }, { rows += it }, { _, _ -> }, { now }, cash = { 100.0 })
-        locked.onEvent(RfqProtocol.Refused(now, "MAKER_LOCKED", "locked", 1L))
+        locked.onEvent(RfqProtocol.Refused(now, 1L, "MAKER_LOCKED", "locked"))
         val before = locked.halted
         locked.onLedger(lost, live.copy(dayLossStop = 0.0))
         assertEquals(before, locked.halted)
