@@ -157,6 +157,21 @@ class RfqMakerTest {
         assertTrue(r.rows.last().data.contains("\"wouldWin\":false"))
     }
 
+    // ---- MK15: the parlay hub keeps each fill's legs ----
+    @Test fun aFilledQuoteIsHandedToTheParlayHubOnceWithItsLegsEvenWhenTheFillArrivesOnTwoSockets() {
+        val fills = ArrayList<FillRecord>(); val rows = ArrayList<RfqRow>()
+        val legs = listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4))
+        val maker = RfqMaker({ cfg.copy(mode = RfqConfig.Mode.LIVE) }, { id -> legs.firstOrNull { it.outcomeId == id } }, { 0.0 }, { true }, { rows += it }, { _, _ -> }, { now }, cash = { 1_000.0 }, onFill = { fills += it })
+        maker.onEvent(created("a", "b"))
+        maker.onEvent(RfqProtocol.QuoteExecuted(now, "rfq-1", "q1", 10.0, 0.216, now))
+        maker.onEvent(RfqProtocol.QuoteExecuted(now, "rfq-1", "q1", 10.0, 0.216, now))
+        assertEquals("one record however many sockets deliver the fill", 1, fills.size)
+        val f = fills.single()
+        assertEquals("rfq-1", f.rfqId); assertEquals(0.216, f.price, 1e-12); assertEquals(10.0, f.wager, 1e-12); assertEquals(0.2, f.fair, 1e-12)
+        assertEquals(listOf("a", "b"), f.legs.map { it.outcomeId }); assertEquals(0.5, f.legs[0].p, 1e-12)
+        assertEquals("the second delivery is not counted as another fill", 1L, maker.filled)
+    }
+
     @Test fun shadowJudgesEveryRfqAsIfTheWalletWereFreeButLiveDoesNot() {
         val shadow = Rig(cfg.copy(mode = RfqConfig.Mode.SHADOW), listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4)), collateral = 500.0)        // the open parlays hold far more than the $90 cap
         shadow.maker.onEvent(created("a", "b"))
