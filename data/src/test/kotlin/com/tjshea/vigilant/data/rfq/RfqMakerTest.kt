@@ -126,7 +126,7 @@ class RfqMakerTest {
         assertTrue(why(created("a", "b"), leg("a", "e1", 0.5, startsInMs = 9 * 86_400_000L), leg("b", "e2", 0.4)).contains("days away"))
         assertTrue(why(created("a", "b"), leg("a", "e1", 0.5, books = 2), leg("b", "e2", 0.4)).contains("2 companies"))
         assertTrue(why(created("a", "b"), leg("a", "e1", 0.5, ageMs = 20 * 60_000L), leg("b", "e2", 0.4)).contains("old"))
-        assertTrue(why(created("a", "b"), leg("a", "e1", 0.1), leg("b", "e2", 0.1)).contains("outside"))
+        assertTrue(why(created("a", "b"), leg("a", "e1", 0.1), leg("b", "e2", 0.1)).contains("too unlikely to win"))
         assertTrue(why(created("a"), leg("a", "e1", 0.5)).contains("1 legs"))
         assertTrue(why(created("a", "b", "c", "d"), leg("a", "e1", 0.9), leg("b", "e2", 0.9), leg("c", "e3", 0.9), leg("d", "e4", 0.9)).contains("4 legs"))
     }
@@ -155,6 +155,25 @@ class RfqMakerTest {
         r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-2"))
         r.maker.onEvent(RfqProtocol.Executed(now, 11, "rfq-2", 25.0, 0.205))
         assertTrue(r.rows.last().data.contains("\"wouldWin\":false"))
+    }
+
+    // ---- MK16 (Tj 2026-11-19: "do not allow parlays that are too easy to win ... set a reasonable cap"): a cap on the parlay and on any one leg ----
+    @Test fun aParlayTooLikelyToWinIsNeverQuotedAndNeitherIsOneWithANearCertainLeg() {
+        fun why(vararg l: LegFair, conf: RfqConfig = cfg) = (RfqPricer.decide(created(*l.map { it.outcomeId }.toTypedArray()), now, conf, fairs(*l), 0.0) as RfqDecision.Decline).reason
+        // two 80% legs: a 64% parlay is over the 60% cap (and no leg is over 90%)
+        val tooEasy = why(leg("a", "e1", 0.8), leg("b", "e2", 0.8))
+        assertTrue(tooEasy, tooEasy == "the parlay is too likely to win (64% against the 60% cap)")
+        // a 95% leg beside a 50% one is a 47.5% parlay, but the leg is padding
+        val padded = why(leg("a", "e1", 0.95), leg("b", "e2", 0.5))
+        assertTrue(padded, padded == "a leg is too likely to win (95% against the 90% cap)")
+        // the declines still carry our fair (the evidence of what the market charges over it)
+        val d = RfqPricer.decide(created("a", "b"), now, cfg, fairs(leg("a", "e1", 0.8), leg("b", "e2", 0.8)), 0.0) as RfqDecision.Decline
+        assertEquals(0.64, d.fair!!, 1e-9)
+        // just under both caps is quoted; a looser setting quotes the 64% one; the old 0.85 cap is a setting
+        assertTrue(RfqPricer.decide(created("a", "b"), now, cfg, fairs(leg("a", "e1", 0.77), leg("b", "e2", 0.77)), 0.0) is RfqDecision.Quote)
+        assertTrue(RfqPricer.decide(created("a", "b"), now, cfg.copy(maxFair = 0.85), fairs(leg("a", "e1", 0.8), leg("b", "e2", 0.8)), 0.0) is RfqDecision.Quote)
+        assertTrue(RfqPricer.decide(created("a", "b"), now, cfg.copy(maxLegFair = 1.0), fairs(leg("a", "e1", 0.95), leg("b", "e2", 0.5)), 0.0) is RfqDecision.Quote)
+        assertEquals("the defaults", 0.60 to 0.90, RfqConfig().maxFair to RfqConfig().maxLegFair)
     }
 
     // ---- MK15: the parlay hub keeps each fill's legs ----
@@ -218,6 +237,7 @@ class RfqMakerTest {
         assertEquals("true", json.parseToJsonElement(r.sent.single()).jsonObject["confirm"]!!.jsonObject["confirmed"]!!.jsonPrimitive.content)
         r.sent.clear()
         // Novig rounds the echoed price to a thousandth: 0.4495 came back as 0.450 on 2026-11-19 and the old 5e-4 bound rejected our own win (92% confirm rate, MAKER_LOCKED). Both extremes of the rounding are ours.
+        r.legs = listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                       // (the fair at 0.9 each would now be declined as too likely to win: MK16)
         r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-8"))
         val sentPrice = json.parseToJsonElement(r.sent.single()).jsonObject["quote"]!!.jsonObject["price"]!!.jsonPrimitive.content.toDouble()
         r.sent.clear()
