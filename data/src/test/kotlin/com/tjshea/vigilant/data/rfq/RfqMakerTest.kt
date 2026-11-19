@@ -61,7 +61,7 @@ class RfqMakerTest {
 
     private fun fairs(vararg l: LegFair) = LegFairs { id -> l.firstOrNull { it.outcomeId == id } }
     private fun created(vararg ids: String, minWager: Double = 10.0) = RfqProtocol.Created(now, "rfq-1", ids.toList(), now + 3_000L, minWager)
-    private val cfg = RfqConfig(mode = RfqConfig.Mode.LIVE, margin = 0.08, minReturn = 0.0, minPoints = 0.0, maxLegs = 3, maxStake = 12.0, maxCollateral = 45.0, maxOpenCollateral = 90.0)   // the old flat-margin rule; the new terms are tested apart
+    private val cfg = RfqConfig(mode = RfqConfig.Mode.LIVE, margin = 0.08, minReturn = 0.0, minPoints = 0.0, maxLegs = 3, maxStake = 12.0, maxCollateral = 45.0, maxOpenCollateral = 90.0, maxLegCollateral = 0.0)   // the old flat-margin rule (the per-leg cap is tested apart); the new terms are tested apart
 
     @Test fun twoLegsFromDifferentGamesArePricedAtTheFairProductPlusTheMargin() {
         val d = RfqPricer.decide(created("a", "b"), now, cfg, fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4)), 0.0) as RfqDecision.Quote

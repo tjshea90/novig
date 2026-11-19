@@ -70,7 +70,7 @@ class RfqSocketTest {
 
     private fun run(mode: RfqConfig.Mode, body: suspend (rows: List<RfqRow>, socket: RfqSocket) -> Unit) = runBlocking {
         val rows = CopyOnWriteArrayList<RfqRow>()
-        val cfg = RfqConfig(mode = mode)
+        val cfg = RfqConfig(mode = mode, maxLegCollateral = 0.0)
         lateinit var socket: RfqSocket
         val maker = RfqMaker({ cfg }, { id -> legs().firstOrNull { it.outcomeId == id } }, { 0.0 }, { socket.send(it) }, { rows += it }, cash = { 1_000.0 })
         socket = RfqSocket(OkHttpClient(), { client() }, maker, { cfg }, scope)
