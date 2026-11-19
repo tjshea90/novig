@@ -1782,3 +1782,8 @@ PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 mi
 ```
 For the parlay engine, do not allow parlays that are too easy to win. For example, some parlays are over 90% chance of winning. Set a reasonable cap where parlays are not accepted by the system if they are too likely to win. Continue to monitor and tweak the settings for maximum profit and look for ways to price even more legs 
 ```
+
+## 2026-11-19T21:21:19Z
+```
+PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 minutes, price more legs, change safeguards and criteria; the maker is on PAPER (SHADOW) until Tj adds money, keep improving it). In /home/user/novig: git fetch -q origin +cloud-feed:refs/remotes/origin/cloud-feed; read status.json rfq (seen, priceable, pricedTrades, wouldWin, wouldEarnPoints, declines with shares, openCollateral, settled) and compare with the last MK10/MK11 lines in research/review/CHANGES.md. Fix the biggest decline class with evidence (journals in cloud-archive-YYYY-MM-DD Releases; tools/rfq_legs.py, tools/rfq_summary.py) via rfq_set.py or code (tests, tools/test.sh, ckpt, push, engine_set.py --reset, CONFIRM the new job's startedAtMs and that a job is running before saying it restarted). Another session (acct-27a37e, MK12) works on the same maker: read the board (tools/coord.py board) first and do not reset the engine twice. Log in CHANGES.md and tell Tj in the app chat with chat.py say, once, only what changed.
+```
