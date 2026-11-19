@@ -80,6 +80,13 @@ data class RfqConfig(
      * parlay is priced on the market's MEDIAN ratio for its class (never below 0.5 or above 4), the floors on top, once the class has [probeMinSamples] answers; OFF: declined as "correlation unmodelled".
      */
     val propPairsFromMarket: Boolean = false,
+    /**
+     * The relative error of one leg's fair (2%): the market model's own floor under a quote is fair x this x sqrt(legs) (and never under [margin] x fair), and half of it is the allowance for our fair's error
+     * in [RfqMarketModel.best]. Two legs at fair 0.25: 0.7 point, the old points floor; four legs at fair 0.08: 0.3 point (the old floor asked 2.1 points of a parlay the market prices at +0.4 over fair in
+     * relative terms +5%). The market pays about the same points of pot whatever the number of legs (+0.37 at two, +0.50 at three, +0.39 at four, +0.62 at five: 7,626 trades), so a points floor per leg
+     * priced the long parlays, 55% of all trades, out of every auction. Used only when [marketPricing] is on; the rule keeps its floors.
+     */
+    val fairErrorRel: Double = 0.02,
 ) {
     enum class Mode { OFF, SHADOW, LIVE }
 
@@ -216,9 +223,11 @@ object RfqPricer {
         val rulePrice = quotePrice(p, ids.size, leadMs, cfg)
         // The market model's price (MK12): the margin that maximises win share x net edge on what the collateral costs, from the probes' answers for this class; computed whenever a model exists so SHADOW journals both,
         // used only when the config says so and never below the rule's floors.
-        val modelPrice = market?.best(RfqMarketModel.classOf(legs, p), p, ids.size, leadMs.coerceAtLeast(0L) / 86_400_000.0, (rulePrice - p).coerceAtLeast(0.0), cfg)
+        val errFloor = maxOf(p * cfg.margin, p * cfg.fairErrorRel * Math.sqrt(ids.size.toDouble()))
+        val modelPrice = market?.best(RfqMarketModel.classOf(legs, p), p, ids.size, leadMs.coerceAtLeast(0L) / 86_400_000.0, errFloor, 0.5 * errFloor, cfg)
             ?.let { ceil((p + it) * 10_000.0 - 1e-7) / 10_000.0 }
-        val price = if (cfg.marketPricing && modelPrice != null) maxOf(rulePrice, modelPrice) else rulePrice
+        // With `marketPricing` the model's price is the quote (it never goes under its own floor: relative error x sqrt(legs)); without, the rule's.
+        val price = if (cfg.marketPricing && modelPrice != null) modelPrice else rulePrice
         if (price > 0.999 || price < 0.001) return no("price ${"%.4f".format(price)} is outside Novig's 0.001-0.999")
         // The RFQ's minimum is the stake the user asked for (96% are the default $10; executed stakes sit just under it, the taker fee). The quote covers exactly that: more collateral than the trade needs
         // would only be tied up. The maker's collateral for a stake w is w (1 - P) / P.

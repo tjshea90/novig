@@ -64,14 +64,13 @@ class RfqMarketModel(private val keep: Int = 600, private val maxAgeMs: Long = 4
 
     /**
      * The margin (probability points over our fair, as a fraction) that maximises the expected profit on the capital a quote ties up, or null while fewer than [RfqConfig.probeMinSamples] answers are in. At
-     * a quote [c] over the fair the win share is [winShare]; a win earns c per dollar of pot, less an allowance for our fair's own error (half the per-leg points floor) and the cost of the collateral held
+     * a quote [c] over the fair the win share is [winShare]; a win earns c per dollar of pot, less [allowance] for our fair's own error (the pricer passes half of its error floor) and the cost of the collateral held
      * (collateral per dollar of pot is 1 - price, held [leadDays] + a quarter day, at [RfqConfig.minReturn] a day): net = c - allowance - cost. The score is win share x net, searched upward from [floorC].
      */
-    fun best(cls: String, fair: Double, nLegs: Int, leadDays: Double, floorC: Double, cfg: RfqConfig): Double? {
+    fun best(cls: String, fair: Double, nLegs: Int, leadDays: Double, floorC: Double, allowance: Double, cfg: RfqConfig): Double? {
         // the league's own answers when there are enough, else the kind of parlay across leagues
         val obs = synchronized(this) { byClass[cls]?.takeIf { it.size >= cfg.probeMinSamples } ?: byClass[coarse(cls)] }?.toList() ?: return null
         if (obs.size < cfg.probeMinSamples) return null
-        val allowance = 0.5 * cfg.minPoints * max(1, nLegs - 1)
         val hold = max(1.0, leadDays + 0.25)
         var bestC: Double? = null
         var bestScore = 0.0
@@ -100,7 +99,8 @@ class RfqMarketModel(private val keep: Int = 600, private val maxAgeMs: Long = 4
             val mix = when { prop && sameGame -> "psg"; prop -> "prop"; sameGame -> "sg"; else -> "gl" }
             val leagues = legs.map { it.league }.filter { it.isNotBlank() }.toSet()
             val league = when { leagues.size == 1 -> leagues.first(); leagues.isEmpty() -> "?"; else -> "multi" }
-            val band = when { fair < 0.15 -> "lo"; fair < 0.40 -> "mid"; else -> "hi" }
+            // "xs": a long shot under 3%, where the market's minimum price (about 1.7-2.1%) is far above the fair, a different business from the rest
+            val band = when { fair < 0.03 -> "xs"; fair < 0.15 -> "lo"; fair < 0.40 -> "mid"; else -> "hi" }
             return "$n|$mix|$league|$band"
         }
 

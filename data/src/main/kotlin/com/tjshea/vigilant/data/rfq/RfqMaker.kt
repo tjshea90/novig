@@ -259,7 +259,8 @@ class RfqMaker(
         }
         // The evidence counts only trades of RFQs the rules would QUOTE: a trade the rules decline (a same-game combination whose fair is an independent product, a leg in play...) says nothing about what a
         // quote of ours would meet. The journal row above keeps every fair for study.
-        (p?.decision as? RfqDecision.Quote)?.let { q ->
+        // A quote priced on the market's own ratio (props of one game: `via`) is judged against a fair built from the market, so it is no evidence of what the market pays over OUR fair: left out of the counters.
+        (p?.decision as? RfqDecision.Quote)?.takeIf { it.via.isEmpty() }?.let { q ->
             synchronized(margins) { margins.addLast((e.price - q.fair) * 100.0); while (margins.size > KEEP) margins.removeFirst() }
             if (q.price <= e.price + 1e-9) { wouldWin++; wouldEdge += (q.price - q.fair) * 100.0 }
             q.modelPrice?.let { m -> if (m <= e.price + 1e-9) { modelWouldWin++; modelWouldEdge += (m - q.fair) * 100.0 } }

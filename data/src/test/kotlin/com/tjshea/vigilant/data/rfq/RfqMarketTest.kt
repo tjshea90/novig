@@ -22,10 +22,11 @@ class RfqMarketTest {
 
     @Test fun aClassIsLegsKindOfLegLeagueAndTheSizeOfTheFair() {
         assertEquals("2|gl|NBA|mid", RfqMarketModel.classOf(listOf(leg("e1"), leg("e2")), 0.2))
+        assertEquals("a long shot under 3% is its own band", "2|gl|NBA|xs", RfqMarketModel.classOf(listOf(leg("e1"), leg("e2")), 0.02))
         assertEquals("3|sg|NFL|mid", RfqMarketModel.classOf(listOf(leg("e1", "SPREAD", "NFL"), leg("e1", "TOTAL", "NFL"), leg("e2", "MONEY", "NFL")), 0.3))
         assertEquals("2|prop|NBA|lo", RfqMarketModel.classOf(listOf(leg("e1"), leg("e2", "POINTS")), 0.05))
         assertEquals("2|psg|NBA|hi", RfqMarketModel.classOf(listOf(leg("e1", "POINTS"), leg("e1", "ASSISTS")), 0.6))
-        assertEquals("5+|gl|NBA|lo", RfqMarketModel.classOf(List(6) { leg("e$it") }, 0.01))
+        assertEquals("5+|gl|NBA|xs", RfqMarketModel.classOf(List(6) { leg("e$it") }, 0.01))
         assertEquals("first-half lines are game lines", "2|gl|NHL|mid", RfqMarketModel.classOf(listOf(leg("e1", "SPREAD_1H", "NHL"), leg("e2", "TOTAL_1H", "NHL")), 0.3))
         assertEquals("legs from two leagues", "2|gl|multi|mid", RfqMarketModel.classOf(listOf(leg("e1", "MONEY", "NBA"), leg("e2", "MONEY", "ATP")), 0.3))
         assertEquals("2|gl|*|mid", RfqMarketModel.coarse("2|gl|NBA|mid"))
@@ -38,11 +39,11 @@ class RfqMarketTest {
         assertEquals(10, m.samples("2|gl|ATP|mid")); assertEquals(110, m.samples("2|gl|*|mid"))
         val cfg = RfqConfig(minReturn = 0.0, minPoints = 0.0, probeMinSamples = 40)
         // ATP has too few answers of its own, so it prices from the kind of parlay across leagues: just under the 0.4 points the pack pays
-        val c = m.best("2|gl|ATP|mid", 0.30, 2, 0.0, 0.0005, cfg)!!
+        val c = m.best("2|gl|ATP|mid", 0.30, 2, 0.0, 0.0005, 0.0, cfg)!!
         assertTrue("falls back on the pooled answers (was $c)", c < 0.0045)
         // with 40 of its own the league speaks for itself
         repeat(40) { m.observe("2|gl|ATP|mid", 0.30, 0.32, 1L) }
-        assertTrue(m.best("2|gl|ATP|mid", 0.30, 2, 0.0, 0.0005, cfg)!! > 0.015)
+        assertTrue(m.best("2|gl|ATP|mid", 0.30, 2, 0.0, 0.0005, 0.0, cfg)!! > 0.015)
     }
 
     @Test fun theWinShareIsTheShareOfAnswersOurQuoteWouldHaveBeaten() {
@@ -71,14 +72,14 @@ class RfqMarketTest {
         // a market that pays 0.5 points over our fair 40% of the time and 1.5 points the other 60%
         repeat(40) { m.observe("c", 0.30, 0.305, 1L) }; repeat(50) { m.observe("c", 0.30, 0.315, 1L) }; repeat(10) { m.observe("c", 0.30, 0.316, 1L) }
         // one day to the games: below 0.5 points the net edge is negative (allowance + the cost of the collateral); between 0.5 and 1.5 the win share is 0.6; the score peaks just under the 1.5 points the market tolerates
-        val c = m.best("c", 0.30, 2, 1.0, 0.0005, cfg)!!
+        val c = m.best("c", 0.30, 2, 1.0, 0.0005, 0.0035, cfg)!!
         assertTrue("the margin lands one step under the 1.5 points the market tolerates 60% of the time (was $c)", c in 0.0140..0.0150)
-        assertNull("fewer than probeMinSamples answers: no model price", RfqMarketModel().also { it.observe("c", 0.3, 0.31, 1L) }.best("c", 0.3, 2, 1.0, 0.0, cfg))
+        assertNull("fewer than probeMinSamples answers: no model price", RfqMarketModel().also { it.observe("c", 0.3, 0.31, 1L) }.best("c", 0.3, 2, 1.0, 0.0, 0.0035, cfg))
         // never below the floor it is given
-        assertTrue(m.best("c", 0.30, 2, 1.0, 0.01, cfg)!! >= 0.01)
+        assertTrue(m.best("c", 0.30, 2, 1.0, 0.01, 0.0035, cfg)!! >= 0.01)
         // a market that quotes below our fair every time cannot be beaten: no price
         val low = RfqMarketModel(); repeat(60) { low.observe("c", 0.30, 0.29, 1L) }
-        assertNull(low.best("c", 0.30, 2, 1.0, 0.0005, cfg))
+        assertNull(low.best("c", 0.30, 2, 1.0, 0.0005, 0.0035, cfg))
     }
 
     @Test fun thePricerQuotesTheModelsPriceOnlyWhenTheConfigSaysSoAndNeverBelowTheFloors() {
@@ -97,7 +98,27 @@ class RfqMarketTest {
         assertTrue("the model prices just under what the market pays (two points over our fair): ${off.modelPrice}", off.modelPrice!! in 0.2650..0.2700)
         val on = RfqPricer.decide(created, now, live.copy(marketPricing = true), lf, 0.0, m) as RfqDecision.Quote
         assertEquals(off.modelPrice!!, on.price, 1e-12)
-        assertTrue("it never prices below the floors", on.price >= on.rulePrice)
+        // the model's own floor: relative error 2% x sqrt(2) x fair 0.25 = 0.7 point; the model never goes under it
+        assertTrue("never under the model's own floor", on.price >= 0.25 + 0.25 * 0.02 * Math.sqrt(2.0) - 1e-9)
+    }
+
+    @Test fun aLongParlayIsPricedByItsRelativeErrorNotAPointsFloorPerLeg() {
+        val now = 1_790_500_000_000L
+        val lf = LegFairs { id -> LegFair(id, "e$id", "l", 0.55, 5, now - 60_000L, now + 3 * 3_600_000L, false, "MONEY", league = "ATP") }
+        val ids = listOf("a", "b", "c", "d", "e")                                         // five legs at 0.55: fair 0.0503
+        val created = RfqProtocol.Created(now, "r", ids, now + 3_000L, 10.0)
+        val live = RfqConfig(mode = RfqConfig.Mode.LIVE, margin = 0.0, minReturn = 0.0, minPoints = 0.007, maxLegs = 7, maxCollateral = 250.0, maxOpenCollateral = 500.0, maxStake = 12.0, minFair = 0.01)
+        val m = RfqMarketModel()
+        val legs = ids.map { lf.leg(it)!! }
+        val cls = RfqMarketModel.classOf(legs, Math.pow(0.55, 5.0))
+        repeat(60) { m.observe(cls, Math.pow(0.55, 5.0), Math.pow(0.55, 5.0) + 0.006, 1L) }      // the market pays 0.6 point over our fair on a five-leg parlay
+        val off = RfqPricer.decide(created, now, live, lf, 0.0, m) as RfqDecision.Quote
+        assertTrue("the rule asks 0.7 point per extra leg: 2.8 points over a 5% parlay", off.rulePrice - off.fair > 0.027)
+        assertEquals("marketPricing off: the rule's price", off.rulePrice, off.price, 0.0)
+        assertNotNull(off.modelPrice)
+        val on = RfqPricer.decide(created, now, live.copy(marketPricing = true), lf, 0.0, m) as RfqDecision.Quote
+        assertTrue("on, the model prices it under the 0.6 point the market pays (was ${on.price - on.fair})", on.price - on.fair in 0.002..0.006)
+        assertTrue(on.price < on.rulePrice)
     }
 
     @Test fun pairsOfPropsInOneGameAreDeclinedWithTheIndependentFairUnlessTheMarketsRatioPricesThem() {
