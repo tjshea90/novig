@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "069397",
+ "kind": "interactive",
+ "task": "",
+ "branch": "claude/parlay-profitability-research-fy3tnz",
+ "head": "a2d030840b0a14a4a1bbadd5a9e5a36098d1ccb9",
+ "since": 1795129305,
+ "beat": 1795129305,
+ "beatIso": "2026-11-19T23:01:45Z",
+ "done": "",
+ "next": ""
+}
