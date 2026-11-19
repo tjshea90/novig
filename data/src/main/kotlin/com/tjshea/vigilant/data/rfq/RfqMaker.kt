@@ -199,7 +199,10 @@ class RfqMaker(
             return
         }
         // A quote we made is a quote we keep: the last look is rejected only when the win is not the one we quoted (a different price or a bigger stake than our maximum), never because the market moved.
-        val sound = kotlin.math.abs(e.price - p!!.quotePrice!!) < 5e-4 && e.wager <= (p.quoteMax ?: 0.0) + 0.005     // 5e-4: Novig may echo the price rounded to a thousandth; it fills at OUR price, and a rejection of our own win is a mark against the 99% confirm rate
+        // Novig echoes our four-decimal price rounded to a THOUSANDTH, so the echo is up to 0.0005 away from what we sent: 0.4495 came back as 0.450 on 2026-11-19, a gap of 5.0000000000000044e-4 in floating point,
+        // which the old 5e-4 bound refused: our own win was rejected, counted against the 99% confirm rate (1 reject in 12 last looks = 92%) and locked the maker for 5 minutes (MAKER_LOCKED, run 44474874762).
+        // The bound is 0.0006 (half a thousandth plus slack for the arithmetic): a rounding difference is never a reason to reject our own quote; it fills at OUR price.
+        val sound = kotlin.math.abs(e.price - p!!.quotePrice!!) < PRICE_ECHO_TOLERANCE && e.wager <= (p.quoteMax ?: 0.0) + 0.005
         val ok = send(RfqProtocol.confirm(nonce.incrementAndGet(), e.rfqId, e.quoteId, sound))
         if (sound && ok) confirmed++
         row("CONFIRM", e.rfqId) { put("confirmed", sound); put("sent", ok); put("wager", e.wager); put("price", e.price); put("quoteId", e.quoteId); put("ours", true) }
@@ -294,6 +297,8 @@ class RfqMaker(
         const val PENDING_MS = 120_000L
         const val TALLY_MS = 5 * 60_000L
         const val KEEP = 500
+        /** How far Novig's echo of our quote's price may be from the price we sent (it rounds to a thousandth): half a thousandth plus slack for floating point. */
+        const val PRICE_ECHO_TOLERANCE = 6e-4
         /** A quote's collateral stays reserved this long after its auction closes (the user may accept a while later). */
         const val RESERVE_AFTER_CLOSE_MS = 120_000L
     }
