@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "3641c1a9ab03de2efbbfaf0c97539baddba02cf0",
+ "head": "f76746de78584e7b84b8b601d218134e2065e3f6",
  "since": 1795103757,
- "beat": 1795119352,
- "beatIso": "2026-11-19T20:15:52Z",
- "done": "MK14: LIVE capital hurdle liveMinReturn .03 (+ paper journaling), leg + EXEC_RESULT journaling, tools/rfq_outcomes.py graded from ESPN (rfq-market.yml), expected-profit study; FULL suite green (4449)",
- "next": "rides the next engine handover (no reset); after tonight's games read OUTCOMES.md (would-win adverse selection); 24 h probes -> marketPricing/propPairsFromMarket; coverage: prop legs (MK11 ladder) and prop+prop same-game pairs"
+ "beat": 1795119382,
+ "beatIso": "2026-11-19T20:16:22Z",
+ "done": "MK15 part 1: ParlayBook/FillBook/ParlayHub (data), engine keeps each fill's legs + publishes parlays.json (cloud), rfq_fills_seed.json; app side next",
+ "next": "MK15: CloudClient.fetchParlays + CloudLink loop + Ui.parlays + ParlayHub screen in the Engine > Parlays section + tests (ParlayBookTest, ParlayHubTest, UI test); then full suite, land, engine picks up at handover (or one coordinated reset)"
 }
