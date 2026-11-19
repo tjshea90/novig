@@ -164,8 +164,8 @@ def build(cats, files):
             continue
         if any(o[0] not in SPORT or o[1] not in ("MONEY", "SPREAD", "TOTAL") for _, o in legs):
             skipped["a leg is not a graded game line"] += 1; continue
-        results, events = [], set()
-        for oid, o in legs:
+        results, events, legrec = [], set(), []
+        for i, (oid, o) in enumerate(legs):
             league, mt, strike, st, starts, eid, name = o
             ev = cat["events"].get(eid) or {}
             g = match_game(ev.get("desc"), ev.get("startsTs") or starts, games_for(league, [ev.get("startsTs") or starts], cache))
@@ -175,13 +175,15 @@ def build(cats, files):
             if res is None:
                 results = None; skipped["leg name not resolvable"] += 1; break
             results.append(res); events.add(eid)
+            lp = (c.get("legs") or [])
+            legrec.append((oid, lp[i]["p"] if len(lp) == len(legs) and "p" in lp[i] else None, res, eid))
         if results is None:
             continue
         if "push" in results:
             skipped["a push voids the parlay"] += 1; continue
         win = all(x == "win" for x in results)
         rows.append({"win": win, "fair": d["fair"], "exec": d["price"], "wager": d["wager"], "n": len(legs), "same": len(events) < len(legs), "league": legs[0][1][0] if len({l[1][0] for l in legs}) == 1 else "mixed",
-                     "ourPrice": d.get("ourPrice"), "ruleWouldWin": d.get("ruleWouldWin"), "rulePrice": d.get("rulePrice"), "maxWager": c.get("maxWager")})
+                     "legrec": legrec, "ourPrice": d.get("ourPrice"), "ruleWouldWin": d.get("ruleWouldWin"), "rulePrice": d.get("rulePrice"), "maxWager": c.get("maxWager")})
     return rows, skipped
 
 
@@ -201,6 +203,24 @@ def report(rows, skipped):
         b = [r for r in rows if lo <= r["fair"] < hi]
         if b:
             out.append("| %d-%d%% | %d | %.1f%% | %.1f%% | %.1f%% |" % (lo * 100, min(hi, 1) * 100, len(b), 100 * sum(r["win"] for r in b) / len(b), 100 * sum(r["fair"] for r in b) / len(b), 100 * sum(r["exec"] for r in b) / len(b)))
+    # The parlays share legs (one popular favorite sits in hundreds of them), so their results are not independent: the table above overstates its own precision. Distinct legs are the honest unit.
+    seen = {}
+    for r in rows:
+        for oid, p, res, eid in r["legrec"]:
+            if p is not None and oid not in seen:
+                seen[oid] = (p, res == "win", eid)
+    if seen:
+        out.append("")
+        out.append("distinct legs graded: %d in %d games; leg-level calibration (our single-leg fair vs how often the leg won):" % (len(seen), len({v[2] for v in seen.values()})))
+        out.append("")
+        out.append("| leg fair | n | hit rate | mean fair |")
+        out.append("|--|--:|--:|--:|")
+        for lo, hi in ((0, .3), (.3, .45), (.45, .55), (.55, .7), (.7, .85), (.85, 1.01)):
+            b = [v for v in seen.values() if lo <= v[0] < hi]
+            if b:
+                out.append("| %d-%d%% | %d | %.1f%% | %.1f%% |" % (lo * 100, min(hi, 1) * 100, len(b), 100 * sum(v[1] for v in b) / len(b), 100 * sum(v[0] for v in b) / len(b)))
+        hv = sum(v[1] for v in seen.values()) / len(seen); mv = sum(v[0] for v in seen.values()) / len(seen)
+        out.append("legs overall: hit %.1f%% vs mean fair %.1f%% (SE %.1f)" % (hv * 100, mv * 100, 100 * (hv * (1 - hv) / len(seen)) ** .5))
     w = [r for r in rows if r.get("ruleWouldWin")]
     out.append("")
     if w:
@@ -241,8 +261,8 @@ def selftest():
     assert grade_leg("SPREAD", "10.5", "MIL -10.5", [], g) == "loss" and grade_leg("SPREAD", "10.5", "POR +10.5", [], g) == "win"
     assert grade_leg("MONEY", "0", "MIL", ["MIL", "POR"], g) == "win" and grade_leg("MONEY", "0", "POR", ["MIL", "POR"], g) == "loss"
     assert grade_leg("MONEY", "0", "XXX", ["XXX", "POR"], g) == "win"      # the home team by elimination of the away abbreviation
-    rows = [{"win": True, "fair": .4, "exec": .45, "wager": 10.0, "n": 2, "same": False, "league": "NBA", "ourPrice": .43, "ruleWouldWin": True, "rulePrice": .43, "maxWager": 10.0},
-            {"win": False, "fair": .4, "exec": .45, "wager": 10.0, "n": 2, "same": False, "league": "NBA", "ourPrice": .43, "ruleWouldWin": True, "rulePrice": .43, "maxWager": 10.0}]
+    rows = [{"legrec": [], "win": True, "fair": .4, "exec": .45, "wager": 10.0, "n": 2, "same": False, "league": "NBA", "ourPrice": .43, "ruleWouldWin": True, "rulePrice": .43, "maxWager": 10.0},
+            {"legrec": [], "win": False, "fair": .4, "exec": .45, "wager": 10.0, "n": 2, "same": False, "league": "NBA", "ourPrice": .43, "ruleWouldWin": True, "rulePrice": .43, "maxWager": 10.0}]
     s = report(rows, collections.Counter())
     assert "graded parlays: 2" in s and "realized profit at OUR price: $+" in s or "realized profit at OUR price: $-" in s, s
     print("rfq_outcomes selftest ok"); return 0
