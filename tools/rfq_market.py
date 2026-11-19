@@ -24,6 +24,8 @@ def rows(files):
             try:
                 with op(fn, "rt") as f:
                     for line in f:
+                        if '"kind":"PROBE"' not in line and '"kind":"EXECUTED"' not in line and '"kind": "PROBE"' not in line and '"kind": "EXECUTED"' not in line:
+                            continue                                    # millions of CREATED/CLOSED rows are never decoded
                         try:
                             r = json.loads(line)
                             r["d"] = json.loads(r.get("data") or "{}")
@@ -140,7 +142,8 @@ if __name__ == "__main__":
     if a == ["selftest"]:
         sys.exit(selftest())
     if a and a[0] == "run" and len(a) > 1:
-        rs = list(rows(a[1:]))
+        # one pass, keeping only the two kinds this reads: a day of journals is millions of CREATED/CLOSED rows
+        rs = [r for r in rows(a[1:]) if r.get("kind") in ("PROBE", "EXECUTED")]
         print(render_probe(probe_table(rs)))
         print()
         print(executed_table(rs))

@@ -1,0 +1,41 @@
+name: Parlay maker market table (MK12, Tj 2026-11-19)
+
+# Free, no Claude usage, no key. Every 6 hours reads the engine's rfq-<day> journals from the cloud-archive Releases (today's and yesterday's), prints what the OTHER makers charge per class of parlay
+# (the engine's market probe asks Novig's keyless parlay price for a sample of the RFQs it prices) and how the market model's price would have done on the trades that really happened
+# (tools/rfq_market.py), and keeps the table in the `rfq-market` Release as SUMMARY.md (never delete). Judge `marketPricing` by it (research/novig_parlay_maker_2026-11-19.md section 8).
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 */6 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rfq-market
+  cancel-in-progress: false
+
+jobs:
+  table:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - run: python3 -I tools/rfq_market.py selftest
+      - name: Read the journals and build the table
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          mkdir -p j
+          for d in "$(date -u +%F)" "$(date -u -d yesterday +%F)"; do
+            gh release download "cloud-archive-$d" --pattern "rfq-*.jsonl.gz" --dir j --clobber 2>/dev/null || echo "no rfq journals in cloud-archive-$d"
+          done
+          ls j | wc -l
+          { echo "# What the other makers charge (probe), $(date -u +%F' '%H:%M) UTC"; echo; python3 -I tools/rfq_market.py run 'j/*.jsonl.gz'; } > SUMMARY.md
+          cat SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+          tag="rfq-market"
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "Parlay maker: what the other makers charge" --notes "SUMMARY.md, rewritten every 6 hours by rfq-market.yml from the engine's rfq journals (tools/rfq_market.py). Never delete."
+          gh release upload "$tag" SUMMARY.md --clobber
