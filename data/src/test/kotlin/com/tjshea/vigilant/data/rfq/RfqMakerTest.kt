@@ -226,7 +226,7 @@ class RfqMakerTest {
         r.maker.onEvent(created("a", "b"))
         r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-7"))
         r.sent.clear()
-        r.legs = listOf(leg("a", "e1", 0.9), leg("b", "e2", 0.9))                       // the fair moved a lot: still confirmed
+        r.legs = listOf(leg("a", "e1", 0.76), leg("b", "e2", 0.76))                     // the fair moved a lot (0.2 -> 0.58; 0.9 each would now be declined as too likely to win, MK16): still confirmed
         r.maker.onEvent(RfqProtocol.QuoteAccepted(now, "rfq-1", "q1", 10.0, 0.216, "rfq-1"))
         val c = json.parseToJsonElement(r.sent.single()).jsonObject["confirm"]!!.jsonObject
         assertEquals("true", c["confirmed"]!!.jsonPrimitive.content)
@@ -237,7 +237,6 @@ class RfqMakerTest {
         assertEquals("true", json.parseToJsonElement(r.sent.single()).jsonObject["confirm"]!!.jsonObject["confirmed"]!!.jsonPrimitive.content)
         r.sent.clear()
         // Novig rounds the echoed price to a thousandth: 0.4495 came back as 0.450 on 2026-11-19 and the old 5e-4 bound rejected our own win (92% confirm rate, MAKER_LOCKED). Both extremes of the rounding are ours.
-        r.legs = listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                       // (the fair at 0.9 each would now be declined as too likely to win: MK16)
         r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-8"))
         val sentPrice = json.parseToJsonElement(r.sent.single()).jsonObject["quote"]!!.jsonObject["price"]!!.jsonPrimitive.content.toDouble()
         r.sent.clear()
