@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "a3f74b56ac7341a09fd1b06561e2781ff1d4df88",
+ "head": "ace6bacda6bbe92c6066fccbf85248aee3ef080b",
  "since": 1795047736,
- "beat": 1795070412,
- "beatIso": "2026-11-19T06:40:12Z",
- "done": "MK10c: same-game (side+total, 8%) and prop (20%/leg) parlay premiums",
- "next": "land, reset engine, watch quotes by class"
+ "beat": 1795070474,
+ "beatIso": "2026-11-19T06:41:14Z",
+ "done": "MK10d: parlay fair index keeps lines across scan passes (hot passes held a third of the lines)",
+ "next": "reset engine; watch no-fair share"
 }
