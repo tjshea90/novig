@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "11c6c27b754f1682acae0acc88b7732f429f6d30",
+ "head": "a3f74b56ac7341a09fd1b06561e2781ff1d4df88",
  "since": 1795047736,
- "beat": 1795069538,
- "beatIso": "2026-11-19T06:25:38Z",
- "done": "correct CHANGES MK10b",
- "next": "same"
+ "beat": 1795069567,
+ "beatIso": "2026-11-19T06:26:07Z",
+ "done": "MK10c: same-game (side+total, 8%) and prop (20%/leg) parlay premiums",
+ "next": "land, reset engine, watch quotes by class"
 }
