@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "4c7a836086b7b19f19be4f7f5e659cdccfac008a",
  "since": 1795123003,
- "beat": 1795126241,
- "beatIso": "2026-11-19T22:10:41Z",
+ "beat": 1795126403,
+ "beatIso": "2026-11-19T22:13:23Z",
  "done": "MK17: tonight's options (only today, longshots <=25% with 3% premium, wallet as the collateral limit), safe-edge floor, same-day hold, wallet status, app options card + steppers, positive-EV pass written; FULL suite green (4472)",
  "next": "post board, ONE engine reset (confirm startedAtMs + status.rfq.walletCash), ship v1.0.142 (versionCode 482) + release.yml, set the Tonight options in config (SHADOW), tell Tj to tap Live when funded"
 }
