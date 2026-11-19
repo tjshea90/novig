@@ -614,6 +614,20 @@ fun main(args: Array<String>) = runBlocking {
             delay(10 * 60_000L)
         }
     }
+    // MK15 (Tj 2026-11-19: "a parlay hub"): what the engine remembers of each parlay it filled (its legs, carried job to job in `rfq-fills.json`, seeded with the 16 parlays filled before it kept them),
+    // each leg's result as Novig grades it, and the book the phone reads (`parlays.json`).
+    val rfqFills = java.util.concurrent.ConcurrentHashMap<String, com.tjshea.vigilant.data.rfq.FillRecord>()
+    val rfqLegResults = java.util.concurrent.ConcurrentHashMap<String, String>()
+    val rfqBook = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.rfq.ParlayBook?>(null)
+    run {
+        val seed = runCatching { com.tjshea.vigilant.data.rfq.FillBook::class.java.getResourceAsStream("/rfq_fills_seed.json")?.bufferedReader()?.readText() }.getOrNull()
+        val carried = runCatching { PreviousFeed.read(git, cfgDir, "rfq-fills.json") }.getOrNull()
+        com.tjshea.vigilant.data.rfq.FillBook.merge(com.tjshea.vigilant.data.rfq.FillBook.decode(carried), com.tjshea.vigilant.data.rfq.FillBook.decode(seed)).forEach { rfqFills[it.rfqId] = it }
+        runCatching { PreviousFeed.read(git, cfgDir, "parlays.json") }.getOrNull()?.let { rfqBook.set(com.tjshea.vigilant.data.rfq.ParlayBook.parse(it)) }
+        if (rfqFills.isNotEmpty()) publisher.stageExtra("rfq-fills.json", com.tjshea.vigilant.data.rfq.FillBook.encode(rfqFills.values))
+        rfqBook.get()?.let { publisher.stageExtra("parlays.json", com.tjshea.vigilant.data.rfq.ParlayBook.encode(it)) }
+        log("RFQ parlay hub: ${rfqFills.size} fills remembered, ${rfqBook.get()?.parlays?.size ?: 0} parlays in the book")
+    }
     val rfqMaker = com.tjshea.vigilant.data.rfq.RfqMaker(
         config = { rfqCfg.get() }, fairs = rfqLegFairs, openCollateral = { rfqCollateral.get() }, send = { rfqSocketRef.get()?.send(it) == true },
         journal = { runCatching { rfqJournal.append(it) } },
@@ -621,6 +635,7 @@ fun main(args: Array<String>) = runBlocking {
         log = { log("RFQ maker: $it") },
         legInfo = { id -> outcomeIndex.get()[id]?.marketLabel },
         market = rfqMarket, probe = rfqProbe, cash = { rfqCash.get() }, exposure = { com.tjshea.vigilant.data.rfq.RfqLedger.exposure(rfqExecs.get()) },
+        onFill = { r -> if (rfqFills.putIfAbsent(r.rfqId, r) == null) runCatching { publisher.stageExtra("rfq-fills.json", com.tjshea.vigilant.data.rfq.FillBook.encode(rfqFills.values)) } },
     )
     val rfqSocket = com.tjshea.vigilant.data.rfq.RfqSocket(http, { rfqClient }, rfqMaker, { rfqCfg.get() }, scope, log = { log(it) }).also { rfqSocketRef.set(it) }
     // The docs allow 10 sockets per key and Novig drops event frames when a connection's 256-frame queue is full (`quote_accepted` is one, with a 1-second answer window): in LIVE a second socket on the same key
@@ -669,6 +684,26 @@ fun main(args: Array<String>) = runBlocking {
                                     }.toString()))
                             }
                         }
+                        // The parlay hub's book: the ledger joined to each fill's legs, with each started leg's result read from Novig's catalog (a graded market leaves it, so a result once seen is kept).
+                        if (execs.isNotEmpty() || rfqBook.get() != null) runCatching {
+                            val nowMs = System.currentTimeMillis()
+                            for ((id, r) in rfqFills.entries.toList()) if (r.legs.any { it.marketId.isBlank() }) {
+                                val fixed = r.legs.map { l -> if (l.marketId.isBlank()) rfqLegFairs.leg(l.outcomeId)?.marketId?.takeIf { it.isNotBlank() }?.let { m -> l.copy(marketId = m) } ?: l else l }
+                                if (fixed != r.legs) rfqFills[id] = r.copy(legs = fixed)
+                            }
+                            val fillsMap = rfqFills.toMap()
+                            val mode = rfqCfg.get().mode.name
+                            val before = rfqBook.get()
+                            val draft = com.tjshea.vigilant.data.rfq.ParlayBook.build(execs, fillsMap, { rfqLegResults[it] }, before, nowMs, mode)
+                            for (leg in com.tjshea.vigilant.data.rfq.ParlayBook.legsToGrade(draft, fillsMap, nowMs).take(40)) {
+                                val m = runCatching { novig.market(leg.marketId) }.getOrNull()
+                                com.tjshea.vigilant.data.rfq.ParlayBook.gradeOf(m?.outcomes?.firstOrNull { it.outcomeId == leg.outcomeId }?.status)?.let { rfqLegResults[leg.outcomeId] = it }
+                            }
+                            val book = com.tjshea.vigilant.data.rfq.ParlayBook.build(execs, fillsMap, { rfqLegResults[it] }, before, nowMs, mode)
+                            val unchanged = before != null && before.parlays == book.parlays && before.mode == book.mode && nowMs - before.ledgerAtMs < 10 * 60_000L
+                            if (!unchanged) { rfqBook.set(book); publisher.stageExtra("parlays.json", com.tjshea.vigilant.data.rfq.ParlayBook.encode(book)) }
+                            publisher.stageExtra("rfq-fills.json", com.tjshea.vigilant.data.rfq.FillBook.encode(rfqFills.values))
+                        }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("RFQ parlay hub: ${e.message?.take(120)}") }
                         rfqMaker.onLedger(com.tjshea.vigilant.data.rfq.RfqLedger.summarize(execs, System.currentTimeMillis()))
                     }
                     cycle++
