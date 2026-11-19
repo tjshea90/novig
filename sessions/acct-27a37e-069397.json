@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "29f586c1f1999ed75dc96720a0d349f2d368706d",
+ "head": "c0b6e5d488300a16be4fafbf37198d7ada6e4f34",
  "since": 1795103757,
- "beat": 1795105595,
- "beatIso": "2026-11-19T16:26:35Z",
+ "beat": 1795105792,
+ "beatIso": "2026-11-19T16:29:52Z",
  "done": "MK12b: same-game copula (RfqCorrelation: Gauss+SameGame, measured rho by league NBA/NFL/NHL/NCAAF/NCAAB) wired into RfqPricer; RfqMarket (probe of Novig keyless parlay price + per-class demand model + optimal margin) wired into RfqMaker/CloudMain; tests RfqCorrelationTest, RfqMarketTest, RfqMakerTest green",
  "next": "MK12c: rfq_set.py (sameGamePremium 0.02, probe, marketPricing, probeMinSamples), research doc, full test gate, land on main, engine reset + verify new job startedAtMs; then ladder/Novig-mid coverage"
 }
