@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "d59704ef65da30ce767957db374a930b63698ed6",
  "since": 1795123003,
- "beat": 1795126599,
- "beatIso": "2026-11-19T22:16:39Z",
+ "beat": 1795126860,
+ "beatIso": "2026-11-19T22:21:00Z",
  "done": "pre-release: MK17: parlay options on the Maker page: only parlays that finish today, longshots only (25% or less), the wallet as the collateral limit, a Tonight button, safety margins; plus the parlay hub (versionCode 482, v1.0.142)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.142), then run: bash tools/record-release.sh v1.0.142 482 \"MK17: parlay options on the Maker page: only parlays that finish today, longshots only (25% or less), the wallet as the collateral limit, a Tonight button, safety margins; plus the parlay hub\""
 }
