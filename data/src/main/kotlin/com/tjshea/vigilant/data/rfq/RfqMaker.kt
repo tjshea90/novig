@@ -217,11 +217,11 @@ class RfqMaker(
                 is RfqDecision.Quote -> {
                     put("decision", "quote"); put("price", d.price); put("maxWager", d.maxWager); put("fair", d.fair); put("edge", d.edge)
                     put("rulePrice", d.rulePrice); d.modelPrice?.let { put("modelPrice", it) }; if (d.via.isNotEmpty()) put("via", d.via)
-                    put("legs", buildJsonArray { d.legs.forEach { l -> add(buildJsonObject { put("label", l.label); put("p", l.probability); put("books", l.books); put("startsMs", l.startsMs) }) } })
+                    put("legs", buildJsonArray { d.legs.forEach { l -> add(legJson(l)) } })
                 }
                 is RfqDecision.Decline -> {
                     put("decision", "decline"); put("reason", d.reason); put("fair", d.fair?.let { JsonPrimitive(it) } ?: JsonNull)
-                    put("legs", buildJsonArray { d.legs.forEach { l -> add(buildJsonObject { put("label", l.label); put("p", l.probability); put("books", l.books); put("startsMs", l.startsMs) }) } })
+                    put("legs", buildJsonArray { d.legs.forEach { l -> add(legJson(l)) } })
                 }
             }
         }
@@ -284,6 +284,12 @@ class RfqMaker(
         if (ok) synchronized(answeredLooks) { answeredLooks.add(e.quoteId); while (answeredLooks.size > 2_000) answeredLooks.remove(answeredLooks.first()) }
         if (sound && ok) confirmed++
         row("CONFIRM", e.rfqId) { put("confirmed", sound); put("sent", ok); put("wager", e.wager); put("price", e.price); put("quoteId", e.quoteId); put("ours", true) }
+    }
+
+    /** One leg as journaled: the fair and what is needed to grade the leg later from the final score (the outcome's name, its event's "Away @ Home", the market type and league): MK14. */
+    private fun legJson(l: LegFair) = buildJsonObject {
+        put("label", l.label); put("p", l.probability); put("books", l.books); put("startsMs", l.startsMs)
+        put("type", l.marketType); put("league", l.league); put("name", l.outcomeName); put("desc", l.eventDesc); put("event", l.eventId); put("outcome", l.outcomeId)
     }
 
     private fun executed(e: RfqProtocol.Executed) {

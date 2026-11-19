@@ -129,6 +129,9 @@ data class LegFair(
     val awayTeam: Boolean = false,
     /** Novig's league name (NBA, NFL, NCAAF...): picks the margin/total calibration in [SameGame.SPORTS]. */
     val league: String = "",
+    /** The outcome's own name ("MIL +31.5", "Over 234.5", "MIL") and its event's "Away @ Home": journaled with the quote so the parlay can be graded from the final score later, whatever has left the catalog (MK14). */
+    val outcomeName: String = "",
+    val eventDesc: String = "",
 )
 
 fun interface LegFairs { fun leg(outcomeId: String): LegFair? }
