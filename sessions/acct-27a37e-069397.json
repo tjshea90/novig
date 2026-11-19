@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "9398be95b0af937c15e9b5faf9fabe7cfb91c802",
  "since": 1795103757,
- "beat": 1795120118,
- "beatIso": "2026-11-19T20:28:38Z",
+ "beat": 1795120124,
+ "beatIso": "2026-11-19T20:28:44Z",
  "done": "pre-ship: MK15: Parlay hub (Engine > Parlays > My parlays): open and closed parlays with every leg's status, profit/loss, collateral, expected final time, what you keep if the buyers lose",
  "next": "ship.sh gates and releases this"
 }
