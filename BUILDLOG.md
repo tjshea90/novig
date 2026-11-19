@@ -482,3 +482,4 @@ day that changes.
 | v1.0.141 | code 481 | 2026-11-19T20:46Z | MK15: Parlay hub (Engine > Parlays > My parlays): open and closed parlays with every leg's status, profit/loss, collateral, expected final time, what you keep if the buyers lose
 | v1.0.142 | code 482 | 2026-11-19T22:23Z | MK17: parlay options on the Maker page (only today, longshots, wallet as the collateral limit, Tonight button)
 | v1.0.143 | code 483 | 2026-11-19T22:36Z | MK17b: Parlays tiles show the whole wallet and the cash free to post when the wallet is the collateral limit; parlay options; parlay hub
+| v1.0.144 | code 484 | 2026-11-19T22:54Z | MK18: parlay controls show your change at once and confirm when the engine has it; faster engine config read; coverage study
