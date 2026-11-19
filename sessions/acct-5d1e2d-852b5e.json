@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "b8f1b4122fe6bdef9f3518fc10f9e56c1e7f9ce4",
+ "head": "9edcaab921d671fb48e45f52d985669644d8708a",
  "since": 1795047736,
- "beat": 1795068579,
- "beatIso": "2026-11-19T06:09:39Z",
- "done": "v1.0.140 recorded; MK10 coverage shipped to engine, reset",
- "next": "next: read status.rfq priceable share; same-game pricing only with evidence"
+ "beat": 1795068617,
+ "beatIso": "2026-11-19T06:10:17Z",
+ "done": "MK10b: rfq maxFairAge 10min, maxLegs 5 (rfq_set)",
+ "next": "check status.rfq quotes/won after scan; margin study at 200 priced trades"
 }
