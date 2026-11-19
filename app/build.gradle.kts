@@ -19,8 +19,8 @@ android {
         // (lint NewApi clean). Was 30: the target device (a Moto G 2026) ships far newer, headroom for whatever other device is on hand.
         minSdk = 29
         targetSdk = 36
-        versionCode = 482
-        versionName = "1.0.142"
+        versionCode = 483
+        versionName = "1.0.143"
         // The book this app prices: Novig. The `mgm` module builds Vigilant MGM from these same
         // sources with "betmgm" (AppBook.kt, BRIEF.md). Never change this one.
         buildConfigField("String", "BOOK", "\"novig\"")
