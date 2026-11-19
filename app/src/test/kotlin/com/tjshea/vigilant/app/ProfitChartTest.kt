@@ -129,7 +129,7 @@ class ProfitChartTest {
         compose.onNodeWithTag("profitCanvas").assertDoesNotExist()
         // No wallet reading: all time is the three settled bets (-1, +1, -1), said so.
         compose.onNodeWithTag("profitAllTime").assertTextEquals("−\$1.00")
-        compose.onNodeWithTag("profitAllTimeHow").assertTextContains("From the 3 bets and bids with a final result", substring = true)
+        compose.onNodeWithTag("profitAllTimeHow").assertTextContains("from the 3 bets and bids with a final result", substring = true)
     }
 
     @Test
@@ -142,11 +142,11 @@ class ProfitChartTest {
     }
 
     @Test
-    fun `all-time ignores the wallet and deposits, final bets only`() {
+    fun `all-time headline is the wallet less net money put in (TR5)`() {
         val m = WalletProfit.Money(198.63, 42.55, 12, 250.0, 20.0, 3, now - 120_000L)
         show(tenDays, TrackerPeriod.TODAY, WalletMoneyUi(m))
-        compose.onNodeWithTag("profitAllTime").assertTextEquals("\$0.00")
-        compose.onNodeWithTag("profitAllTimeHow").assertTextContains("Deposits and withdrawals are not used", substring = true)
+        compose.onNodeWithTag("profitAllTime").assertTextEquals("+\$11.18")
+        compose.onNodeWithTag("profitAllTimeHow").assertTextContains("Headline = the Vigilant wallet", substring = true)
     }
 
     @Test
