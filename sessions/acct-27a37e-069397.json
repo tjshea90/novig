@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "53c1b79c20220cb90193d076eb3e2ab254a09492",
+ "head": "e57e31fd4bc49e9931c7f3e0bd8199b4dc33c224",
  "since": 1795129305,
- "beat": 1795131835,
- "beatIso": "2026-11-19T23:43:55Z",
+ "beat": 1795131987,
+ "beatIso": "2026-11-19T23:46:27Z",
  "done": "MK19/MK17d: app tests green; landing the engine fixes",
  "next": "graceful engine reset then verify"
 }
