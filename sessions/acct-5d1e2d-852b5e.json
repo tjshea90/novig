@@ -5,11 +5,11 @@
  "nonce": "852b5e",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-9ecyw8",
+ "branch": "claude/optimistic-curie-yvknhs",
  "head": "f3894246d8b5bafe2fd0a8942d61fd5ee9a2350f",
  "since": 1794983019,
- "beat": 1795044348,
- "beatIso": "2026-11-18T23:25:48Z",
+ "beat": 1795047674,
+ "beatIso": "2026-11-19T00:21:14Z",
  "done": "chat: answered Tj on ledger-based P/L; TR4 logged",
  "next": "TR3/TR4: single ledger source per game day"
 }
