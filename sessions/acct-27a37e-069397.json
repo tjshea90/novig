@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "a2d030840b0a14a4a1bbadd5a9e5a36098d1ccb9",
+ "head": "dd43d9baee8d52485652058a0f2feea5f3c0b4a6",
  "since": 1795129305,
- "beat": 1795129305,
- "beatIso": "2026-11-19T23:01:45Z",
+ "beat": 1795129491,
+ "beatIso": "2026-11-19T23:04:51Z",
  "done": "",
  "next": ""
 }
