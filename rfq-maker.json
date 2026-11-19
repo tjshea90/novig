@@ -1,1 +1,1 @@
-{"mode":"LIVE","margin":0.02,"minReturn":0.039999999999999994,"allowProps":false,"minPoints":0.01,"maxStake":12.0,"maxCollateral":75.0,"maxOpenCollateral":150.0,"minBooks":3,"maxFairAgeMs":600000,"maxLegs":7,"minLeadMs":1200000,"maxDaysAhead":5,"minFair":0.01,"maxFair":0.85,"dayLossStop":20.0}
+{"mode":"LIVE","margin":0.02,"minReturn":0.01,"allowProps":false,"minPoints":0.01,"maxStake":12.0,"maxCollateral":75.0,"maxOpenCollateral":150.0,"minBooks":3,"maxFairAgeMs":600000,"maxLegs":7,"minLeadMs":1200000,"maxDaysAhead":5,"minFair":0.01,"maxFair":0.85,"dayLossStop":20.0}
