@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "4c7a836086b7b19f19be4f7f5e659cdccfac008a",
+ "head": "8abd100541b2da35f99fdcfe5497daf11f272d93",
  "since": 1795123003,
- "beat": 1795126403,
- "beatIso": "2026-11-19T22:13:23Z",
- "done": "MK17: tonight's options (only today, longshots <=25% with 3% premium, wallet as the collateral limit), safe-edge floor, same-day hold, wallet status, app options card + steppers, positive-EV pass written; FULL suite green (4472)",
- "next": "post board, ONE engine reset (confirm startedAtMs + status.rfq.walletCash), ship v1.0.142 (versionCode 482) + release.yml, set the Tonight options in config (SHADOW), tell Tj to tap Live when funded"
+ "beat": 1795126418,
+ "beatIso": "2026-11-19T22:13:38Z",
+ "done": "pre-release: MK17: parlay options on the Maker page: only parlays that finish today, longshots only (25% or less), the wallet as the collateral limit, a Tonight button, safety margins; plus the parlay hub (versionCode 482, v1.0.142)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.142), then run: bash tools/record-release.sh v1.0.142 482 \"MK17: parlay options on the Maker page: only parlays that finish today, longshots only (25% or less), the wallet as the collateral limit, a Tonight button, safety margins; plus the parlay hub\""
 }
