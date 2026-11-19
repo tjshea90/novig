@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "6c5b2b5571e3f78c884c1da8a9df285ce38ee4c2",
+ "head": "b8f1b4122fe6bdef9f3518fc10f9e56c1e7f9ce4",
  "since": 1795047736,
- "beat": 1795066262,
- "beatIso": "2026-11-19T05:31:02Z",
- "done": "MK10: parlay leg fair index uses every priced outcome (not only ones Novig asks)",
- "next": "engine reset to pick up; read status.rfq declines"
+ "beat": 1795066311,
+ "beatIso": "2026-11-19T05:31:51Z",
+ "done": "v1.0.140 recorded; MK10 coverage shipped to engine, reset",
+ "next": "next: read status.rfq priceable share; same-game pricing only with evidence"
 }
