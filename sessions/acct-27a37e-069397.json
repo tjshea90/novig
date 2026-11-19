@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "903a244866cdca1291c40666b84ea2b3934d96f6",
+ "head": "f3bcc56affba75a75c882ffc84a3b4367733c24e",
  "since": 1795103757,
- "beat": 1795120017,
- "beatIso": "2026-11-19T20:26:57Z",
- "done": "MK15 part 1: ParlayBook/FillBook/ParlayHub (data), engine keeps each fill's legs + publishes parlays.json (cloud), rfq_fills_seed.json; app side next",
- "next": "MK15: CloudClient.fetchParlays + CloudLink loop + Ui.parlays + ParlayHub screen in the Engine > Parlays section + tests (ParlayBookTest, ParlayHubTest, UI test); then full suite, land, engine picks up at handover (or one coordinated reset)"
+ "beat": 1795120042,
+ "beatIso": "2026-11-19T20:27:22Z",
+ "done": "MK15: parlay hub built (engine parlays.json + fills memory + seed, phone hub screen, tests); FULL suite green (4464)",
+ "next": "land (push.sh), post board note, ONE engine reset so parlays.json publishes (confirm startedAtMs + parlays.json on cloud-feed), then ship.sh + release.yml for the app, send Tj the link"
 }
