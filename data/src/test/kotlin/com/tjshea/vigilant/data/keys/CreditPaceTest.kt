@@ -186,9 +186,16 @@ class CreditPaceTest {
         now += 3 * 60_000L; answer(343_700, 3)                  // late again, after the stale window, by 1,200 credits: lag, not a new billing cycle
         val u = m.flow.value.providers.getValue("parlay").keys.getValue("biz")
         assertEquals("the month is still Nov 1 to Dec 1", Instant.parse("2026-11-01T00:00:00Z").toEpochMilli(), u.periodStart)
-        // 19 of 30 days' share of a million is allowed through today: about 289,000 may go tonight, not 0
+        // (met part-way through its period with 344,000 already used: what is left is spread over the days left, about 59,000 a day, not 0)
         val today = business.spendableToday(u, now)
-        assertTrue("spendable tonight: $today", today in 200_000..330_000)
+        assertTrue("spendable tonight: $today", today in 40_000..80_000)
+        // The engine's real key: seen since Oct 28 (before the credits month), 552,000 credits charged by the app: its whole million is the month's, 19 of 30 days' share is allowed through today, so about 296,000 may go
+        val real = KeyUsage(periodStart = Instant.parse("2026-11-01T00:00:00Z").toEpochMilli(), used = 344_053, remaining = 655_947, limit = 1_000_000, firstSeenMs = Instant.parse("2026-10-28T03:00:00Z").toEpochMilli(), charged = 551_695,
+            resetAtMs = Instant.parse("2026-12-01T00:00:00Z").toEpochMilli())
+        val realToday = business.spendableToday(real, now)
+        assertTrue("spendable tonight on the real figures: $realToday", realToday in 250_000..330_000)
+        // and what the meter did before this fix: its period start moved to NOW, which leaves nothing
+        assertEquals(0, business.spendableToday(real.copy(periodStart = now), now))
         // a real reset (the count falls to almost nothing) is still followed
         now += 6 * 3_600_000L; answer(40, 3)
         assertEquals(now, m.flow.value.providers.getValue("parlay").keys.getValue("biz").periodStart)
