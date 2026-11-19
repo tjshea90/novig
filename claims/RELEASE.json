@@ -5,7 +5,7 @@
  "label": "acct-27a37e",
  "name": "tj Gmail",
  "nonce": "069397",
- "note": "MK17: parlay options on the Maker page: only parlays that finish today, longshots only (25% or less), the wallet as the collateral limit, a Tonight button, safety margins; plus the parlay hub",
+ "note": "MK17b: Parlays tiles show the whole wallet and the cash free to post when the wallet is the collateral limit (not the old fixed 80 dollars); parlay options; parlay hub",
  "since": 1795126241,
- "beat": 1795126999
+ "beat": 1795127005
 }

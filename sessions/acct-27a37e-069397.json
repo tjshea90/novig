@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "328ab2f64c67f384739903661c69d4e72148975f",
  "since": 1795123003,
- "beat": 1795126999,
- "beatIso": "2026-11-19T22:23:19Z",
+ "beat": 1795127005,
+ "beatIso": "2026-11-19T22:23:25Z",
  "done": "pre-ship: MK17b: Parlays tiles show the whole wallet and the cash free to post when the wallet is the collateral limit (not the old fixed 80 dollars); parlay options; parlay hub",
  "next": "ship.sh gates and releases this"
 }
