@@ -1,13 +1,13 @@
-# CHECKPOINT 4668 — read me first, then TASKS.md
+# CHECKPOINT 4669 — read me first, then TASKS.md
 
-**Written:** 2026-11-19T05:31:51Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-aoglz9` · **builds on:** `a05fdf0af` (this checkpoint is the commit after it)
+**Written:** 2026-11-19T06:10:16Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-aoglz9` · **builds on:** `b8f1b4122` (this checkpoint is the commit after it)
 
 ## Just done
-v1.0.140 recorded; MK10 coverage shipped to engine, reset
+MK10b: rfq maxFairAge 10min, maxLegs 5 (rfq_set)
 
 ## Do this next
-next: read status.rfq priceable share; same-game pricing only with evidence
+check status.rfq quotes/won after scan; margin study at 200 priced trades
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ next: read status.rfq priceable share; same-game pricing only with evidence
 
 ## Last ten checkpoints
 ```
+  b8f1b4122 ckpt 4668: v1.0.140 recorded; MK10 coverage shipped to engine, reset
   6c5b2b557 ckpt 4667: MK10: parlay leg fair index uses every priced outcome (not only ones Novig 
   ee40cd183 ckpt 4666: GD2 + TR5 shipped v1.0.140; MK10 parlay data read
   e4240e81d ckpt 4665: pre-release: GD2 grade fills with bare wording; TR5 profit headline back to
@@ -26,5 +27,4 @@ next: read status.rfq priceable share; same-game pricing only with evidence
   698a37e43 ckpt 4661: pre-ship: GD1: grade games the first score feed lacks via the other feeds
   cc9ca8671 ckpt 4660: GD1: ChainedScores merges second feed's missing games; tests green
   54f451807 ckpt 4659: chat wake: answered Tj on P/L, wallet API; TR5 open
-  e21b0480c ckpt 4658: chat: TR5 logged (tracker -53 vs ledger -255 mismatch), answered Tj
 ```
