@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "d94a984bebcbe818ce636c3b800a4df85820e744",
+ "head": "7b6f93e3c87cce318ba7d874df5a014eee2d3071",
  "since": 1795047736,
- "beat": 1795128060,
- "beatIso": "2026-11-19T22:41:00Z",
+ "beat": 1795128677,
+ "beatIso": "2026-11-19T22:51:17Z",
  "done": "MK10 21:51: 4 of 4 settled parlays were buyer hits (adverse selection watch)",
  "next": "judge when the 15 open parlays settle"
 }
