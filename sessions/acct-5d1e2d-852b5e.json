@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "e4240e81d9c12824734323292c6704ad4d2a1680",
+ "head": "ee40cd183588b980948d4d5c8023180d5b99825b",
  "since": 1795047736,
- "beat": 1795065816,
- "beatIso": "2026-11-19T05:23:36Z",
- "done": "pre-release: GD2 grade fills with bare wording; TR5 profit headline back to bets' own sum (versionCode 480, v1.0.140)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.140), then run: bash tools/record-release.sh v1.0.140 480 \"GD2 grade fills with bare wording; TR5 profit headline back to bets' own sum\""
+ "beat": 1795065873,
+ "beatIso": "2026-11-19T05:24:33Z",
+ "done": "GD2 + TR5 shipped v1.0.140; MK10 parlay data read",
+ "next": "MK10: same-game pricing in SHADOW from propline-sgp logs"
 }
