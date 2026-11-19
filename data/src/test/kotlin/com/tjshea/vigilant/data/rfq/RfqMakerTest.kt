@@ -412,6 +412,27 @@ class RfqMakerTest {
         assertEquals("with no return and no points asked only the relative floor is left", 0.2040, RfqPricer.quotePrice(0.20, 2, 3 * h, roc.copy(minReturn = 0.0, minPoints = 0.0)), 1e-9)
     }
 
+    // ---- MK14: capital is the scarce thing, so LIVE asks a return per day of collateral; SHADOW keeps the looser rule and only journals what the hurdle would have asked ----
+    @Test fun liveAsksTheCapitalHurdleAndShadowOnlyRecordsIt() {
+        val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                                  // fair 0.20, a game 3 h away
+        val loose = RfqConfig(mode = RfqConfig.Mode.SHADOW, margin = 0.015, minReturn = 0.004, liveMinReturn = 0.03, minPoints = 0.007, maxLegs = 5)
+        val shadow = RfqPricer.decide(created("a", "b"), now, loose, f, 0.0) as RfqDecision.Quote
+        // SHADOW: (0.20 + 0.004 x 1)/1.004 = 0.2032 -> 0.204 (the 1.5% floor 0.203 and the 0.7-point floor 0.207: the points floor binds at 0.207)
+        assertEquals(0.207, shadow.price, 1e-9)
+        // the hurdle's price is journaled beside it: (0.20 + 0.03)/1.03 = 0.2233 -> 0.224 (a 3% return a day on the collateral for a lock-up of under a day)
+        assertEquals(0.224, shadow.livePrice!!, 1e-9)
+        val live = RfqPricer.decide(created("a", "b"), now, loose.copy(mode = RfqConfig.Mode.LIVE), f, 0.0, cashRoom = 1_000.0) as RfqDecision.Quote
+        assertEquals("LIVE quotes the hurdle's price", 0.224, live.price, 1e-9)
+        assertNull("nothing to compare in LIVE", live.livePrice)
+        // a longer lock-up asks more: two days out is 2.25 days of collateral, r = 6.75%
+        val far = fairs(leg("a", "e1", 0.5, startsMs = now + 48 * 3_600_000L), leg("b", "e2", 0.4, startsMs = now + 48 * 3_600_000L))
+        val longHold = RfqPricer.decide(created("a", "b"), now, loose.copy(mode = RfqConfig.Mode.LIVE), far, 0.0, cashRoom = 1_000.0) as RfqDecision.Quote
+        assertEquals(RfqPricer.up((0.20 + 0.03 * 2.25) / (1 + 0.03 * 2.25)), longHold.price, 1e-9)
+        // a hurdle at or under the rule's own return changes nothing and records nothing
+        val same = RfqPricer.decide(created("a", "b"), now, loose.copy(liveMinReturn = 0.004), f, 0.0) as RfqDecision.Quote
+        assertNull(same.livePrice); assertEquals(shadow.price, same.price, 1e-9)
+    }
+
     @Test fun theQuoteCoversTheStakeTheRfqAskedForAndLongshotsThatTieUpTooMuchAreDeclined() {
         val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                                  // fair 0.20, price (0.20 + 0.04)/1.04 = 0.2308, up to 0.231
         val d = RfqPricer.decide(created("a", "b", minWager = 10.0), now, roc, f, 0.0) as RfqDecision.Quote
