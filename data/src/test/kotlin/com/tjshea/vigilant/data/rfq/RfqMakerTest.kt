@@ -225,6 +225,12 @@ class RfqMakerTest {
         assertEquals("false", json.parseToJsonElement(r.sent.single()).jsonObject["confirm"]!!.jsonObject["confirmed"]!!.jsonPrimitive.content)
     }
 
+    /** An RFQ created at the rig's clock with legs fresh at that time (the rig's clock moves in the tests that wait). */
+    private fun freshCreated(r: Rig, id: String): RfqProtocol.Created {
+        r.legs = listOf(LegFair("a", "e1", "label a", 0.5, 5, r.clock - 60_000L, r.clock + 3 * 3_600_000L, false, "MONEY"), LegFair("b", "e2", "label b", 0.4, 5, r.clock - 60_000L, r.clock + 3 * 3_600_000L, false, "SPREAD"))
+        return RfqProtocol.Created(r.clock, id, listOf("a", "b"), r.clock + 3_000L, 10.0)
+    }
+
     @Test fun anRfqDeliveredTwiceIsPricedAndQuotedOnce() {
         val r = rig(RfqConfig.Mode.LIVE)
         r.maker.onEvent(created("a", "b")); r.maker.onEvent(created("a", "b"))                  // the same rfqId on two sockets
@@ -254,13 +260,13 @@ class RfqMakerTest {
     @Test fun drainingStopsNewQuotesAndSaysHowLongTheLastOnesNeed() {
         val r = rig(RfqConfig.Mode.LIVE)
         r.maker.onEvent(created("a", "b"))
-        assertEquals("nothing to wait for before a draining job quoted", 0L, RfqMaker.DRAIN_AFTER_QUOTE_MS.coerceAtMost(0L) + RfqMaker(RfqConfig.copy0(), { null }, { 0.0 }, { true }, { }).drainRemainingMs())
+        assertEquals("a maker that never quoted has nothing to wait for", 0L, rig(RfqConfig.Mode.SHADOW).maker.drainRemainingMs())
         r.maker.beginDrain()
         assertEquals(RfqMaker.DRAIN_AFTER_QUOTE_MS, r.maker.drainRemainingMs())
         r.clock += 20_000L
         assertEquals(RfqMaker.DRAIN_AFTER_QUOTE_MS - 20_000L, r.maker.drainRemainingMs())
-        r.sent.clear(); r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-2"))
-        assertTrue("a draining maker quotes nothing new", r.sent.isEmpty())
+        r.sent.clear(); r.maker.onEvent(freshCreated(r, "rfq-2"))
+        assertTrue("a draining maker quotes nothing new", r.sent.isEmpty() && r.rows.any { it.kind == "CREATED" && it.data.contains("\"rfq-2\"").not() })
         r.clock += 30_000L
         assertEquals(0L, r.maker.drainRemainingMs())
     }
@@ -270,8 +276,8 @@ class RfqMakerTest {
         r.maker.onEvent(RfqProtocol.Refused(now, 3, "MAKER_BARRED", "Your maker can't quote right now."))
         assertNotNull(r.maker.halted); assertTrue(r.told.single().contains("stopped quoting"))
         r.clock += 24 * 3_600_000L
-        r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-9"))
-        assertNotNull("no end: Novig says contact them", r.maker.halted)
+        r.maker.onEvent(freshCreated(r, "rfq-9"))
+        assertNotNull("no end: Novig says contact them", r.maker.halted); assertTrue(r.sent.isEmpty())
         assertTrue(r.maker.status(true).contains("MAKER_BARRED") || r.maker.snapshot(true, r.cfg, "m", 0.0, "").refusals.any { it.startsWith("MAKER_BARRED") })
         val ro = rig(RfqConfig.Mode.LIVE)
         ro.maker.onEvent(RfqProtocol.Refused(now, 4, "READ_ONLY_KEY", null)); assertNotNull(ro.maker.halted)
@@ -285,13 +291,13 @@ class RfqMakerTest {
         assertNotNull(r.maker.halted)
         r.maker.onEvent(created("a", "b")); assertTrue("locked: no quote", r.sent.isEmpty())
         r.clock += 241_000L
-        r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-2")); assertNull("the stated end has passed", r.maker.halted); assertEquals(1, r.sent.size)
+        r.maker.onEvent(freshCreated(r, "rfq-2")); assertNull("the stated end has passed", r.maker.halted); assertEquals(1, r.sent.size)
         val s = r.maker.snapshot(true, r.cfg, "m", 0.0, "")
         assertEquals("basic", s.makerTier); assertEquals(10, s.confirmMinSample); assertEquals("confirm_rate", s.lockSource)
         // a lock by hand with no end stays until Novig lifts it
         val admin = RfqStanding.parse("""{"makerId":"m","tier":"basic","confirmStanding":{"lookbackMinutes":1440,"counted":3,"confirmed":3,"threshold":"0.99","minSample":10},"lock":{"source":"admin"}}""")!!
         val r2 = rig(RfqConfig.Mode.LIVE); r2.maker.onStanding(admin); assertNotNull(r2.maker.halted); r2.clock += 7 * 24 * 3_600_000L
-        r2.maker.onEvent(created("a", "b")); assertNotNull(r2.maker.halted)
+        r2.maker.onEvent(freshCreated(r2, "rfq-3")); assertNotNull(r2.maker.halted); assertTrue(r2.sent.isEmpty())
     }
 
     @Test fun faultsStopTheQuotingAndTellTj() {
