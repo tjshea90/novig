@@ -529,6 +529,7 @@ fun main(args: Array<String>) = runBlocking {
     if (dedicatedMakerClient != null) log("RFQ maker: quoting from its own subaccount (NOVIG_MAKER_KEY_ID ${makerKeyId.take(8)}...), not the Vigilant wallet")
     val rfqCash = java.util.concurrent.atomic.AtomicReference<Double?>(null)
     val rfqExecs = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.rfq.RfqLedger.Exec>>(emptyList())
+    val rfqJournaledExecs = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     val rfqSocketRef = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.rfq.RfqSocket?>(null)
     val rfqDirectFairs = object : com.tjshea.vigilant.data.rfq.LegFairs {
         private var indexedFor: List<com.tjshea.vigilant.data.scanner.Opportunity>? = null
