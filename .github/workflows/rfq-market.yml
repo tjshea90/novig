@@ -24,6 +24,7 @@ jobs:
         with:
           fetch-depth: 1
       - run: python3 -I tools/rfq_market.py selftest
+      - run: python3 -I tools/rfq_outcomes.py selftest
       - name: Read the journals and build the table
         env:
           GH_TOKEN: ${{ github.token }}
@@ -38,6 +39,11 @@ jobs:
           ls j | wc -l
           { echo "# What the other makers charge (probe), $(date -u +%F' '%H:%M) UTC"; echo; python3 -I tools/rfq_market.py run 'j/*.jsonl.gz'; } > SUMMARY.md
           cat SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+          # MK14: did our fair come true? Every parlay trade the maker could price, with its legs journaled since 2026-11-19 18:50 UTC, is graded from ESPN's public final scores (no key) and the realized profit
+          # of the trades our rule's price would have won is read against what it expected (tools/rfq_outcomes.py). Free and keyless; kept beside SUMMARY.md.
+          { echo "# Did our fair come true? $(date -u +%F' '%H:%M) UTC"; echo; python3 -I tools/rfq_outcomes.py run none j/*.jsonl.gz || echo "(outcome grading failed: see the log)"; } > OUTCOMES.md
+          cat OUTCOMES.md >> "$GITHUB_STEP_SUMMARY"
           tag="rfq-market"
           retry gh release view "$tag" >/dev/null 2>&1 || retry gh release create "$tag" --title "Parlay maker: what the other makers charge" --notes "SUMMARY.md, rewritten every 6 hours by rfq-market.yml from the engine's rfq journals (tools/rfq_market.py). Never delete."
           retry gh release upload "$tag" SUMMARY.md --clobber
+          retry gh release upload "$tag" OUTCOMES.md --clobber
