@@ -223,6 +223,7 @@ class RfqMakerTest {
 
     @Test fun aWonQuoteIsConfirmedOnlyIfItIsTheOneWeQuotedAndTheLastLookNeverSecondGuessesTheMarket() {
         val r = rig(RfqConfig.Mode.LIVE)
+        r.cfg = r.cfg.copy(maxOpenCollateral = 500.0)       // many quotes out at once: the open-collateral cap is not what this test is about
         r.maker.onEvent(created("a", "b"))
         r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-7"))
         r.sent.clear()
