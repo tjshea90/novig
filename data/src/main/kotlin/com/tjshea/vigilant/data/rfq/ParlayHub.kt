@@ -65,7 +65,10 @@ object ParlayHub {
         val nextFinalMs: Long?,
         val lastFinalMs: Long?,
         val expectedTotal: Double,
+        /** The most collateral the maker may have up: the whole wallet (cash + what is posted) when the wallet is the limit (MK17), else the fixed cap. */
         val maxOpenCollateral: Double?,
+        /** The cash in the wallet still free to post (wallet mode), else null. */
+        val walletFree: Double? = null,
     )
 
     data class Hub(val summary: Summary, val open: List<OpenView>, val closed: List<ClosedView>, val empty: Boolean, val note: String)
@@ -228,7 +231,8 @@ object ParlayHub {
             realizedPnl = pnl, pnl24h = pnl24, settled = closedRaw.size, makerWon = closed.count { it.won == true }, makerLost = closed.count { it.won == false }, open = open.size,
             collateral = open.sumOf { it.collateral }, ifAllBuyersLose = open.sumOf { it.stake }, worstCase = -alive.sumOf { it.collateral }, lockedIn = dead.sumOf { it.stake }, lockedInCount = dead.size,
             expectedOpen = expectedOpen, nextFinalMs = finals.filter { it >= now }.minOrNull() ?: finals.minOrNull(), lastFinalMs = finals.maxOrNull(), expectedTotal = pnl + expectedOpen,
-            maxOpenCollateral = rfq?.config?.maxOpenCollateral,
+            maxOpenCollateral = if (rfq?.config?.walletCollateral == true && rfq.walletTotal != null) rfq.walletTotal else rfq?.config?.maxOpenCollateral,
+            walletFree = if (rfq?.config?.walletCollateral == true) rfq.walletCash else null,
         )
         val note = when {
             book == null -> "Waiting for the engine to publish the parlay book."

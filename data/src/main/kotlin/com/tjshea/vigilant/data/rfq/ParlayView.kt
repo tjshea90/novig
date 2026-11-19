@@ -64,7 +64,8 @@ object ParlayView {
                 "${r.makerWon} won · ${r.makerLost} lost · ${r.openParlays} open" + (d24?.let { " · 24 h " + (if (it >= 0) "+" else "-") + "\$" + String.format(Locale.US, "%.2f", kotlin.math.abs(it)) } ?: ""),
                 if ((r.realizedPnl ?: 0.0) > 0.005) Tone.GOOD else if ((r.realizedPnl ?: 0.0) < -0.005) Tone.BAD else Tone.NEUTRAL,
             )
-            tiles += DashboardModel.Tile("Collateral tied up", usd(r.openCollateral), "of ${usd(c.maxOpenCollateral)} allowed in all", if (r.openCollateral > c.maxOpenCollateral * 0.9) Tone.WARN else Tone.NEUTRAL)
+            tiles += DashboardModel.Tile("Collateral tied up", usd(r.openCollateral), if (c.walletCollateral && r.walletTotal != null) "of your ${usd(r.walletTotal)} wallet, ${usd(r.walletCash ?: 0.0)} still free to post (the wallet is the limit, not a fixed cap)" else "of ${usd(c.maxOpenCollateral)} allowed in all",
+                if (!c.walletCollateral && r.openCollateral > c.maxOpenCollateral * 0.9) Tone.WARN else Tone.NEUTRAL)
         }
         val headline = when (c.mode) {
             RfqConfig.Mode.OFF -> "Off"
@@ -84,7 +85,8 @@ object ParlayView {
         }
         val ev = "Evidence for going live: ${r.pricedTrades} of ${RfqStatus.EVIDENCE_TRADES} priced trades" + (r.medianGapPoints?.let { "; the market paid ${pts(it)} pts of pot over our fair" } ?: "") + "."
         val rule = (if (c.allowProps) "Quote rule (player props allowed): " else "Quote rule: game-line parlays only (the market pays 38% over our fair on parlays with a player prop, 2.6% on game lines); ") + "at least ${"%.1f".format(Locale.US, c.minReturn * 100)}% return on the collateral (more for longer lock-ups), ${"%.1f".format(Locale.US, c.minPoints * 100)} pt per extra leg, ${"%.1f".format(Locale.US, c.margin * 100)}% floor; 2 to ${c.maxLegs} legs, never a parlay likelier than ${"%.0f".format(Locale.US, c.maxFair * 100)}% to win or with a leg likelier than ${"%.0f".format(Locale.US, c.maxLegFair * 100)}%, " +
-            "stake as asked up to ${usd(c.maxStake)}, ${usd(c.maxCollateral)} per parlay, ${usd(c.maxOpenCollateral)} in all."
+            (if (c.walletCollateral) "stake as asked up to ${usd(c.maxStake)}; the wallet is the collateral limit: one parlay up to ${"%.0f".format(Locale.US, c.walletShare * 100)}% of it, everything posted together up to the cash in it."
+            else "stake as asked up to ${usd(c.maxStake)}, ${usd(c.maxCollateral)} per parlay, ${usd(c.maxOpenCollateral)} in all.")
         val warning = when {
             r.halted != null -> "Stopped: ${r.halted}"
             c.mode == RfqConfig.Mode.LIVE && !r.connected -> "Not connected: ${r.note.ifBlank { "waiting for the socket" }}"
