@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "6cbc0f66e90a5d7e6caad231f429766792050698",
+ "head": "890d337260bf0557674163a8801bcf1a98978dfc",
  "since": 1795123003,
- "beat": 1795126193,
- "beatIso": "2026-11-19T22:09:53Z",
- "done": "MK17 part 1: onlyToday / longshotsOnly / walletCollateral in the pricer and maker, safe-edge floor, same-day hold, wallet status, rfq_set fields, tests (98 rfq tests green)",
- "next": "MK17: app options on the Maker page (switches + steppers + Tonight preset + wallet numbers), full suite, land, ONE engine reset, app release; Tj flips LIVE himself"
+ "beat": 1795126220,
+ "beatIso": "2026-11-19T22:10:20Z",
+ "done": "MK17: tonight's options (only today, longshots <=25% with 3% premium, wallet as the collateral limit), safe-edge floor, same-day hold, wallet status, app options card + steppers, positive-EV pass written; FULL suite green (4472)",
+ "next": "post board, ONE engine reset (confirm startedAtMs + status.rfq.walletCash), ship v1.0.142 (versionCode 482) + release.yml, set the Tonight options in config (SHADOW), tell Tj to tap Live when funded"
 }
