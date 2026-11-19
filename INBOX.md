@@ -1795,3 +1795,8 @@ PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 mi
 ```
 I'm about to put money into the wallet. Review the parlay system. See if there is a way to filter parlays so it only accepts parlays that will finish today (the latest leg is a game on todays slate). Then make it accept fewer parlays but at longer odds. I want to post more collateral but for parlays that are more of a longshot, such as 25% or less chance to win. The engine has to have a way to calculate this within the amount in my wallet so that it can accept parlays up to the collateral amount available in my wallet at any time. Put these into the app as options that i can change or turn on and off . I want to use it tonight. Also do another pass to ensure that the accepted parlays are truly positive ev for me 
 ```
+
+## 2026-11-19T22:16:15Z
+```
+switch it to live
+```
