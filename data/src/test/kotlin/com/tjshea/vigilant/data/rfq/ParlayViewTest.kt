@@ -5,6 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import com.tjshea.vigilant.data.cloud.DashboardModel
 import org.junit.Test
 
 /** MKV (Tj, 2026-11-18: "I want it in vigilant"): what the Parlays view says, from the engine's [RfqStatus]. */
@@ -70,6 +71,16 @@ class ParlayViewTest {
         val model = tiles.single { it.label.startsWith("Market model") }
         assertTrue(model.value + " " + model.sub, model.value == "31 of ${withProbe.pricedTrades}" && model.sub.contains("+1.40") && model.sub.contains("not used yet"))
         assertTrue(ParlayView.of(withProbe.copy(config = withProbe.config.copy(marketPricing = true))).tiles.single { it.label.startsWith("Market model") }.sub.contains("pricing from it"))
+    }
+
+    @Test fun novigsConfirmRateAndAnyLockShowAsATile() {
+        assertTrue("not read yet: no tile", ParlayView.of(shadow).tiles.none { it.label.startsWith("Novig's confirm") })
+        val ok = ParlayView.of(shadow.copy(makerTier = "basic", confirmCounted = 12, confirmConfirmed = 12, confirmThreshold = 0.99, confirmMinSample = 10)).tiles.single { it.label.startsWith("Novig's confirm") }
+        assertEquals("12 of 12", ok.value); assertTrue(ok.sub, ok.sub.contains("bar 99%") && ok.sub.contains("once 10 are counted") && ok.sub.contains("tier basic")); assertEquals(DashboardModel.Tone.GOOD, ok.tone)
+        val missed = ParlayView.of(shadow.copy(confirmCounted = 12, confirmConfirmed = 11, confirmThreshold = 0.99, confirmMinSample = 10)).tiles.single { it.label.startsWith("Novig's confirm") }
+        assertEquals("a missed last look under the bar is red", DashboardModel.Tone.BAD, missed.tone)
+        val locked = ParlayView.of(shadow.copy(confirmCounted = 0, confirmConfirmed = 0, confirmThreshold = 0.99, confirmMinSample = 10, lockSource = "confirm_rate", lockUntilMs = 1_790_500_300_000L)).tiles.single { it.label.startsWith("Novig's confirm") }
+        assertTrue(locked.sub, locked.sub.contains("LOCKED (confirm_rate)") && locked.value == "no last looks yet"); assertEquals(DashboardModel.Tone.BAD, locked.tone)
     }
 
     @Test fun theStatusRoundTripsThroughTheEnginesJson() {
