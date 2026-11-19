@@ -116,7 +116,7 @@ class RfqMarketTest {
         val on = RfqPricer.decide(created, now, base.copy(propPairsFromMarket = true), lf, 0.0, m) as RfqDecision.Quote
         assertEquals("priced on the market's median ratio (1.30), no prop premium on top", 0.16 * 1.3, on.fair, 1e-9)
         assertTrue(on.via, on.via.startsWith("market ratio 1.30"))
-        assertTrue("the floors still apply on top of it", on.price >= on.fair + 0.005)
+        assertTrue("the floors still apply on top of it", on.price >= on.fair + 0.005 - 1e-9)
         // too few answers: declined as before
         assertTrue(RfqPricer.decide(created, now, base.copy(propPairsFromMarket = true), lf, 0.0, RfqMarketModel().also { it.observe(cls, 0.16, 0.2, 1L) }) is RfqDecision.Decline)
     }
