@@ -99,7 +99,7 @@ private fun HubHeadline(rfq: RfqStatus?, book: ParlayBook?, hub: ParlayHub.Hub, 
     val mode = rfq?.config?.mode?.name ?: book?.mode.orEmpty()
     val modeText = when (mode) {
         "LIVE" -> "Live: quoting with real money"
-        "SHADOW" -> "Paper: quoting nothing, only listening (these parlays were filled earlier, when it was live)"
+        "SHADOW" -> "Paper mode: no new quotes are sent. The parlays below were filled earlier, while it was live."
         "OFF" -> "Off"
         else -> ""
     }
@@ -132,7 +132,9 @@ private fun hubTiles(hub: ParlayHub.Hub, now: Long): List<DashboardModel.Tile> {
     tiles += DashboardModel.Tile("Expected on the open ones", ParlayHub.signed(s.expectedOpen), "at our odds, after the legs already decided", if (s.expectedOpen > 0.005) Tone.GOOD else if (s.expectedOpen < -0.005) Tone.BAD else Tone.NEUTRAL)
     if (s.lockedInCount > 0) tiles += DashboardModel.Tile("Already won", ParlayHub.signed(s.lockedIn), "${s.lockedInCount} open parlays where the buyer lost a leg: yours when Novig settles them", Tone.GOOD)
     s.lastFinalMs?.let { last ->
-        tiles += DashboardModel.Tile("All open parlays final by", ParlayHub.clock(last, now, zone), (s.nextFinalMs?.takeIf { it != last }?.let { "next one ${ParlayHub.relative(it, now)}" } ?: ParlayHub.relative(last, now)) + " · games' usual length")
+        tiles += DashboardModel.Tile(
+            "All open parlays final", ParlayHub.relative(last, now).removePrefix("in "), "about ${ParlayHub.clock(last, now, zone)}" + (s.nextFinalMs?.takeIf { it != last }?.let { " · the first ${ParlayHub.relative(it, now)}" } ?: "") + " (games' usual length)",
+        )
     }
     tiles += DashboardModel.Tile("Settled", "${s.settled}", "${s.makerWon} won · ${s.makerLost} lost" + (if (s.settled > 0) " · last 24 h ${ParlayHub.signed(s.pnl24h)}" else ""), if (s.makerLost > s.makerWon) Tone.WARN else Tone.NEUTRAL)
     return tiles
@@ -220,7 +222,7 @@ private fun OpenCard(v: ParlayHub.OpenView, now: Long) {
                 Money("If buyer loses", ParlayHub.signed(v.ifBuyerLoses), Modifier.weight(1f), Tone.GOOD)
                 Money("If buyer wins", ParlayHub.signed(v.ifBuyerWins), Modifier.weight(1f), Tone.BAD)
             }
-            v.expected?.let { e -> v.buyerChance?.let { c -> Text("Expected ${ParlayHub.signed(e)} · the buyer still wins ${"%.0f".format(Locale.US, c * 100)}% of the time by our odds", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } }
+            if (v.status != ParlayHub.Status.BUYER_DEAD) v.expected?.let { e -> v.buyerChance?.let { c -> Text("Expected ${ParlayHub.signed(e)} · the buyer still wins ${"%.0f".format(Locale.US, c * 100)}% of the time by our odds", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } }
             if (open) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
                     v.legs.forEach { LegRow(it) }

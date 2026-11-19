@@ -176,7 +176,7 @@ object ParlayHub {
         }
         val progress = when {
             legs.isEmpty() -> "${p.nLegs} legs"
-            lost > 0 -> "$lost lost · $won won · $toPlay not needed"
+            lost > 0 -> (if (lost == 1) "1 leg lost" else "$lost legs lost") + (if (won > 0) " · $won won" else "") + (if (toPlay > 0) " · the other $toPlay no longer matter" else "")
             else -> "$won of ${legs.size} legs won" + (if (toPlay > 0) " · $toPlay still to play" else "")
         }
         val end = expectedFinal(p)

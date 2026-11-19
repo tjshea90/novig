@@ -77,7 +77,7 @@ class ParlayHubUiTest {
         compose.onNodeWithText("If every open parlay loses").assertExists()
         compose.onNodeWithText("Worst case").assertExists()
         compose.onNodeWithText("Expected on the open ones").assertExists()
-        compose.onNodeWithText("All open parlays final by").assertExists()
+        compose.onNodeWithText("All open parlays final").assertExists()
         compose.onNodeWithTag("hubOpen-A").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("The buyer is ahead: 1 of 3 legs won").assertExists()
         compose.onNodeWithText("The buyer already lost a leg", substring = true).assertExists()
