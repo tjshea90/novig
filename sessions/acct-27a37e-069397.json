@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "946509dc75384cf4ff07cc7aecb1d7985331e09f",
+ "head": "3641c1a9ab03de2efbbfaf0c97539baddba02cf0",
  "since": 1795103757,
- "beat": 1795119110,
- "beatIso": "2026-11-19T20:11:50Z",
+ "beat": 1795119352,
+ "beatIso": "2026-11-19T20:15:52Z",
  "done": "MK14: LIVE capital hurdle liveMinReturn .03 (+ paper journaling), leg + EXEC_RESULT journaling, tools/rfq_outcomes.py graded from ESPN (rfq-market.yml), expected-profit study; FULL suite green (4449)",
  "next": "rides the next engine handover (no reset); after tonight's games read OUTCOMES.md (would-win adverse selection); 24 h probes -> marketPricing/propPairsFromMarket; coverage: prop legs (MK11 ladder) and prop+prop same-game pairs"
 }
