@@ -79,6 +79,8 @@ data class RfqConfig(
      * bias: our 70-85% legs hit 82%, and our price won 42% of the trades with a leg over 90% against 17% of all). 0.90.
      */
     val maxLegFair: Double = 0.90,
+    /** MK20: price two player props of one game from the measured ratio of how often such pairs hit together ([PropPairs]); off = they decline as "correlation unmodelled". */
+    val propPairs: Boolean = true,
     /**
      * MK17 (Tj 2026-11-19: "only accepts parlays that will finish today (the latest leg is a game on todays slate)"): quote only a parlay whose LAST leg starts before today's slate ends (the sports day
      * runs 5 am to 5 am Eastern, like the Tracker's). Off = any game within [maxDaysAhead].
@@ -273,7 +275,7 @@ object RfqPricer {
             val groups = legs.groupBy { it.eventId }
             for ((_, group) in groups) {
                 if (group.size == 1) { joint *= group[0].probability; continue }
-                val g = sameGameJoint(group, cfg)
+                val g = sameGameJoint(group, cfg) ?: (if (cfg.propPairs) PropPairs.joint(group) else null)
                 if (g == null) { unmodelled = true; break }
                 joint *= g
             }
