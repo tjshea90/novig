@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "88d5cf7b716f40320bb43e3088ad3187716d8d9e",
+ "head": "9d3c8b0d00e0c2500127669d64869d03e8dab2f6",
  "since": 1795123003,
- "beat": 1795127947,
- "beatIso": "2026-11-19T22:39:07Z",
+ "beat": 1795128011,
+ "beatIso": "2026-11-19T22:40:11Z",
  "done": "MK17c: collateral hold 120 s -> 45 s after the auction closes (fills come 6-29 s after the quote), a fill stays counted 75 s until the balance read shows it; why-so-little diagnosis logged; FULL suite green (4473)",
  "next": "graceful engine reset (engine_set --reset) so the live maker quotes more; then verify quotesSent rate and cash-short declines drop; MK14 follow-ups 00:40/14:00 UTC, coverage 14:30 UTC"
 }
