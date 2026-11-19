@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "8c750c",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-ja7vy6",
+ "head": "6b65df2ba02b898134fb4207e67efa5ea95c0b27",
+ "since": 1795112536,
+ "beat": 1795112536,
+ "beatIso": "2026-11-19T18:22:16Z",
+ "done": "WATCH 2026-11-19: engine healthy, no action",
+ "next": "continue MK13 concentration cap / SHADOW read"
+}
