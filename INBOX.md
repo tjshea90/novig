@@ -1813,3 +1813,8 @@ Make sure to raise the allowed collateral to include my full wallet, and exclude
 ```
 Why is the engine pricing almost nothing 
 ```
+
+## 2026-11-19T22:39:31Z
+```
+I think it isn't finding enough fair odds. Also, the controls take a long time to change because if i alter any setting it has to wait for github. Isn't there a better way?
+```
