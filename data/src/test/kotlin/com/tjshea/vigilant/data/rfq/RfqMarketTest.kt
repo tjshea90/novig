@@ -100,6 +100,9 @@ class RfqMarketTest {
         assertTrue("it never prices below the floors", on.price >= on.rulePrice)
     }
 
+    /** Waits (up to 5 s) for [cond]: the probe's workers run on real threads and a loaded test machine is slow. */
+    private suspend fun until(cond: () -> Boolean) { val end = System.currentTimeMillis() + 5_000L; while (!cond() && System.currentTimeMillis() < end) delay(10L) }
+
     private fun item(i: Int, cls: String, ids: List<String> = listOf("a$i", "b$i")) = RfqProbe.Item("r$i", ids, cls, 0.2, 0.21, 2, System.currentTimeMillis())
 
     @Test fun theProbeAsksTheLeastSampledClassFirstOncePerSetAndJournalsTheAnswer() = runBlocking {
@@ -109,7 +112,7 @@ class RfqMarketTest {
         val probe = RfqProbe(scope, model, { rows += it }, { true }, { ids -> asked += ids; NovigParlay.Result.Priced(NovigParlay.Quote(0.23, 0L, 0L)) }, gapMs = 5L, startDelayMs = 0L, workers = 2)
         probe.offer(item(1, "busy")); probe.offer(item(2, "rare"))
         probe.offer(item(2, "rare"))                                                     // the same legs again: once
-        delay(400)
+        until { probe.sent >= 2 }; delay(100)
         scope.cancel()
         assertEquals("one probe per set of legs", 2, asked.size)
         assertEquals("the class with fewer answers goes first", listOf("a2", "b2"), asked.first())
@@ -125,10 +128,10 @@ class RfqMarketTest {
         val model = RfqMarketModel(); val rows = Collections.synchronizedList(ArrayList<RfqRow>()); var mode = 0; var calls = 0
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val probe = RfqProbe(scope, model, { rows += it }, { true }, { calls++; if (mode == 0) NovigParlay.Result.NoPrice else NovigParlay.Result.Limited(30) }, gapMs = 5L, startDelayMs = 0L, workers = 1)
-        probe.offer(item(1, "c")); delay(150)
-        assertEquals(1, model.samples("c")); assertEquals(1.0, model.summary().single().noQuote, 0.0)
-        mode = 1; probe.offer(item(2, "c")); delay(150)
-        val after = calls; probe.offer(item(3, "c")); delay(150)
+        probe.offer(item(1, "c")); until { probe.sent >= 1 }; delay(50)
+        assertEquals(1, model.samples("c")); assertEquals(1.0, model.summary().first { it.cls == "c" }.noQuote, 0.0)
+        mode = 1; probe.offer(item(2, "c")); until { probe.limited >= 1 }
+        val after = calls; probe.offer(item(3, "c")); delay(300)
         scope.cancel()
         assertEquals("after a 429 it rests for the Retry-After", after, calls)
         assertEquals(1, model.samples("c"))                                              // the limited answer is no observation
@@ -137,7 +140,7 @@ class RfqMarketTest {
     @Test fun aDisabledProbeAsksNothing() = runBlocking {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default); var calls = 0
         val probe = RfqProbe(scope, RfqMarketModel(), { }, { false }, { calls++; NovigParlay.Result.NoPrice }, gapMs = 5L, startDelayMs = 0L, workers = 1)
-        probe.offer(item(1, "c")); delay(120); scope.cancel()
+        probe.offer(item(1, "c")); delay(300); scope.cancel()
         assertEquals(0, calls); assertEquals(0, probe.queued())
     }
 }
