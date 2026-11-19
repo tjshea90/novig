@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "a1da257728b6ea05b377aa6ab147f411ce3ffee7",
+ "head": "ffb9aec7091ad60fe16353b3554b5a27580eabf6",
  "since": 1795047736,
- "beat": 1795071734,
- "beatIso": "2026-11-19T07:02:14Z",
- "done": "parlay 30-min check in ROUTINE.md + session cron",
- "next": "wait warm scan, measure, attack props"
+ "beat": 1795071933,
+ "beatIso": "2026-11-19T07:05:33Z",
+ "done": "MK11 logged; ladder-rung finding",
+ "next": "read 06:51 run journal; build prop ladder interpolation for rfq leg fairs"
 }
