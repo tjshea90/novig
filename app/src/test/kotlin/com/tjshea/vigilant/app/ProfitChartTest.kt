@@ -129,7 +129,7 @@ class ProfitChartTest {
         compose.onNodeWithTag("profitCanvas").assertDoesNotExist()
         // No wallet reading: all time is the three settled bets (-1, +1, -1), said so.
         compose.onNodeWithTag("profitAllTime").assertTextEquals("−\$1.00")
-        compose.onNodeWithTag("profitAllTimeHow").assertTextContains("from the 3 bets and bids with a final result", substring = true)
+        compose.onNodeWithTag("profitAllTimeHow").assertTextContains("From the 3 bets and bids with a final result", substring = true)
     }
 
     @Test
@@ -142,11 +142,11 @@ class ProfitChartTest {
     }
 
     @Test
-    fun `all-time headline is the wallet less net money put in (TR5)`() {
+    fun `all-time headline is the bets sum, the wallet only as detail (TR5)`() {
         val m = WalletProfit.Money(198.63, 42.55, 12, 250.0, 20.0, 3, now - 120_000L)
         show(tenDays, TrackerPeriod.TODAY, WalletMoneyUi(m))
-        compose.onNodeWithTag("profitAllTime").assertTextEquals("+\$11.18")
-        compose.onNodeWithTag("profitAllTimeHow").assertTextContains("Headline = the Vigilant wallet", substring = true)
+        compose.onNodeWithTag("profitAllTime").assertTextEquals("\$0.00")
+        compose.onNodeWithTag("profitAllTimeHow").assertTextContains("For comparison, the wallet", substring = true)
     }
 
     @Test
@@ -218,11 +218,8 @@ class ProfitChartTest {
         assertTrue(line, line.contains("−\$12.50") && line.contains("\$40.00 on open bets counted at cost") && line.contains("ago"))
     }
 
-    @Test fun headlineIsTheWalletThenTheLedgerThenTheBetsSum() {
+    @Test fun headlineIsTheBetsOwnSum() {
         val book = com.tjshea.vigilant.data.tracker.SlateProfit.Book(emptyList())
-        val money = WalletProfit.Money(cash = 84.68, openCost = 110.82, openBets = 230, putIn = 1078.03, takenOut = 630.92, transfers = 48, atMs = 0L)
-        assertEquals(-251.61, ProfitText.headline(book, WalletMoneyUi(money = money, ledgerProfit = -255.84)).first, 0.01)
-        assertEquals(-255.84, ProfitText.headline(book, WalletMoneyUi(ledgerProfit = -255.84)).first, 0.0)
-        assertEquals(0.0, ProfitText.headline(book, WalletMoneyUi()).first, 0.0)
+        assertEquals(0.0, ProfitText.headline(book, WalletMoneyUi(ledgerProfit = -255.84)).first, 0.0)
     }
 }
