@@ -1,0 +1,584 @@
+[
+ {
+  "rfqId": "01a1ef38-ea2a-7621-b5f7-940d8d24436f",
+  "quotedMs": 1795014876358,
+  "price": 0.554,
+  "fair": 0.5239946140846988,
+  "wager": 6.69786,
+  "legs": [
+   {
+    "outcomeId": "01a1ec8c-51c0-7713-9f20-bca329e877e9",
+    "marketId": "",
+    "label": "Total Over 204.5",
+    "desc": "Houston Rockets @ Indiana Pacers",
+    "league": "NBA",
+    "type": "TOTAL",
+    "startsMs": 1795046700000,
+    "p": 0.8764236819753273,
+    "result": "WIN"
+   },
+   {
+    "outcomeId": "01a1e577-a822-7bb0-9e02-381058ae015e",
+    "marketId": "",
+    "label": "Total Over 3.5",
+    "desc": "Montreal Canadiens @ New Jersey Devils",
+    "league": "NHL",
+    "type": "TOTAL",
+    "startsMs": 1795048200000,
+    "p": 0.8415616786346607,
+    "result": "WIN"
+   },
+   {
+    "outcomeId": "01a1ecf9-de34-7201-9722-c717a6ae2ff7",
+    "marketId": "",
+    "label": "Total Under 245.5",
+    "desc": "Detroit Pistons @ New Orleans Pelicans",
+    "league": "NBA",
+    "type": "TOTAL",
+    "startsMs": 1795050300000,
+    "p": 0.8301206818685883,
+    "result": "WIN"
+   },
+   {
+    "outcomeId": "01a1edba-2f31-7cb2-a4bc-b80388e5dfe2",
+    "marketId": "",
+    "label": "Total Under 242.5",
+    "desc": "Philadelphia 76ers @ Orlando Magic",
+    "league": "NBA",
+    "type": "TOTAL",
+    "startsMs": 1795046700000,
+    "p": 0.8558261129649856,
+    "result": "WIN"
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1ef99-ef5b-7200-9c65-658cd570efa0",
+  "quotedMs": 1795021219789,
+  "price": 0.615,
+  "fair": 0.6032117595257043,
+  "wager": 1.4391,
+  "legs": [
+   {
+    "outcomeId": "01a1ec55-9fe6-7a30-bad3-4cbafd71d44a",
+    "marketId": "",
+    "label": "Spread Phoenix Suns +5.5",
+    "desc": "Phoenix Suns @ Sacramento Kings",
+    "league": "NBA",
+    "type": "SPREAD",
+    "startsMs": 1795057500000,
+    "p": 0.8038263854847009,
+    "result": "WIN"
+   },
+   {
+    "outcomeId": "01a1ec39-87ff-7d13-bc51-a2bff13fbb9b",
+    "marketId": "",
+    "label": "Spread Memphis Grizzlies +13.5",
+    "desc": "Memphis Grizzlies @ Cleveland Cavaliers",
+    "league": "NBA",
+    "type": "SPREAD",
+    "startsMs": 1795046700000,
+    "p": 0.7504254281998624,
+    "result": "WIN"
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f073-cdda-7da3-b492-17ebd1ff4aee",
+  "quotedMs": 1795035493427,
+  "price": 0.546,
+  "fair": 0.5354746383115179,
+  "wager": 0.9555,
+  "legs": [
+   {
+    "outcomeId": "01a1eb0a-f549-72d2-95b0-930245a14446",
+    "marketId": "",
+    "label": "Spread IU Indianapolis +24.5",
+    "desc": "IU Indianapolis @ Penn State",
+    "league": "NCAAB",
+    "type": "SPREAD",
+    "startsMs": 1795044600000,
+    "p": 0.7107583774250441,
+    "result": "WIN"
+   },
+   {
+    "outcomeId": "01a1ec03-3563-79d3-be5a-8732dd2d73e2",
+    "marketId": "",
+    "label": "Spread Eastern Michigan -3.5",
+    "desc": "Detroit Mercy @ Eastern Michigan",
+    "league": "NCAAB",
+    "type": "SPREAD",
+    "startsMs": 1795044600000,
+    "p": 0.7533849129593811,
+    "result": "WIN"
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f29a-0f6e-7d81-ad9c-455ae2431fb4",
+  "quotedMs": 1795071573891,
+  "price": 0.59,
+  "fair": 0.5702656403343996,
+  "wager": 2.2184,
+  "legs": [
+   {
+    "outcomeId": "01a1c9ea-d65a-7d30-bf13-2eb31e9f70db",
+    "marketId": "01a1c9ea-d65a-7d30-bf13-2ea51e1ee9e6",
+    "label": "Moneyline Houston Texans",
+    "desc": "Indianapolis Colts @ Houston Texans",
+    "league": "NFL",
+    "type": "MONEY",
+    "startsMs": 1795137300000,
+    "p": 0.8407485394934135
+   },
+   {
+    "outcomeId": "01a1f17c-7be0-7721-aa2c-440820008bf9",
+    "marketId": "01a1f17c-7be0-7721-aa2c-43f18a1277af",
+    "label": "Moneyline San Antonio Spurs",
+    "desc": "Los Angeles Clippers @ San Antonio Spurs",
+    "league": "NBA",
+    "type": "MONEY",
+    "startsMs": 1795136700000,
+    "p": 0.892154690987655
+   },
+   {
+    "outcomeId": "01a1f220-5740-79f1-aeae-e4e269bd7cd6",
+    "marketId": "01a1f220-5740-79f1-aeae-e4c8e2275a16",
+    "label": "Moneyline Portland Trail Blazers",
+    "desc": "Portland Trail Blazers @ Milwaukee Bucks",
+    "league": "NBA",
+    "type": "MONEY",
+    "startsMs": 1795136700000,
+    "p": 0.7602753684020056
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f2af-5904-7223-aced-3d07e58c4df0",
+  "quotedMs": 1795072946347,
+  "price": 0.393,
+  "fair": 0.36315293426981726,
+  "wager": 9.41628,
+  "legs": [
+   {
+    "outcomeId": "01a1ed14-abf6-7cb2-a24e-83ddc9c22284",
+    "marketId": "",
+    "label": "Moneyline Stefan Kozlov",
+    "desc": "Vignesh Gogineni @ Stefan Kozlov Round of 16",
+    "league": "ATP",
+    "type": "MONEY",
+    "startsMs": 1795104000000,
+    "p": 0.777403268204628
+   },
+   {
+    "outcomeId": "01a1ef71-2cb3-7c83-8130-4bbb009eb5d9",
+    "marketId": "",
+    "label": "Moneyline SoonWoo Kwon",
+    "desc": "SoonWoo Kwon @ Matthew William Donald Round of 16",
+    "league": "ATP",
+    "type": "MONEY",
+    "startsMs": 1795087800000,
+    "p": 0.7689562692573284
+   },
+   {
+    "outcomeId": "01a1f016-b4d1-7ba1-a044-2abb800bc00d",
+    "marketId": "",
+    "label": "Moneyline Edas Butvilas",
+    "desc": "Edas Butvilas @ Eero Vasa Round of 16",
+    "league": "ATP",
+    "type": "MONEY",
+    "startsMs": 1795092000000,
+    "p": 0.7460086837826653
+   },
+   {
+    "outcomeId": "01a1f0a0-0c36-7903-a8bb-46fd2f6e2f0c",
+    "marketId": "01a1f0a0-0c36-7903-a8bb-46ecbb8c4c45",
+    "label": "Moneyline Dylan Dietrich",
+    "desc": "Justin Boulais @ Dylan Dietrich Round of 16",
+    "league": "ATP",
+    "type": "MONEY",
+    "startsMs": 1795122000000,
+    "p": 0.8143248175182481
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f31e-b8d5-7ae3-97bd-01f4d23ad973",
+  "quotedMs": 1795080247175,
+  "price": 0.762,
+  "fair": 0.7506948015085233,
+  "wager": 10.67562,
+  "legs": [
+   {
+    "outcomeId": "01a1f272-b017-7d83-a9e1-efc89b20bac5",
+    "marketId": "01a1f272-b017-7d83-a9e1-efbfe7c5bc8a",
+    "label": "Spread Memphis Grizzlies +7.5",
+    "desc": "Golden State Warriors @ Memphis Grizzlies",
+    "league": "NBA",
+    "type": "SPREAD",
+    "startsMs": 1795136700000,
+    "p": 0.8438340645738647
+   },
+   {
+    "outcomeId": "01a1f17c-7be0-7721-aa2c-440820008bf9",
+    "marketId": "01a1f17c-7be0-7721-aa2c-43f18a1277af",
+    "label": "Moneyline San Antonio Spurs",
+    "desc": "Los Angeles Clippers @ San Antonio Spurs",
+    "league": "NBA",
+    "type": "MONEY",
+    "startsMs": 1795136700000,
+    "p": 0.8896237222748568
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f355-2aff-7a41-a5ae-20cd815d7c6d",
+  "quotedMs": 1795083817066,
+  "price": 0.747,
+  "fair": 0.7325964575067591,
+  "wager": 0.9711,
+  "legs": [
+   {
+    "outcomeId": "01a1f0a0-f692-70e2-a786-63d168ce9c69",
+    "marketId": "01a1f0a0-f692-70e2-a786-63cc1ffcf860",
+    "label": "Moneyline Washington",
+    "desc": "Utah Tech @ Washington",
+    "league": "NCAAB",
+    "type": "MONEY",
+    "startsMs": 1795140000000,
+    "p": 0.9205305867894176
+   },
+   {
+    "outcomeId": "01a1f0a0-f6ff-78d3-8524-c0eecbd58184",
+    "marketId": "01a1f0a0-f6ff-78d3-8524-c0d67a024a1f",
+    "label": "Moneyline Stanford",
+    "desc": "Sacramento State @ Stanford",
+    "league": "NCAAB",
+    "type": "MONEY",
+    "startsMs": 1795143600000,
+    "p": 0.9132210564928136
+   },
+   {
+    "outcomeId": "01a1f2fc-4542-75f0-8a19-96ccd0e52582",
+    "marketId": "01a1f2fc-4542-75f0-8a19-96b5713abc85",
+    "label": "Moneyline California",
+    "desc": "East Texas A&M @ California",
+    "league": "NCAAB",
+    "type": "MONEY",
+    "startsMs": 1795143600000,
+    "p": 0.8714664539496377
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f364-8d03-7500-8f86-0466009a3f01",
+  "quotedMs": 1795084832194,
+  "price": 0.44,
+  "fair": 0.42564797446076513,
+  "wager": 1.892,
+  "legs": [
+   {
+    "outcomeId": "01a1ebaf-e71e-7480-b50b-adfb695733b4",
+    "marketId": "",
+    "label": "Moneyline Ben Shelton N/A",
+    "desc": "Rafael Jodar @ Ben Shelton N/A",
+    "league": "ATP",
+    "type": "MONEY",
+    "startsMs": 1795093200000,
+    "p": 0.7102576467387465
+   },
+   {
+    "outcomeId": "01a1ebaf-e75b-7d82-b1a1-30c0bbe49c89",
+    "marketId": "01a1ebaf-e75b-7d82-b1a1-30b44075a8b6",
+    "label": "Moneyline Alexander Zverev N/A",
+    "desc": "Arthur Fils @ Alexander Zverev N/A",
+    "league": "ATP",
+    "type": "MONEY",
+    "startsMs": 1795116600000,
+    "p": 0.7004957897222004
+   },
+   {
+    "outcomeId": "01a1f09f-e19e-7841-babd-6e352403ac73",
+    "marketId": "01a1f09f-e19e-7841-babd-6e21649993fd",
+    "label": "Moneyline Carlos Alcaraz N/A",
+    "desc": "Flavio Cobolli @ Carlos Alcaraz N/A",
+    "league": "ATP",
+    "type": "MONEY",
+    "startsMs": 1795179600000,
+    "p": 0.8555179451087833
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f367-4c91-73f2-b02c-442c55f5a4c8",
+  "quotedMs": 1795085013147,
+  "price": 0.607,
+  "fair": 0.5977612987766909,
+  "wager": 9.62095,
+  "legs": [
+   {
+    "outcomeId": "01a1c9ea-d65a-7d30-bf13-2eb31e9f70db",
+    "marketId": "01a1c9ea-d65a-7d30-bf13-2ea51e1ee9e6",
+    "label": "Moneyline Houston Texans",
+    "desc": "Indianapolis Colts @ Houston Texans",
+    "league": "NFL",
+    "type": "MONEY",
+    "startsMs": 1795137300000,
+    "p": 0.8405489057410187
+   },
+   {
+    "outcomeId": "01a1ebaf-e71e-7480-b50b-adfb695733b4",
+    "marketId": "",
+    "label": "Moneyline Ben Shelton N/A",
+    "desc": "Rafael Jodar @ Ben Shelton N/A",
+    "league": "ATP",
+    "type": "MONEY",
+    "startsMs": 1795093200000,
+    "p": 0.7111558824167538
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f368-d12b-7510-bd9b-4502a57d34b3",
+  "quotedMs": 1795085106363,
+  "price": 0.453,
+  "fair": 0.44593441628990976,
+  "wager": 9.48129,
+  "legs": [
+   {
+    "outcomeId": "01a1dfd5-b7fd-7c13-a868-230dd38031cf",
+    "marketId": "01a1dfd5-b7fc-76d0-9226-f79d5dc8a27b",
+    "label": "Total Over 50.5",
+    "desc": "Rice @ Temple",
+    "league": "NCAAF",
+    "type": "TOTAL",
+    "startsMs": 1795134600000,
+    "p": 0.5305276269401349
+   },
+   {
+    "outcomeId": "01a1c9ea-d65a-7d30-bf13-2eb31e9f70db",
+    "marketId": "01a1c9ea-d65a-7d30-bf13-2ea51e1ee9e6",
+    "label": "Moneyline Houston Texans",
+    "desc": "Indianapolis Colts @ Houston Texans",
+    "league": "NFL",
+    "type": "MONEY",
+    "startsMs": 1795137300000,
+    "p": 0.8405489057410187
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f37a-5125-77d2-b311-a051407cc41a",
+  "quotedMs": 1795086254427,
+  "price": 0.509,
+  "fair": 0.501612036866215,
+  "wager": 4.76424,
+  "legs": [
+   {
+    "outcomeId": "01a1ebaf-e71e-7480-b50b-adfb695733b4",
+    "marketId": "",
+    "label": "Moneyline Ben Shelton N/A",
+    "desc": "Rafael Jodar @ Ben Shelton N/A",
+    "league": "ATP",
+    "type": "MONEY",
+    "startsMs": 1795093200000,
+    "p": 0.7119856618423855
+   },
+   {
+    "outcomeId": "01a1ebaf-e75b-7d82-b1a1-30c0bbe49c89",
+    "marketId": "01a1ebaf-e75b-7d82-b1a1-30b44075a8b6",
+    "label": "Moneyline Alexander Zverev N/A",
+    "desc": "Arthur Fils @ Alexander Zverev N/A",
+    "league": "ATP",
+    "type": "MONEY",
+    "startsMs": 1795116600000,
+    "p": 0.7045254753701184
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f3ab-eb61-7931-9aaf-3753fa04f9f5",
+  "quotedMs": 1795089501145,
+  "price": 0.687,
+  "fair": 0.6771461517424969,
+  "wager": 4.84335,
+  "legs": [
+   {
+    "outcomeId": "01a1f220-5740-79f1-aeae-e4e269bd7cd6",
+    "marketId": "01a1f220-5740-79f1-aeae-e4c8e2275a16",
+    "label": "Moneyline Portland Trail Blazers",
+    "desc": "Portland Trail Blazers @ Milwaukee Bucks",
+    "league": "NBA",
+    "type": "MONEY",
+    "startsMs": 1795136700000,
+    "p": 0.7754333592410272
+   },
+   {
+    "outcomeId": "01a1f17c-7be0-7721-aa2c-440820008bf9",
+    "marketId": "01a1f17c-7be0-7721-aa2c-43f18a1277af",
+    "label": "Moneyline San Antonio Spurs",
+    "desc": "Los Angeles Clippers @ San Antonio Spurs",
+    "league": "NBA",
+    "type": "MONEY",
+    "startsMs": 1795136700000,
+    "p": 0.8732486727231711
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f3c4-79b1-7b41-8c7d-7abf86f011d1",
+  "quotedMs": 1795091117016,
+  "price": 0.59,
+  "fair": 0.5761828056170291,
+  "wager": 2.8792,
+  "legs": [
+   {
+    "outcomeId": "01a1c9ea-d65a-7d30-bf13-2eb31e9f70db",
+    "marketId": "01a1c9ea-d65a-7d30-bf13-2ea51e1ee9e6",
+    "label": "Moneyline Houston Texans",
+    "desc": "Indianapolis Colts @ Houston Texans",
+    "league": "NFL",
+    "type": "MONEY",
+    "startsMs": 1795137300000,
+    "p": 0.8421534476129923
+   },
+   {
+    "outcomeId": "01a1f23b-ce24-79f0-8563-f44ffd6a8234",
+    "marketId": "01a1f23b-ce24-79f0-8563-f43e0d1fe3c0",
+    "label": "Moneyline Florida",
+    "desc": "West Virginia @ Florida",
+    "league": "NCAAB",
+    "type": "MONEY",
+    "startsMs": 1795116600000,
+    "p": 0.7758657113297633
+   },
+   {
+    "outcomeId": "01a1f2e0-820a-78e0-b69b-1d5c8f23f944",
+    "marketId": "01a1f2e0-820a-78e0-b69b-1d4343f33363",
+    "label": "Moneyline High Point",
+    "desc": "Montana State @ High Point",
+    "league": "NCAAB",
+    "type": "MONEY",
+    "startsMs": 1795132800000,
+    "p": 0.8818251969052179
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f3c8-5955-7bf1-b735-9944a67fba4f",
+  "quotedMs": 1795091384339,
+  "price": 0.662,
+  "fair": 0.6477169148467548,
+  "wager": 1.93966,
+  "legs": [
+   {
+    "outcomeId": "01a1f2e0-820a-78e0-b69b-1d5c8f23f944",
+    "marketId": "01a1f2e0-820a-78e0-b69b-1d4343f33363",
+    "label": "Moneyline High Point",
+    "desc": "Montana State @ High Point",
+    "league": "NCAAB",
+    "type": "MONEY",
+    "startsMs": 1795132800000,
+    "p": 0.8793822653134109
+   },
+   {
+    "outcomeId": "01a1f2fc-4542-75f0-8a19-96ccd0e52582",
+    "marketId": "01a1f2fc-4542-75f0-8a19-96b5713abc85",
+    "label": "Moneyline California",
+    "desc": "East Texas A&M @ California",
+    "league": "NCAAB",
+    "type": "MONEY",
+    "startsMs": 1795143600000,
+    "p": 0.8747360187576358
+   },
+   {
+    "outcomeId": "01a1c9ea-d65a-7d30-bf13-2eb31e9f70db",
+    "marketId": "01a1c9ea-d65a-7d30-bf13-2ea51e1ee9e6",
+    "label": "Moneyline Houston Texans",
+    "desc": "Indianapolis Colts @ Houston Texans",
+    "league": "NFL",
+    "type": "MONEY",
+    "startsMs": 1795137300000,
+    "p": 0.8420357412064009
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f3d5-b24e-73e3-a82f-1d32fb59efbc",
+  "quotedMs": 1795092258483,
+  "price": 0.637,
+  "fair": 0.6163635685542458,
+  "wager": 1.92374,
+  "legs": [
+   {
+    "outcomeId": "01a1f23b-ce24-79f0-8563-f44ffd6a8234",
+    "marketId": "01a1f23b-ce24-79f0-8563-f43e0d1fe3c0",
+    "label": "Moneyline Florida",
+    "desc": "West Virginia @ Florida",
+    "league": "NCAAB",
+    "type": "MONEY",
+    "startsMs": 1795116600000,
+    "p": 0.781203166857768
+   },
+   {
+    "outcomeId": "01a1f2e0-820a-78e0-b69b-1d5c8f23f944",
+    "marketId": "01a1f2e0-820a-78e0-b69b-1d4343f33363",
+    "label": "Moneyline High Point",
+    "desc": "Montana State @ High Point",
+    "league": "NCAAB",
+    "type": "MONEY",
+    "startsMs": 1795132800000,
+    "p": 0.8818470598228798
+   },
+   {
+    "outcomeId": "01a1f2e0-8289-7181-8bb4-a0de7a8a13fa",
+    "marketId": "01a1f2e0-8289-7181-8bb4-a0c38be1c157",
+    "label": "Moneyline Ohio State",
+    "desc": "UMBC @ Ohio State",
+    "league": "NCAAB",
+    "type": "MONEY",
+    "startsMs": 1795132800000,
+    "p": 0.9720573057069904
+   },
+   {
+    "outcomeId": "01a1f0a0-f692-70e2-a786-63d168ce9c69",
+    "marketId": "01a1f0a0-f692-70e2-a786-63cc1ffcf860",
+    "label": "Moneyline Washington",
+    "desc": "Utah Tech @ Washington",
+    "league": "NCAAB",
+    "type": "MONEY",
+    "startsMs": 1795140000000,
+    "p": 0.9204237700542859
+   }
+  ]
+ },
+ {
+  "rfqId": "01a1f3e1-2838-73c2-97ea-15f3ae09647a",
+  "quotedMs": 1795092990599,
+  "price": 0.527,
+  "fair": 0.5193003816206524,
+  "wager": 9.54397,
+  "legs": [
+   {
+    "outcomeId": "01a1c9ea-d65b-7fe3-9fac-b6d605d1b0e8",
+    "marketId": "01a1c9ea-d65b-7fe3-9fac-b6cd882c09b1",
+    "label": "Spread Houston Texans -4.5",
+    "desc": "Indianapolis Colts @ Houston Texans",
+    "league": "NFL",
+    "type": "SPREAD",
+    "startsMs": 1795137300000,
+    "p": 0.7254821827890929
+   },
+   {
+    "outcomeId": "01a1ef5d-767e-7253-9645-4244ae625c2b",
+    "marketId": "01a1ef5d-767e-7253-9645-42364b7c9edd",
+    "label": "Moneyline Carolina Hurricanes",
+    "desc": "Montreal Canadiens @ Carolina Hurricanes",
+    "league": "NHL",
+    "type": "MONEY",
+    "startsMs": 1795132800000,
+    "p": 0.7158003241709104
+   }
+  ]
+ }
+]
