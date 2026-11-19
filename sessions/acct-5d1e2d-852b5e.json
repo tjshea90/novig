@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "6d511ca17c3a9e61e648e3e039ea5f2f18b19531",
+ "head": "076fb99a136b93681ead151c58d6f215e6bd1401",
  "since": 1795047736,
- "beat": 1795107750,
- "beatIso": "2026-11-19T17:02:30Z",
+ "beat": 1795108067,
+ "beatIso": "2026-11-19T17:07:47Z",
  "done": "MK11: RfqLadder prop rung interpolation wired into the rfq leg fairs",
  "next": "reset engine, confirm startedAtMs, read 'RFQ ladder' log and no-fair share"
 }
