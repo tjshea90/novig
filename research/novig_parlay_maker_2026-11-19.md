@@ -101,6 +101,13 @@ Different-game parlays of 2-3 game-line legs (moneyline, spread, total, team tot
 - **Switch on (only with evidence, class B in research/review/ROUTINE.md)**: `python3 tools/rfq_set.py marketPricing=true --why "..."`; undo `marketPricing=false`. LIVE itself stays Tj's call and needs money (the wallet cash was $7.36 with $73 of collateral open).
 - Evidence rule for `marketPricing`: 24 h of probes (about 30,000 answers), and in the journals' EXECUTED rows the model's price winning at least as often as the rule's per league with a higher margin, and the settled P&L of the first live parlays not below -$3 per $100 of collateral.
 
+## 8b. Runbook: when Tj adds money and wants LIVE again
+1. `python3 tools/rfq_set.py --show`; wallet cash (status `walletCash`) must exceed the open-collateral cap (the maker's collateral comes out of the same subaccount as the bets and bids).
+2. Read the evidence: `python3 -I tools/rfq_market.py run <rfq-*.jsonl.gz of the last 24 h from the cloud-archive Releases>` (the probe table and the rule-vs-model line) and `status.rfq.market`. Per league the table gives the margin the market tolerates and the share it wins.
+3. If the classes the maker would quote have 40+ answers each and the model's price wins at least as many executed trades as the rule's with a higher margin: `python3 tools/rfq_set.py marketPricing=true --why "..."`. Otherwise keep the floors and raise `minPoints` to 0.010 (the flat 0.7 pt had no net edge in the NBA/NHL/NCAAB).
+4. `python3 tools/rfq_set.py mode=LIVE maxStake=12 maxCollateral=35 maxOpenCollateral=<cash minus a $20 reserve> dayLossStop=20 --why "..."`, then watch `status.rfq` (quotes, won, confirmed, filled) and the engine log's `RFQ maker LIVE:` line; the confirm rate must stay at 100% of our own wins (the last-look fix of MK12a).
+5. Tennis and college basketball first: `maxLegs=3` keeps long-parlay collateral small; long parlays (4+ legs, 55% of trades) tie up the most for the least.
+
 ## 9. Not known yet
 Whether our fair is as good as the other makers' per league (needs realized outcomes: the catalog forgets settled ids, so the engine must record outcomes itself: MK5); who the other makers are and how many; whether the best price a probe returns is the same one a real RFQ gets (the probe is anonymous and unattached to an account); tennis's wide margin may be our fair running low rather than thin competition (the first settled tennis parlays decide).
 
