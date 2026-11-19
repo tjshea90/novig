@@ -126,9 +126,11 @@ private fun PickingOptions(cfg: RfqConfig, rfq: RfqStatus, apply: (RfqConfig) ->
             }
             OptionRow("Only parlays that finish today", "The last leg must be a game on today's slate (5 am to 5 am Eastern).", cfg.onlyToday, "optToday") { apply(cfg.copy(onlyToday = it)) }
             OptionRow(
-                "Longshots only", "Only parlays with at most ${"%.0f".format(Locale.US, cfg.longshotMaxChance * 100)}% chance to win by our odds: fewer of them, a bigger payout, more collateral each. Priced with a 5% safety margin on our odds.",
+                "Longshots only", "Only parlays with at most ${"%.0f".format(Locale.US, cfg.longshotMaxChance * 100)}% chance to win by our odds: fewer of them, a bigger payout, more collateral each. Priced with a ${"%.0f".format(Locale.US, cfg.longshotPremium * 100)}% safety margin on our odds.",
                 cfg.longshotsOnly, "optLongshots",
             ) { apply(cfg.copy(longshotsOnly = it)) }
+            if (cfg.longshotsOnly) Stepper("Safety margin on longshots", "%.0f%%".format(Locale.US, cfg.longshotPremium * 100), "optLongshotMargin",
+                { apply(cfg.copy(longshotPremium = (cfg.longshotPremium - 0.01).coerceAtLeast(0.0))) }, { apply(cfg.copy(longshotPremium = (cfg.longshotPremium + 0.01).coerceAtMost(0.10))) })
             if (cfg.longshotsOnly) Stepper("Win chance at most", "%.0f%%".format(Locale.US, cfg.longshotMaxChance * 100), "optLongshotChance",
                 { apply(cfg.copy(longshotMaxChance = (cfg.longshotMaxChance - 0.05).coerceAtLeast(0.10))) }, { apply(cfg.copy(longshotMaxChance = (cfg.longshotMaxChance + 0.05).coerceAtMost(0.40))) })
             OptionRow(

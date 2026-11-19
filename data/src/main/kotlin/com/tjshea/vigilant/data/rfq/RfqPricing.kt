@@ -89,9 +89,9 @@ data class RfqConfig(
     val longshotMaxChance: Double = 0.25,
     /**
      * The safety premium (relative) a longshot parlay's fair carries in [longshotsOnly] (MK17, the positive-EV pass): of the 2,025 parlays graded from final scores, the ones we gave 0-10% hit 5.2% against a 4.6% fair
-     * and the 10-20% ones 15.1% against 13.8% (our fair too low by about a point, the size of our whole edge; clustered, not yet significant). 5% on the fair makes the quote safe if that is real; 0 = none.
+     * and the 10-20% ones 15.1% against 13.8% (our fair too low by about a point, the size of our whole edge; clustered, not yet significant). 3% on the fair covers about a third of it and 5% all of it (paper fills of a 25%-or-less, same-day setup over 5.9 h: 7 at 0%, 3 at 3%, 1 at 5%, at the 3%/day hurdle); 0 = none.
      */
-    val longshotPremium: Double = 0.05,
+    val longshotPremium: Double = 0.03,
     /**
      * MK17 (Tj: "the engine has to have a way to calculate this within the amount in my wallet so that it can accept parlays up to the collateral amount available in my wallet at any time"): the WALLET is
      * the collateral limit instead of the fixed dollar caps. With it on: one parlay may lock up at most [walletShare] of the wallet (cash + the collateral already held), one outcome (a leg shared by many
