@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "a498946ce05afe74ab090a7cb81685e3977ab174",
+ "head": "36e09e625a9bead9c706ac75e685e125763d8cf7",
  "since": 1795103757,
- "beat": 1795108551,
- "beatIso": "2026-11-19T17:15:51Z",
+ "beat": 1795108753,
+ "beatIso": "2026-11-19T17:19:13Z",
  "done": "MK12h: rfq-market.yml retries refused calls (the workflow token's 1,000 an hour is shared with the engine)",
  "next": "re-dispatch rfq-market.yml once the engine's token budget recovers; read the new job's probe status; Messages note to Tj"
 }
