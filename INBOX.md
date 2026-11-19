@@ -1800,3 +1800,8 @@ I'm about to put money into the wallet. Review the parlay system. See if there i
 ```
 switch it to live
 ```
+
+## 2026-11-19T22:21:03Z
+```
+Make sure to raise the allowed collateral to include my full wallet, and exclude collateral already up. I think right now it won't go past 80 dollars but it is already counting the  collateral already posted 
+```
