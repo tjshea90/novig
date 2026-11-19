@@ -1,5 +1,7 @@
 package com.tjshea.vigilant.data.rfq
 
+import com.tjshea.vigilant.data.reference.LineKind
+import com.tjshea.vigilant.data.reference.Side
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -50,8 +52,12 @@ class RfqMakerTest {
     }
 
     // ---- the pricing rule ----
-    private fun leg(id: String, event: String, p: Double, books: Int = 5, ageMs: Long = 60_000L, startsInMs: Long = 3 * 3_600_000L, live: Boolean = false, type: String = "MONEY") =
-        LegFair(id, event, "label $id", p, books, now - ageMs, now + startsInMs, live, type)
+    private fun leg(id: String, event: String, p: Double, books: Int = 5, ageMs: Long = 60_000L, startsInMs: Long = 3 * 3_600_000L, live: Boolean = false, type: String = "MONEY",
+                    side: Side? = null, homeLine: Double? = null, league: String = "XX", awayTeam: Boolean = false, period: Int = 0): LegFair {
+        val kind = when (type.removeSuffix("_1H")) { "MONEY" -> LineKind.MONEYLINE; "SPREAD" -> LineKind.SPREAD; "TOTAL" -> LineKind.TOTAL; "TEAM_TOTAL" -> LineKind.TEAM_TOTAL; else -> LineKind.PLAYER_PROP }
+        val s = side ?: if (kind == LineKind.TOTAL || kind == LineKind.TEAM_TOTAL || kind == LineKind.PLAYER_PROP) Side.OVER else Side.HOME
+        return LegFair(id, event, "label $id", p, books, now - ageMs, now + startsInMs, live, type, kind, s, period, homeLine, awayTeam, league)
+    }
 
     private fun fairs(vararg l: LegFair) = LegFairs { id -> l.firstOrNull { it.outcomeId == id } }
     private fun created(vararg ids: String, minWager: Double = 10.0) = RfqProtocol.Created(now, "rfq-1", ids.toList(), now + 3_000L, minWager)
@@ -75,14 +81,30 @@ class RfqMakerTest {
         assertTrue("the user's own minimum above $10 counts", (RfqPricer.decide(created("a", "b", minWager = 13.0), now, cfg, f, 0.0) as RfqDecision.Decline).reason.contains("asked"))
     }
 
-    @Test fun aSideAndTheTotalOfOneGameIsPricedWithACorrelationPremium() {
-        val f = fairs(leg("a", "e1", 0.5, type = "SPREAD"), leg("b", "e1", 0.5, type = "TOTAL"))
+    @Test fun aSideAndTheTotalOfOneGameIsPricedByTheCopulaPlusAPremium() {
+        // an unknown league: the margin and total are independent, so the joint is the product; the premium is the model's own-error cushion (config default 2%)
+        val f = fairs(leg("a", "e1", 0.5, type = "SPREAD", homeLine = -3.5), leg("b", "e1", 0.5, type = "TOTAL"))
         val q = RfqPricer.decide(created("a", "b"), now, cfg, f, 0.0) as RfqDecision.Quote
-        assertEquals("the fair is the product raised 8%", 0.25 * 1.08, q.fair, 1e-9)
-        val plain = RfqPricer.decide(created("a", "b"), now, cfg.copy(sameGamePremium = 0.0), f, 0.0) as RfqDecision.Decline
-        assertTrue(plain.reason.contains("one game"))
-        val other = fairs(leg("a", "e1", 0.5, type = "MONEY"), leg("b", "e1", 0.5, type = "SPREAD"))
+        assertEquals("independent 0.25 raised by the 2% premium", 0.25 * 1.02, q.fair, 1e-9)
+        assertEquals("an 8% premium (the old flat rule) is still a setting", 0.25 * 1.08, (RfqPricer.decide(created("a", "b"), now, cfg.copy(sameGamePremium = 0.08), f, 0.0) as RfqDecision.Quote).fair, 1e-9)
+        val off = RfqPricer.decide(created("a", "b"), now, cfg.copy(sameGamePremium = -1.0), f, 0.0) as RfqDecision.Decline
+        assertTrue("a negative premium switches the same-game pricing off", off.reason.contains("one game"))
+        // college football: the favourite covering goes with the Over (+17% correlation, a lift of about 11%): the price rises with it
+        val cfb = fairs(leg("a", "e1", 0.5, type = "SPREAD", homeLine = -7.0, league = "NCAAF"), leg("b", "e1", 0.5, type = "TOTAL", league = "NCAAF"))
+        val qc = RfqPricer.decide(created("a", "b"), now, cfg, cfb, 0.0) as RfqDecision.Quote
+        assertTrue("the NCAAF favourite + over is dearer than independent plus the premium (was ${qc.fair})", qc.fair > 0.25 * 1.12 && qc.fair < 0.25 * 1.18)
+        // a spread and a moneyline of one game is the same kind of line: Novig refuses it, so does the model; a player prop beside a side is not modelled
+        val other = fairs(leg("a", "e1", 0.5, type = "MONEY"), leg("b", "e1", 0.5, type = "SPREAD", homeLine = -3.5))
         assertTrue((RfqPricer.decide(created("a", "b"), now, cfg, other, 0.0) as RfqDecision.Decline).reason.contains("one game"))
+        val prop = fairs(leg("a", "e1", 0.5, type = "SPREAD", homeLine = -3.5), leg("b", "e1", 0.5, type = "POINTS"))
+        assertTrue((RfqPricer.decide(created("a", "b"), now, cfg, prop, 0.0) as RfqDecision.Decline).reason.contains("one game"))
+    }
+
+    @Test fun aTeamTotalAndTheGameTotalAreDearerThanIndependentAndTwoGamesStillMultiply() {
+        val f = fairs(leg("a", "e1", 0.5, type = "TEAM_TOTAL"), leg("b", "e1", 0.5, type = "TOTAL"), leg("c", "e2", 0.6, type = "MONEY"))
+        val q = RfqPricer.decide(created("a", "b", "c"), now, cfg, f, 0.0) as RfqDecision.Quote
+        // the same-game pair is dearer than independent (a team's total follows the game total), then x 0.6 from the other game
+        assertTrue("the pair is about 0.34-0.40, then x0.6 (was ${q.fair / 0.6})", q.fair / 0.6 in 0.34..0.40)
     }
 
     @Test fun propLegsArePricedWithAPremiumAPropLeg() {

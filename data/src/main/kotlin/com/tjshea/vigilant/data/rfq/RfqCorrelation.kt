@@ -216,12 +216,22 @@ object SameGame {
         return null
     }
 
+    /** Two legs on the same kind of line (a spread and a moneyline, two spreads, two totals, one team's total twice) in one period: Novig refuses the parlay, and they are one event or its opposite, not a pair to price. */
+    fun hasDuplicateLine(legs: List<GameLeg>): Boolean {
+        val keys = legs.map { l ->
+            val family = when (l.kind) { LineKind.MONEYLINE, LineKind.SPREAD -> "margin"; LineKind.TOTAL -> "total"; LineKind.TEAM_TOTAL -> if (l.awayTeam) "teamAway" else "teamHome"; LineKind.PLAYER_PROP -> "prop" }
+            family + l.period
+        }
+        return keys.toSet().size != keys.size
+    }
+
     /**
      * The probability that every leg wins, for 2 or [MAX_LEGS] legs of one game, or null when a leg is not a modelled game line (or the legs contradict: the same line twice, which Novig refuses anyway).
      * Probabilities are clamped inside (0.001, 0.999).
      */
     fun joint(legs: List<GameLeg>, sport: Sport = DEFAULT): Double? {
         if (legs.size !in 2..MAX_LEGS) return null
+        if (hasDuplicateLine(legs)) return null
         val z = legs.map { Gauss.inv(it.p.coerceIn(0.001, 0.999)) }
         val fav = homeFavorite(legs)
         fun r(i: Int, j: Int) = correlation(legs[i], legs[j], sport, fav)
