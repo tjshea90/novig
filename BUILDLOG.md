@@ -479,3 +479,4 @@ day that changes.
 | v1.0.138 | code 478 | 2026-11-18T05:37Z | MKV: parlay maker results in the app (Settled parlays tile, 24 h loss stop status), live at small limits, game lines only
 | v1.0.139 | code 479 | 2026-11-19T05:12Z | GD1 grading via other feeds; TR5 profit headline is the wallet
 | v1.0.140 | code 480 | 2026-11-19T05:31Z | GD2 grade fills with bare wording; TR5 profit headline back to bets' own sum
+| v1.0.141 | code 481 | 2026-11-19T20:46Z | MK15: Parlay hub (Engine > Parlays > My parlays): open and closed parlays with every leg's status, profit/loss, collateral, expected final time, what you keep if the buyers lose
