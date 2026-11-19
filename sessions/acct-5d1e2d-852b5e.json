@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "e4eac9800584edce52f7e713765010d94cca8083",
+ "head": "e742cad0f41e161684de0e5c6ab1f9c3a6d63594",
  "since": 1795047736,
- "beat": 1795103270,
- "beatIso": "2026-11-19T15:47:50Z",
- "done": "TR7 logged: ledger drop = parlay collateral",
- "next": "fix ledger open cost with rfq collateral"
+ "beat": 1795103297,
+ "beatIso": "2026-11-19T15:48:17Z",
+ "done": "MK10k: rfq maker SHADOW (paper) per Tj",
+ "next": "30-min checks on shadow numbers; LIVE when Tj adds money"
 }
