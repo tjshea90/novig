@@ -1844,3 +1844,8 @@ Turn the stop lots off. It can lose everything
 ```
 Parlayapi also has a socket. Use it 
 ```
+
+## 2026-11-19T23:27:59Z
+```
+Zero priced?
+```
