@@ -45,8 +45,8 @@ volume) and journals `livePrice` / `liveWouldWin` (status `liveHurdleWouldWin`) 
 
 ## 4. What it should earn (expected value, then the honest range)
 
-Steady state, per $100 of capital in use, **if our fair is true**: the 3% hurdle earns about **$4.70 a day** (2% hurdle $3.90, accept-everything $2.10), before the fees Novig charges nothing on a maker's
-RFQ fills (docs api/rfq: no maker fee is listed; verify at the first live fills). The opportunity at the 3% hurdle is about $160 of expected profit a day on roughly $3,600 of capital, so **returns per dollar
+Steady state, per $100 of capital in use, **if our fair is true**: the 3% hurdle earns about **$4.70 a day** (2% hurdle $3.90, accept-everything $2.10), with no fee on it: Novig's docs say makers pay
+none and earn no Maker Credit (api/fees; verify against the first live fills' `executions` rows). The opportunity at the 3% hurdle is about $160 of expected profit a day on roughly $3,600 of capital, so **returns per dollar
 hold up to a few thousand dollars** and then fall as the hurdle has to come down.
 
 | capital | fair true | half the edge real | no edge |
