@@ -1854,3 +1854,8 @@ Zero priced?
 ```
 The problem is the engine prices almost nothing. It doesn't have enough fair odds 
 ```
+
+## 2026-11-19T23:41:13Z
+```
+So you are sure that the engine only being able to price 17 rfqs out of 60000 isn't the reason
+```
