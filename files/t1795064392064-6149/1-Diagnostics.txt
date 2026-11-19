@@ -1,0 +1,539 @@
+== WHAT TO DO (ranked findings) ==
+0 BUG · 3 FAILURE · 1 OPTIMIZE · 0 IMPROVE · 5 WATCH (9 in all; the top 25 are listed)
+[FAILURE] #1 API ParlayAPI: key …10d2 was refused
+    key: health:API ParlayAPI:key …10d2 was refused
+    evidence: plan: free
+    code: Settings › Fair odds & sources: replace it
+    do: A failing health check: the evidence says what, 'code' says where to look (or what to change on the phone).
+[FAILURE] #2 Phone: notifications are off for Vigilant: no +EV alerts, no scan-done notes
+    key: health:Phone:notifications are off for Vigilant: no +EV alerts, no scan-d
+    evidence: (no further evidence)
+    code: Android Settings › Apps › Vigilant › Notifications
+    do: A failing health check: the evidence says what, 'code' says where to look (or what to change on the phone).
+[FAILURE] #3 CNO's edges (CLV): its bets lose to the close on average: the edges it shows aren't real
+    key: health:CNO's edges (CLV):its bets lose to the close on average: the edges it shows ar
+    evidence: CLV -2.1% on 19 bets, beat the close 42%, EV when bet +2.0% (placed within 48 h; 8 earlier left out)
+    code: that list's filters (minimum EV, fewest books, devig)
+    do: A failing health check: the evidence says what, 'code' says where to look (or what to change on the phone).
+[OPTIMIZE] #4 The screen stutters with nothing running: 42.6% of its frames are slow, 23 froze
+    key: perf:frames:quiet
+    evidence: 2044 frames, 871 slow, p50 27 ms, p95 332 ms, worst 1386 ms (Performance block); slowest tabs: TRACKER 90.6% slow of 203, worst 1386 ms; EV 63.7% slow of 278, worst 1115 ms; ENGINE 55.2% slow of 194, worst 1007 ms
+    code: the screen in use (the Tracker's derived lists over every bet, the Feed's rows), the state flows MainViewModel mirrors, and the heap/GC load (Memory block)
+    do: Load compose-performance: find what recomposes or recomputes on the main thread per state change (a list built from thousands of bets, a flow collected without distinctUntilChanged) and what allocates in the background; move it off the main thread. Never drop data to do it.
+[WATCH] #5 API Novig: 2 calls throttled or refused today
+    key: health:API Novig:2 calls throttled or refused today
+    evidence: 2725 calls today; the last 15m ago
+    code: its pacing in data/keys/ (QuotaPolicy, KeyPool)
+[WATCH] #6 Grading: 24 bets started over 6 h ago still open (24 need a tap)
+    key: health:Grading:24 bets started over 6 h ago still open (24 need a tap)
+    evidence: most common ×24: You hold both sides of this market, so one of them won: Novig shows no payout for either and the sco
+    code: data/tracker/BetSettler.kt, BetGrader.kt, Scores.kt
+[WATCH] #7 Closing lines: 62% of last week's started bets have a true close
+    key: health:Closing lines:62% of last week's started bets have a true close
+    evidence: 426 of 690; missing ×72: Couldn't read this bet's market; ESPN keeps full-game moneylines, spreads and totals only; ParlayAPI
+    code: data/tracker/ClosingLine.kt (capture), HistoricalCloses.kt, ParlayCloses.kt
+[WATCH] #8 Sockets: 4 sockets are switched off while the API is on
+    key: health:Sockets:4 sockets are switched off while the API is on
+    evidence: Novig's market feed (every scan reads its books by request: ~800 prices take about 2 minutes); Pinnodds; Kalshi; SharpAPI
+    code: Settings › APIs › Sockets
+[WATCH] #9 Wallet deployment: only $0.00 of $84.42 is working in bids (target $1013.07)
+    key: health:Wallet deployment:only $0.00 of $84.42 is working in bids (target $1013.07)
+    evidence: see WALLET DEPLOYMENT: what is wanted and what limits it (few games on Novig, the EV and sharp rules)
+    code: MakerDesk.deployScale / deployFor
+
+== SINCE THE PREVIOUS REPORT ==
+This is the first report saved on this phone: nothing earlier to compare with.
+
+VIGILANT DIAGNOSTICS · Nov 18, 11:58:34 PM
+Version 1.0.138 (code 478) installed Nov 18, 12:38:18 AM · alps 711 · Android 10 (API 29)
+For Claude: code at github.com/tjshea90/novig (modules engine/data/app; paths below are under data/src/main/kotlin/com/tjshea/vigilant/ or app's). Health checks come first, worst first, each with its evidence [in brackets] and the code that owns it (→); the blocks after are the numbers behind them. No keys are ever included.
+
+== Health checks (worst first) ==
+3 FAIL · 5 WARN · 15 OK
+FAIL API ParlayAPI: key …10d2 was refused [plan: free] → Settings › Fair odds & sources: replace it
+FAIL Phone: notifications are off for Vigilant: no +EV alerts, no scan-done notes → Android Settings › Apps › Vigilant › Notifications
+FAIL CNO's edges (CLV): its bets lose to the close on average: the edges it shows aren't real [CLV -2.1% on 19 bets, beat the close 42%, EV when bet +2.0% (placed within 48 h; 8 earlier left out)] → that list's filters (minimum EV, fewest books, devig)
+WARN API Novig: 2 calls throttled or refused today [2725 calls today; the last 15m ago] → its pacing in data/keys/ (QuotaPolicy, KeyPool)
+WARN Grading: 24 bets started over 6 h ago still open (24 need a tap) [most common ×24: You hold both sides of this market, so one of them won: Novig shows no payout for either and the sco] → data/tracker/BetSettler.kt, BetGrader.kt, Scores.kt
+WARN Closing lines: 62% of last week's started bets have a true close [426 of 690; missing ×72: Couldn't read this bet's market; ESPN keeps full-game moneylines, spreads and totals only; ParlayAPI] → data/tracker/ClosingLine.kt (capture), HistoricalCloses.kt, ParlayCloses.kt
+WARN Sockets: 4 sockets are switched off while the API is on [Novig's market feed (every scan reads its books by request: ~800 prices take about 2 minutes); Pinnodds; Kalshi; SharpAPI] → Settings › APIs › Sockets
+WARN Wallet deployment: only $0.00 of $84.42 is working in bids (target $1013.07) [see WALLET DEPLOYMENT: what is wanted and what limits it (few games on Novig, the EV and sharp rules)] → MakerDesk.deployScale / deployFor
+OK   Game matching: 100% of Novig's games matched to a fair-odds source [35 of 35; 199 futures left out]
+OK   API ParlayAPI: key …4f83 is spent until its reset in 283h 1m; the other keys carry on
+OK   API OddsPapi Free (v4): key …ff45 is spent until its reset in 283h 1m; the other keys carry on
+OK   Runway The Odds API: tight but lasting [The Odds API: 5,884 of 10,500 credits used this month (21 keys), 4,616 left · resets Dec 1 · at this pace about 9,695 by]
+OK   CrazyNinjaOdds: read 2m ago, 49 rows
+OK   Background auto-scan: the phone rests: the GitHub engine scans and trades while Vigilant is closed (no service, no wake lock)
+OK   Open bets' EV now: 8 of 155 upcoming bets have a current EV (no Check odds now in the last 30 min: tap it before copying) [50 never priced]
+OK   Tracker data: 1151 bets have no EV on record (imported or synced): left out of expected vs actual
+OK   Tracker data: 49 outlier bets (over ±6% EV when bet) left out of the stats
+OK   Edge accuracy (CLV): bets placed within 48 h of the start beat the close: the edges hold up [average CLV +0.4%, EV when bet +2.2%, beat the close 50%, 457 bets placed within 48 h of the start; placed earlier: CLV +2.2% on 313 bets (see Early bets)]
+OK   Early bets (CLV): bets placed more than 48 h before the start beat the close [CLV +2.2% on 313 bets, beat the close 58%, 24 closed over 10% worse than their price; within 48 h: CLV +0.4% on 457]
+OK   Vigilant's edges (CLV): its bets beat the close [CLV +0.5% on 438 bets, beat the close 51%, EV when bet +2.2% (placed within 48 h; 305 earlier left out)]
+OK   Auto-bet: off → the Auto-bet tab
+OK   Sharp-book confirmation: on for auto-bet via PropLine, PropLine props, PropLine 1st half, ParlayAPI, ParlayAPI props, ParlayAPI 1st half, The Odds API, Sportsbook props, OddsPapi Free, OddsPapi Free props, SharpAPI (0 feed calls since the app opened)
+OK   Memory: heap 74 of 256 MB (29%)
+
+== Settings ==
+Scanner: Both · paused: no
+Kill switch (STOP ALL): off
+Background auto-scan: CNO + Vigilant every 30 sec → actually runs: CNO + Vigilant · service not running
+Keep awake (Tj, 2026-10-02): switch on · the phone rests: the GitHub engine scans and trades, nothing on the phone to keep awake (PB9)
+Auto-bet (Tj, 2026-10-01): off
+Auto-lock (RESEARCH.md §67): off · min 2.0% of the stake · in-game no · locks on offer now 39 of 164 API markets · Tracker Novig-only filter off · hide locked bets on
+Make orders / Bids (RESEARCH.md §70): ON · 1.8% under the fair (sharp book's if lower) · ⅛ Kelly of $200.00, up to $3.00 a bid · Props, Team totals · up to 60 min (less if the fair goes old) · games within 72 h · no bid longer than +140 · most unlimited bids / no dollar limit · stop 5 min before the start · both sides yes · sharp veto on · sharp book required yes · popular first yes (Novig's volume by kind of market) · long-run saver off · fewest books agreeing 3 · recommend off · 0 resting, 0 cancelling, 0 filled of 0 on record (2 days; fills 7) · last pass 5s ago (0 posted, 0 cancelled, The GitHub engine runs the bids now)
+
+Live burst recorder: off · nothing recorded (switch it on in Settings › Live burst recorder)
+Burst trader (real money): off
+
+PINNODDS LIVE (RESEARCH.md §116)
+Feed: off · not running · real bets ON · stake $1, game $10, day $25, halt at $10 lost · min EV 1.5%, min move 1 points, trigger Any edge, devig Worst case, pregame on, hold-off after a score off
+Engine: socket off · Pinnacle matchups 0 (0 live) · Novig live games 0 · matched 0 · markets held 0 · frames 0 · last frame none · evaluations 0 · candidates 0
+Trader this run: 0 bets · 0 paper · 0 missed · 0 refused · spent $0
+No decisions yet.
+Post-score study (the pause after a score; reads only, sends nothing):
+  No score has been probed yet: after each score on a matched game the moneyline is read at +0s, +1s, +2s, +3s, +5s, +8s, +12s, +20s, +30s.
+
+LIVE BIDS (RESEARCH.md §123-§124)
+Switch: off · feed not running · REAL money · preset More fills (changed)
+Rules: 2.5% under Pinnacle's fair · fair 14%-86% · moneyline/spread/total incl. tennis · bid rests 28s · pulled if EV < 1.7% · 27s hold after a score · 12s after a danger frame · Pinnacle silent > 17s = pull · overround ≤ 8.3% · Pinnacle limit ≥ $671
+Detail: devig Worst case · price 11.9%-83.4% · fair 14%-86% · quiet 17s · fair age 0s · settle 4s · book gap 10.5% · ttl 28s refresh 8s overlap true · pull below 1.7%, on score true, Novig move 4% · cool-off 64s · pick-off stop 4/8 · max pull 12s, max place 15s · credit counted false · both sides true · tennis true · leagues all
+Limits: ⅛ Kelly on a $200 bankroll · stake $0.50-$1 · 50 bids, 6 a game · $5 a game · $40 a day · halt at $15 lost · wallet reserve $5
+Engine: running false · lines watched for bids 0 · judgments made 0 · socket off · Pinnacle live 0 · matched 0 · Novig markets watched 0
+Desk: off · 0 up ($0.00 if all filled) · today 0 posted, 0 filled for $0.00
+No live bids yet.
+  No bid has gone up yet (no line has been judged).
+
+LIVE TAIL BETS (RESEARCH.md §125)
+Switch: off · paper · stake $1, game $10, day $20, halt at $10 lost · min edge 5%
+Lab: running false · games 0 · with state 0 · cycles 0 · tail strikes seen 0
+Taker this run: 0 bought · 0 paper · 0 missed · 0 refused · spent $0
+
+LIVE LIGHT (push lane for obviously wrong live prices; Tj 2026-10-14)
+Switch: off · running false · Novig live feed NOT connected (the 20-second pass is used) · bids off
+PINNACLE WEBSITE FEED (RESEARCH.md §127)
+Engine's source: ParlayAPI Pinnacle (GitHub) · compare run off · poll 2000 ms · up to 60 live games · key built-in public key
+Not running.
+== SPORTSGAMEODDS PRO (SPORTSGAMEODDS_API.md) ==
+switch off · 1 key · extra books on · alternate lines on · active now: false
+health: no answer yet
+Pinnacle prices from: Pinnodds first (switched on, key saved) · last board: no board read yet
+
+== SOCKETS (Settings › APIs › Sockets: on = kept open for real-time prices; off with the API on = read by request) ==
+Novig market feed: API ON · socket OFF · no feed (off, or no read key) · every scan reads Novig's books by request (a scan of ~800 prices takes about 2 minutes at the key's 16 a second)
+BoltOdds: API off · socket OFF · lines not live · props not live
+Kalshi: API ON · socket OFF · not live · 0 of 0 markets subscribed · signed or public REST read every scan
+Pinnodds: API ON · socket OFF · live engine not running · the live lane waits (needs the push)
+Streaming engine: off
+
+== FAIR CALIBRATION (is the fair line honest? win rate vs fair and close) ==
+win rate against the fair chance the bet was placed on (and the chance at the close): a gap under zero with |z| over 2 means the fair line runs high for that group; the edge and the CLV are then overstated by about twice the gap
+  all: n 313 · fair 50.1% · won 46.0% · gap -4.1 pts (z -1.4) · ROI -10.7% · -28.39
+  bets: n 308 · fair 50.1% · won 45.5% · gap -4.6 pts (z -1.6) · ROI -11.0% · -29.08
+  bets · Spreads: n 141 · fair 49.3% · won 48.2% · gap -1.1 pts (z -0.3) · ROI -12.0% · -13.85
+  bets · Game totals: n 128 · fair 49.7% · won 40.6% · gap -9.1 pts (z -2.1) · ROI -14.6% · -17.32
+  bets · stated EV 0.0-2.0%: n 61 · fair 48.7% · won 50.8% · gap +2.1 pts (z 0.3) · ROI -15.1% · -3.51
+  bets · stated EV 2.0-3.5%: n 118 · fair 48.8% · won 44.1% · gap -4.7 pts (z -1.0) · ROI -9.6% · -7.43
+  bets · stated EV 3.5-5.0%: n 49 · fair 49.9% · won 46.9% · gap -3.0 pts (z -0.4) · ROI -10.4% · -5.81
+  bets · stated EV 5.0-100.0%: n 55 · fair 49.2% · won 34.5% · gap -14.6 pts (z -2.2) · ROI -11.8% · -9.83
+
+== WALLET DEPLOYMENT (Bids › Keep the wallet working) ==
+VOLUME MODE ON: every bid at the most its EV floor allows (1.5% on the safest types, 2.5% on riskier ones and lines no sharp book prices), up to 400 bids, the kinds that fill fastest first (research/bid_fill_speed_2026-10-14.md), new stakes scaled up toward the wallet target (never past the Kelly ceiling)
+switch ON · target 1200% of the wallet (the most the bids may be worth) · stake ceiling 33% of full Kelly · bids on · bid while the scan runs ON · quick scans between full ones ON (full scan every 15 min)
+last pass: wallet $1013.07 · target $1013.07 · resting $0.00 (0% of the wallet) · stake scale x4.0 (cap 33% Kelly)
+wanted after this pass: $0.00 · riskier wallet-filling bids wanted: 0 ($0.00) · deeper second bids posted this run: 0
+STILL SHORT of the target by $1013.07: there are not enough bids that pass every rule (the games on Novig, the sharp-book and EV rules): the skip reasons below say which
+0 bids (up now and wanted this pass) across 0 games · most bids on one game 0, most dollars $0.00 (limits: no bid count, $20.00 a game)
+
+== GITHUB ENGINE (its own heartbeat on the cloud-feed branch) ==
+run 44460312690 · heartbeat 0s ago · idle between scans · passes 11 · 43 bets listed · settings rev 1795063426434 (priced under 1795063426434)
+Novig: Novig read-only key active: 16 reads a second, tier BASE (up to 2,048 open orders), websocket off (reads by request)
+APIs on the engine: polymarket, sxbet, sharpapi, kalshi, propline, propline_props, propline_1h, oddsapi, oddsapi_props, parlay, parlay_props, parlay_1h
+ranking by measured freshness and accuracy: SGO (not measured) > PropLine (p90 10 min) > The Odds API (p90 1 s) > OddsPapi Free (not measured) | PropLine (p90 73 s) > SGO (not measured) > OddsPapi Free (not measured) > The Odds API (not measured) | always asked, not ranked: Kalshi (p90 <1 s); ParlayAPI (p90 108 s); ParlayAPI (p90 2 min); ParlayAPI (p90 6 min); Polymarket (p90 <1 s); PropLine (p90 10 min); sharpapi (not measured); SX Bet (p90 <1 s)
+last scan: EV spread of 3610 priced lines: +EV 90 · 0 to -2% 414 · -2 to -5% 826 · -5 to -10% 755 · below -10% 1525; exchange lines compared: SX Bet 176 · Kalshi 764 · Polymarket 670; Last scan took 27 s: board 1.2 s · fair odds 21 s (SX Bet 21 s, Polymarket 19 s, ParlayAPI 16 s) · 2,724 Novig prices in 25 s (108.5 a second: 2724 by live feed) · live feed asked for 2,000 at 1.4 s · live feed held 2000 of 2,000 asked at the end · hot refresh: 0 fair-odds reads, 10 Novig re-reads of games about to start · first bet at 27 s · Novig refused none; Novig books: 2724 read, 0 unchanged, 0 from cache, 0 left out as too late; feeds: polymarket 4+0, kalshi 7+0, sxbet 7+0, sharpapi 7+0, propline 7+0, propline_props 4+0, propline_1h 2+0, parlay 7+0, parlay_1h 2+0, parlay_props 3+0, oddsapi 0+0, oddsapi_props 0+0
+
+== BIDS FROM GITHUB (the engine's candidate lines + this phone's Novig books) ==
+no candidate list has reached this phone yet (the engine says it published one 0s ago: not fetched, or unreadable)
+engine: candidate pass 0s ago, 705 lines · heartbeat 0s ago
+
+== BOLTODDS PRO (BOLTODDS_API.md) ==
+switch off · 3 keys · every book on · active now: false
+REST: no answer yet
+lines socket: off · connects 0, drops 0 · frames 0 (0 arrays, biggest 0 chars) · not ready
+  snapshot: 0 read, last 0 games in 0 ms
+  board: 0 games, 0 outcomes · books  · sports 
+  games flagged in play (info.is_live): none
+  push lag (for the live-fair decision): no live push has arrived yet
+  messages: none
+props socket: off · connects 0, drops 0 · frames 0 (0 arrays, biggest 0 chars) · not ready
+  snapshot: 0 read, last 0 games in 0 ms
+  board: 0 games, 0 outcomes · books  · sports 
+  games flagged in play (info.is_live): none
+  push lag (for the live-fair decision): no live push has arrived yet
+  messages: none
+
+== ODDSPAPI FREE v4 (ODDSPAPI_API.md addendum) ==
+switch ON · 4 keys · closing lines only
+health: answering · plan active · 254/250 requests used this period · books 198bet, 1red, 1xbet, 1xbit, 20bet, 22bet, 31bet, 3et, 4casters, 500.casino, 7bet.co.uk, 7bet.lt, 888sport, 888sport.ca, 888sport.de, 888sport.dk, 888sport.es, 888sport.it, 888sport.ro, admiralbet.ba, admiralbet.it, admiralbet.me, admiralbet.rs, allbritishcasino, alphawin, apuestatotal, asports.bet, atg.se, balkanbet.rs, ballybet, bcgame, bet3000, bet365, bet365-nj, bet365.bet.ar, bet365.bet.br, bet365.de, bet365.es, bet365.fr, bet365.gr, bet365.it, bet365.nl, bet487, bet99, betamapola, betano, betano.bet.br, betano.bg, betano.ca, betano.cz, betano.de, betano.dk, betano.mx, betano.pe, betano.pt, betano.ro, betboo.bet.br, betcenter.be, betcity.nl, betcris, betdsi, betfair-ex, betfair.es, betfair.it, betfirst.be, betflag.it, betfred, betfury, betify, betika, betinia.dk, betmgm, betmgm.co.uk, betnacional, betnation.nl, betonline.ag, betonred, betparx, betpawa.cm, betplay, betplay.io, betrivers, betsafe, betsson, betsson.it, betuk, betus, betwar, betway, betway.de, betway.es, betwhale.ag, betwinner, bfb247, bingoal.be, blaze, blaze.bet.br, bluechip, bodog.eu, bolsadeaposta-spb, bookmaker.eu, borgata, bovada.lv, boylesports, bpremium, brazino777.bet.br, bwin, bwin.be, bwin.de, bwin.dk, bwin.es, bwin.fr, bwin.pt, caesars, campobet.dk, casapariurilor.ro, cashpoint, cashpoint.dk, casumo, circasports, cloudbet, codere.es, coolbet, coolzino, coral, cryptoleo, dafabet, desertdiamond, draftkings, duel, duelbits, efortuna.pl, efortuna.ro, eplay24.it, espnbet, esportivabet, estrelabet, estrelabet.bet.br, eurobet.it, expekt.dk, expekt.se, fair999-ex, fairpari, fanatics, fanduel, fbsports, fdj, feelingbet.fr, fezbet, fliff, fonbet, fortunejack, fourwinds, freshbet, fun88.co.uk, gamdom, gamebookers, genybet.fr, goldbet.it, goldenbet, goldenpalacesports.be, goldenpark.es, greatwin, grosvenor, hardrockbet, hth, inbet, indibet, inkabet, interwetten, ivibet, jackbit, jacks.nl, jazzsports, justbet, kaiyun, kalshi, kto, kto.bet.br, ladbrokes, ladbrokes.de, leovegas, leovegas.dk, leovegas.es, leovegas.it, leovegas.uk, leyusports, librabet, limitless-ex, livescorebet, lottoland, lottomatica.it, lowvig.ag, mansion88, marathonbet, matchbook, maxbet.ro, maxbet.rs, megadice, megapari, melbet, merkurbets, merkurxtip.cz, midnite, mozzartbet, mrbit.ro, mrgreen, mrgreen.dk, mrjack.bet, msport, mybookie.ag, myriad, mystake, n1bet, napoleonsports.be, neds.com.au, netbet, netbet.co.uk, netbet.fr, netbet.it, nextbet, ninecasino, nordicbet, novig.us, oddset, odibets, oktagonbet, ole777, orbitx, overtime.io, paddypower, paf, paf.es, pagbet, pamestoixima.gr, paradisewager, partycasino, partypoker, pb77, pin88, pinnacle, piwi247-ex, piwi247-spb, pixbet, planetwin365.it, playnow, pmu, pointsbet.com.au, pokerstars, pokerstars.es, pokerstars.fr, pokerstars.it, pokerstars.ro, pokerstars.uk, polymarket, polymarket.us, powbet, powerplay, prizepicks, prolineplus, prophetx, ps3838, punter.io, quickwin, quigioco.it, rabona, rainbet, rajbets, razed, rebet.app, rollbit, rolletto, roobet, rooster.bet, rushbet.co, sabasports, sbobet, scooore.be, sesamesport.bg, sharp.ag, sharpbet, sharpxch, singbet, singbet-b, sisal.it, skybet, snai.it, soccerbet.rs, solabet, spelet.lv, sportaza, sportingbet, sportingbet.bet.br, sportingbet.co.za, sports411.ag, sportsbetting.ag, sportsinteraction, sportuna, sportwetten.de, sportybet, stake, stake.bet.br, starcasino.be, stoiximan, sugarhouse, sunbet.co.za, superbet, superbet.bet.br, superbet.pl, superbet.ro, superbet.rs, svenskaspel, sx.bet, tab.com.au, tabtouch, thescore, tigergaming, tipico, tiptorro, tonybet, topodds, toto.nl, unibet, unibet.be, unibet.com.au, unibet.dk, unibet.fr, unibet.ie, unibet.nl, unibet.se, vave, velobet, vertex, virginbet, vistabet, wazamba, wettarena, williamhill, williamhill-nj, winamax.de, winamax.es, winamax.fr, winbet.bg, winbet.ro, winpot.mx, xbet.ag, yesplay, zebet.fr · sports 10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68
+billable requests made today: 0 · may buy now: false · all requests (incl. free): 1
+fair odds feed: 250 requests a day · every book on · active now: true
+Sharp books (Tj, 2026-10-02: veto by default): auto-bet CONFIRM · alerts VETO · Pinnacle or Circa, quote at most 10 min old, edge at least 1.0%, CNO's page may confirm · feeds: PropLine, PropLine props, PropLine 1st half, ParlayAPI, ParlayAPI props, ParlayAPI 1st half, The Odds API, Sportsbook props, OddsPapi Free, OddsPapi Free props, SharpAPI · feed calls since the app opened 0 (0 failed) · veto bar 1.0% on the sharpest book (RESEARCH.md §72)
+Trap guard (RESEARCH.md §71): auto-bet and alerts only on games starting within 48 h · bets first listed more than that many hours before the start skipped (auto-bet and alerts) · game lines Novig just moved skipped (the auto-bet and game-line bids read Novig's trades first) · favorites need no extra edge (auto-bet) · player-prop Overs need 3.0% more edge (auto-bet) · bids only on games starting within 72 h (their own setting since v0.86.1)
+Small-prop guard (RESEARCH.md §109): no kind of player prop over 27.12% of the last 24 h's auto-bets (once there are 8; never under an even split of the kinds being bet) · at most 3 auto-bets on one kind of prop in one game · Last 24 hours: no auto-bets. Last 7 days: no auto-bets.
+Leagues: ATP, NBA, NCAAB, NCAAF, NFL, NHL, WTA · days ahead 10 · starts within any time · live games off
+Edge shown: 1.5% to 25.0% · max odds +150 · fair odds BLEND / WORST_CASE, at least 2 books
+Scan size: no limit Novig prices · lines/game no limit · props/game no limit · fill the budget on · window 240 h
+Fair-odds sources on: kalshi, oddsapi, oddsapi_props, oddspapi_free, oddspapi_free-props, parlay, parlay_1h, parlay_props, polymarket, propline, propline_1h, propline_props, sharpapi, sxbet · sportsbook props on (credits/scan no limit, PropLine games no limit)
+Keys saved: The Odds API 21 · Pinnacle (pinnapi) 0 · Pinnacle (PinnWire) 0 · PropLine 3 · ParlayAPI 10 · Pinnodds 1 · SportsGameOdds 1 · OddsPapi Free (v4) 4 · BoltOdds 3 · SX Bet 1 · SharpAPI 1
+CNO list (RESEARCH.md §85): conservative devig · odds any to +150 · 4+ books · edge ≥ 1.0% · 100 rows (300 when the app has to filter) · complete book on · games: NHL, NBA, WNBA, MLB, NCAAF, NFL, NCAAB · pregame only · asked of CNO as all leagues (the app filters)
+CrazyNinjaOdds: on · refresh 60 s · only bets the books agree on off · alerts ≥ 4.0%
+Stakes: bankroll $200.00 · ¼ Kelly · bet slip amount Kelly
+Betting through the API: on · wallet $84.42 · amount $1.00, most per bet $5.00, most per day $500.00, most on one game $25.00, no minimum edge by hand (auto-bet has its own)
+Novig key: connected · management key saved on this phone (••••b387)
+Novig key route: usable now · stand-downs since the app opened: 0
+[… 17 more lines of this section left out to keep the file under 60 KB; the first (newest/most important) are kept]
+== Last Vigilant scan ==
+Started 5s ago (Nov 18, 11:58:29 PM) · window 240 h
+Novig prices: 0 read (0 through the key, 0 pushed), 0 shown from the last scan
+Games 234 on Novig, 223 matched to fair odds · 10005 lines priced · 15022 sides with a fair price · 262 +EV · 17 games past days ahead
+Matched by league (games, futures aside): NCAAF 18/18 · NCAAB 9/9 · ATP 4/4 · NFL 3/3 · NBA 1/1
+Feed now: 40 bets
+Errors: none
+
+== API usage (each provider's own allowance) ==
+Includes the GitHub engine's usage, published 29s ago (its share is the 'GitHub' figure on each line; a key's 'left' is the provider's own newest figure when it sent one).
+Kalshi pace test: on, 3 a second, no request made yet this session
+  key: Ed25519 05aeeddc… · host https://external-api.kalshi.com/trade-api/v2 · signed reads at ~4.0 a second
+  account: not read yet
+  catalog: 0 series held, socket off
+  socket: off · connects 0, drops 0 · frames 0 (ticker 0, lifecycle 0) · not ready
+    markets: wanted 0, subscribed 0, with a push 0, closed/paused 0 · chunk 200 · sequence gaps 0 · acks: subscribed 0, ok 0 · still waiting for 0
+Novig book reads by caller since the app opened (504 requests): locks 495 · fresh-book 6 · open-bets 3
+boltodds: 0 calls today, 0 refused/throttled
+    key …e852: used 0
+    key …d074: used 0
+    key …4e08: used 0
+kalshi: 994 calls today, 0 refused/throttled · GitHub 994 of them
+novig: 2725 calls today, 2 refused/throttled, last throttle 15m ago · GitHub 2035 of them
+oddsapi: 148 calls today, 0 refused/throttled · GitHub 148 of them
+    key …16a7: used 286, 214 left, the provider's figure read 1m ago
+    key …71c4: used 286, 214 left, the provider's figure read 2m ago
+    key …5a6f: used 286, 214 left, the provider's figure read 2m ago
+    key …05f9: used 286, 214 left, the provider's figure read 2m ago
+    key …bf07: used 286, 214 left, the provider's figure read 2m ago
+    key …f6bc: used 286, 214 left, the provider's figure read 2m ago
+    key …7785: used 286, 214 left, the provider's figure read 2m ago
+    key …4baf: used 286, 214 left, the provider's figure read 2m ago
+    key …cefe: used 286, 214 left, the provider's figure read 2m ago
+    key …c5c6: used 286, 214 left, the provider's figure read 2m ago
+    key …badc: used 286, 214 left, the provider's figure read 2m ago
+    key …587f: used 286, 214 left, the provider's figure read 2m ago
+    key …d06e: used 283, 217 left, the provider's figure read 2m ago
+    key …258c: used 271, 229 left, the provider's figure read 2m ago
+    key …7cc8: used 272, 228 left, the provider's figure read 2m ago
+    key …af31: used 271, 229 left, the provider's figure read 2m ago
+    key …f180: used 271, 229 left, the provider's figure read 2m ago
+    key …666e: used 271, 229 left, the provider's figure read 2m ago
+    key …1eb5: used 272, 228 left, the provider's figure read 2m ago
+    key …999c: used 271, 229 left, the provider's figure read 2m ago
+    key …9797: used 270, 230 left, the provider's figure read 2m ago
+oddspapi_free: 8 calls today, 0 refused/throttled · GitHub 8 of them
+    key …ff45: used 254, 0 left, spent until Nov 30, 7:00:00 PM, the provider's figure read 12m ago
+    key …2f72: used 98, 152 left, the provider's figure read 12m ago
+    key …a210: used 0, 250 left, the provider's figure read 12m ago
+    key …2f65: used 0, 250 left, the provider's figure read 12m ago
+parlay: 165 calls today, 0 refused/throttled · GitHub 133 of them
+    key …10d2: used 1000, 0 left, REFUSED, spent until Nov 30, 7:00:00 PM, resets Nov 30, 7:00:00 PM (the provider's time), the provider's figure read 5s ago · plan: free
+      its own account: plan free · 0 left of 1000 · resets Nov 30, 7:00:00 PM · read from /v1/usage
+    key …d087: used 327778, 672222 left, resets Nov 30, 7:00:00 PM (the provider's time), the provider's figure read 5s ago · plan: business
+      its own account: plan business · 672222 left of 1000000 · resets Nov 30, 7:00:00 PM · read from /v1/usage
+    key …9dca: used 905, 95 left, resets Nov 30, 7:00:00 PM (the provider's time), the provider's figure read just now · plan: free
+      its own account: plan free · 95 left of 1000 · resets Nov 30, 7:00:00 PM · read from /v1/usage
+    key …4f83: used 1000, 0 left, spent until Nov 30, 7:00:00 PM, resets Nov 30, 7:00:00 PM (the provider's time), the provider's figure read just now · plan: free
+      its own account: plan free · 0 left of 1000 · resets Nov 30, 7:00:00 PM · read from /v1/usage
+    key …451b: used 900, 100 left, resets Nov 30, 7:00:00 PM (the provider's time), the provider's figure read just now · plan: free
+      its own account: plan free · 100 left of 1000 · resets Nov 30, 7:00:00 PM · read from /v1/usage
+    key …b48c: used 902, 98 left, resets Nov 30, 7:00:00 PM (the provider's time), the provider's figure read just now · plan: free
+      its own account: plan free · 98 left of 1000 · resets Nov 30, 7:00:00 PM · read from /v1/usage
+    key …a0a8: used 900, 100 left, resets Nov 30, 7:00:00 PM (the provider's time), the provider's figure read just now · plan: free
+      its own account: plan free · 100 left of 1000 · resets Nov 30, 7:00:00 PM · read from /v1/usage
+    key …b3f5: used 904, 96 left, resets Nov 30, 7:00:00 PM (the provider's time), the provider's figure read just now · plan: free
+      its own account: plan free · 96 left of 1000 · resets Nov 30, 7:00:00 PM · read from /v1/usage
+    key …98e5: used 902, 98 left, resets Nov 30, 7:00:00 PM (the provider's time), the provider's figure read just now · plan: free
+      its own account: plan free · 98 left of 1000 · resets Nov 30, 7:00:00 PM · read from /v1/usage
+    key …9144: used 912, 88 left, resets Nov 30, 7:00:00 PM (the provider's time), the provider's figure read just now · plan: free
+      its own account: plan free · 88 left of 1000 · resets Nov 30, 7:00:00 PM · read from /v1/usage
+pinnacle: 0 calls today, 0 refused/throttled
+pinnwire: 0 calls today, 0 refused/throttled
+polymarket: 566 calls today, 0 refused/throttled · GitHub 566 of them
+propline: 212 calls today, 0 refused/throttled · GitHub 212 of them
+    key …0c2f: used 273, 249727 left, resets Nov 19, 7:00:00 PM (the provider's time), the provider's figure read 31s ago
+    key …c2e5: used 6, 994 left, resets Nov 19, 7:00:00 PM (the provider's time), the provider's figure read 2m ago · plan: free
+    key …8aef: used 6, 994 left, resets Nov 19, 7:00:00 PM (the provider's time), the provider's figure read 2m ago · plan: free
+sgo: 0 calls today, 0 refused/throttled
+    key …5be3: used 0
+sharpapi: 133 calls today, 0 refused/throttled · GitHub 133 of them
+    key …TeBu: used 123
+sxbet: 775 calls today, 0 refused/throttled · GitHub 775 of them
+    key …Ovdc: used 0
+ParlayAPI extras since the app opened: injuries 6, movers 20, second opinions 0, picks 0 · injury reports kept 999 · tagged now 2 · line moves 8 · picks listed 0 (0 found at Novig)
+
+== Runway (will each API's allowance last?) ==
+OddsPapi Free (v4): 352 of 1,000 requests used this month (4 keys), 652 left · resets Dec 1 · at this pace about 580 by the reset: OK
+PropLine: 285 of 252,000 requests used today (3 keys), 251,715 left · resets in 19h 1m · at this pace about 1,374 by the reset: OK
+ParlayAPI: 335,103 of 1,008,000 credits used this month (10 keys), 672,897 left · resets Dec 1 · at this pace about 552,145 by the reset: OK · 1 key refused by the provider (wrong or deleted)
+The Odds API: 5,884 of 10,500 credits used this month (21 keys), 4,616 left · resets Dec 1 · at this pace about 9,695 by the reset: WATCH
+
+== Last rounds (what they cost each API) ==
+Scan: 5s ago · took 93 ms
+    cost: no API was asked (everything was re-used)
+Check odds now: none since the app opened.
+
+== CrazyNinjaOdds ==
+Last read: 2m ago · 49 rows · errors in a row 0
+Kept current now: no
+
+== Background auto-scan ==
+Now: idle · last started never · ended never · found 0, alerts sent 0
+Cycle record: none yet (it starts with the next background cycle)
+
+== Tracker ==
+Bets: 1576 (open 206: 155 upcoming, 51 started; settled 1370)
+By kind: bets 1571 (open 206) · bids filled 5 (open 0) · a bid is a make order Vigilant posted that a taker filled; bids nobody filled are in the Make orders / Bids block above
+By scanner: Vigilant 1534, CNO 42, ParlayAPI 0 · placed through the API 1532
+Current EV: 8 of 155 upcoming bets have one read inside the fair odds' age limit; 97 have an old one; 50 none
+Check odds now counter (since Nov 7, 1:34:48 AM): 86 +EV · 25 −EV · 77% +EV · Avg +1.8% EV (29 over ±5% left out) (6 live games left out)
+Scan study: 2,685 bets logged over 11 days · 2,536 graded · 857 with a closing line · 8.7 MB · 0 bets logged since the app opened · logging on
+Scan study's wide CNO read: no read yet since the app opened
+Settled by: score feeds 162, Novig's ledger 1160, you 0
+Started and still open: 51 (24 for over 6 hours, 24 need a tap)
+  waiting ×24: You hold both sides of this market, so one of them won: Novig shows no payout for either and the score feeds can't say which, check it in the Novig app
+Closing line value (all time): Beat the close 53% (420 of 787) · avg vs close +1.1% · avg EV at bet +2.6% · 787 bets with a true close (516 Novig's trades, 245 read before the start, 14 ESPN, 7 DraftKings + FanDuel via ParlayAPI, 2 OddsPapi Free · Pinnacle close, 2 FanDuel via ParlayAPI, 1 DraftKings via ParlayAPI) · 155 waiting for their close (game not started) · 620 started with no close found yet · 415 over ±5% included
+Next closing-line read: Nov 19, 7:34:00 AM · alarm Nov 19, 7:34:00 AM
+Closes found after the start: last look 0 bets, found 0 · Novig trade data read 127494 KB
+  still looking for 129 closes:
+    ×51: ESPN keeps full-game moneylines, spreads and totals only; Novig publishes this day's trades the next morning
+    ×26: OddsPapi Free keeps its last requests; Not on ESPN's scoreboard; ParlayAPI's closes are DraftKings' and FanDuel's moneylines since Pinnacle's were withdrawn (2026-11-09); No trades on Novig in the 15 minutes before the start
+    ×12: OddsPapi Free keeps its last requests; Not on ESPN's scoreboard; ParlayAPI's closes are DraftKings' and FanDuel's moneylines since Pinnacle's were withdrawn (2026-11-09); Only 1 trade on Novig in the 15 minutes before the start (needs 3)
+    ×5: OddsPapi Free keeps its last requests; Not on ESPN's scoreboard; ParlayAPI's closes are DraftKings' and FanDuel's moneylines since Pinnacle's were withdrawn (2026-11-09); Only 2 trades on Novig in the 15 minutes before the start (needs 3)
+    ×2: OddsPapi Free keeps its last requests; ESPN keeps full-game moneylines, spreads and totals only; ParlayAPI's closes are DraftKings' and FanDuel's moneylines since Pinnacle's were withdrawn (2026-11-09); No trades on Novig in the 15 minutes before the start
+Results: 619-651-61 · profit +29.44 on 912.02 staked (+3.2%) · average EV when bet +2.7% · average CLV +1.1%
+Money put in 245.60 (worked out from the bets: the least money that could have placed them all with winnings re-bet) · profit +45.68 = +18.6% of the money put in · 975.43 staked in all, each deposited dollar bet 4.0 times
+All-time profit (wallet): cash 84.68 + open bets 110.82 (230 markets) - put in 447.11 (1078.03 in, 630.92 out, 48 ledger rows: TRANSFER_IN +1078.03 (38), TRANSFER_OUT -630.92 (10)) = -251.61, read 3 min ago
+Every settled bet, outliers too (the Tracker's Profit): profit +45.68 on 975.43 staked (+4.7%) · 49 outlier bets (over ±6% EV when bet)
+Expected +6.01 vs actual -17.66 over 280 settled bets with an EV: -1.6 standard deviations
+Locked in: 8 of 1576 bets locked in across 4 markets (both sides held equally, so each pays the same whichever side wins): +$0.04 on $1.73 staked on both sides, fees included, paid once the games are graded. 35 more markets are partly locked (one side held more: still riding). Hidden from the other numbers and the Bets list (Hide locked bets is on). (profit % +2.1%)
+Maker fills: 5 bets · average EV at the fair when posted +3.7% · CLV – on 0 with a close, 0 beat it
+
+== Bets and bids apart (Tracker records only: a bid appears once a taker fills it; EV for a bid is the edge at its fair when it was posted; outliers aside unless said) ==
+Bets (taker orders): 1522 bets (196 open) · 615-650-61 · ROI +3.2% · EV when bet +2.7% · CLV +1.1% on 770 · beat close 53% · expected +5.97 vs actual -18.35
+  every settled bet, outliers too (the Tracker's Profit): profit +44.99 on 974.32 staked (+4.6%) · 49 outliers (over ±6% EV when bet)
+  closing line (all time, outliers in): beat the close 53% (420 of 787) · avg vs close +1.1% · avg EV at bet +2.6% · 155 waiting for their close · 615 started with no close found yet
+  open: 206 (155 upcoming, 51 started) · current EV on the upcoming: 8 of 155 priced, average +2.6%
+  by time to the start when placed:
+    under 30 min: 50 bets (0 open) · 20-27-3 · ROI -14.5% · EV when bet +3.4% · CLV -0.0% on 38 · beat close 53% · expected +0.66 vs actual -3.05
+    30 min-2 h: 40 bets (0 open) · 15-24-1 · ROI -38.0% · EV when bet +2.9% · CLV -0.4% on 16 · beat close 44% · expected +0.44 vs actual -14.00
+    2-6 h: 114 bets (5 open) · 43-58-8 · ROI -1.2% · EV when bet +1.8% · CLV -0.7% on 56 · beat close 46% · expected +1.00 vs actual -3.27
+    6-24 h: 609 bets (32 open) · 266-278-33 · ROI +6.0% · EV when bet +2.5% · CLV +0.8% on 281 · beat close 50% · expected +2.85 vs actual +4.57
+    24 h or more: 699 bets (159 open) · 263-261-16 · ROI +12.7% · EV when bet +2.9% · CLV +1.8% on 379 · beat close 57% · expected +1.01 vs actual -2.59
+    after the start: 10 bets (0 open) · 8-2 · ROI -25.0%
+  Novig's own trades just before (trap guard): not recorded for bets
+  graded by: score feeds 162, Novig's ledger 1160, you 0 · started and still open: 51 (24 for over 6 hours, 24 need a tap)
+Bids (make orders that filled): 5 bids (0 open) · 4-1 · ROI +61.8% · EV when bet +3.7% · expected +0.04 vs actual +0.69
+  closing line (all time, outliers in): beat the close – · avg vs close – · avg EV at post – · 5 started with no close found yet
+  open: 0 (0 upcoming, 0 started) · current EV on the upcoming: 0 of 0 priced
+  by time to the start when posted:
+    under 30 min: 1 bid (0 open) · 1-0 · ROI +98.0% · EV when bet +2.6% · expected +0.01 vs actual +0.33
+    2-6 h: 1 bid (0 open) · 0-1 · ROI -100.0% · EV when bet +3.8% · expected +0.01 vs actual -0.23
+    6-24 h: 2 bids (0 open) · 2-0 · ROI +107.2% · EV when bet +4.1% · expected +0.02 vs actual +0.51
+    24 h or more: 1 bid (0 open) · 1-0 · ROI +117.4% · EV when bet +3.6% · expected +0.00 vs actual +0.09
+  Novig's own trades just before (trap guard): not recorded for bids
+  graded by: score feeds 0, Novig's ledger 0, you 0 · started and still open: 0 (0 for over 6 hours, 0 need a tap)
+
+Novig's own price: 136 of 174 open Novig bets · 0 without Novig's ids on record
+  no Novig price ×38: Novig's price for this bet hasn't been read yet (tap Check Novig now)
+
+== Accuracy by bet or bid, scanner and market (outliers aside; CLV on n = bets with a true close) ==
+Bet or bid Bets (taker orders): 1522 bets (196 open) · 615-650-61 · ROI +3.2% · EV when bet +2.7% · CLV +1.1% on 770 · beat close 53% · expected +5.97 vs actual -18.35
+Bet or bid Bids (make orders that filled): 5 bids (0 open) · 4-1 · ROI +61.8% · EV when bet +3.7% · expected +0.04 vs actual +0.69
+Scanner Vigilant: 1486 bets (192 open) · 600-636-58 · ROI +2.5% · EV when bet +2.7% · CLV +1.2% on 743 · beat close 54% · expected +5.70 vs actual -20.29
+Scanner CNO: 41 bets (4 open) · 19-15-3 · ROI +41.4% · EV when bet +2.0% · CLV -1.5% on 27 · beat close 41% · expected +0.30 vs actual +2.64
+Market Other: 1151 bets (127 open) · 484-506-34 · ROI +1.9% · CLV +1.5% on 581 · beat close 55%
+Market Spread: 155 bets (19 open) · 67-63-6 · ROI +2.1% · EV when bet +2.4% · CLV +0.9% on 92 · beat close 54% · expected +2.42 vs actual -2.97
+Market Total: 157 bets (32 open) · 49-67-9 · ROI -6.2% · EV when bet +3.0% · CLV -1.6% on 63 · beat close 43% · expected +3.01 vs actual -17.02
+Market Moneyline: 25 bets (2 open) · 12-4-7 · ROI +64.7% · EV when bet +0.8% · CLV -0.1% on 23 · beat close 39% · expected -0.00 vs actual +0.57
+Market Team total: 19 bets (11 open) · 2-4-2 · ROI +40.6% · EV when bet +3.7% · CLV -1.4% on 1 · beat close 0% · expected +0.10 vs actual -1.80
+Market 1st half / inning / set total: 9 bets (1 open) · 2-5-1 · ROI +19.5% · EV when bet +3.4% · CLV -1.7% on 6 · beat close 50% · expected +0.36 vs actual +0.45
+Market Player props: 6 bets (1 open) · 2-2-1 · ROI +54.1% · EV when bet +3.1% · CLV +6.8% on 2 · beat close 100% · expected +0.10 vs actual +2.53
+Market 1st half / set spread: 5 bets (3 open) · 1-0-1 · ROI +356.6% · EV when bet +3.1% · CLV -1.7% on 2 · beat close 50% · expected +0.01 vs actual +0.58
+Edge No EV on record: 1151 bets (127 open) · 484-506-34 · ROI +1.9% · CLV +1.5% on 581 · beat close 55%
+Edge 2–3%: 121 bets (22 open) · 41-50-8 · ROI +16.5% · EV when bet +2.4% · CLV -0.2% on 61 · beat close 46% · expected +1.41 vs actual -1.82
+Edge 4% and up: 79 bets (16 open) · 28-29-6 · ROI +9.2% · EV when bet +4.9% · CLV +0.8% on 33 · beat close 64% · expected +3.31 vs actual +1.32
+Edge 1–2%: 72 bets (11 open) · 29-27-5 · ROI +13.8% · EV when bet +1.7% · CLV +0.0% on 41 · beat close 49% · expected +0.34 vs actual -1.96
+Edge 3–4%: 70 bets (19 open) · 20-27-4 · ROI -11.0% · EV when bet +3.4% · CLV -0.2% on 26 · beat close 50% · expected +1.33 vs actual -12.15
+Edge Under 1%: 34 bets (1 open) · 17-12-4 · ROI +3.0% · EV when bet -1.2% · CLV -1.2% on 28 · beat close 36% · expected -0.39 vs actual -3.05
+
+== Each scanner by market ==
+CNO · Spread: 21 bets (1 open) · 15-4-1 · ROI +87.9% · EV when bet +2.0% · CLV -0.1% on 16 · beat close 50% · expected +0.17 vs actual +5.13
+CNO · Total: 14 bets (1 open) · 3-9-1 · ROI +5.1% · EV when bet +2.0% · CLV -4.3% on 8 · beat close 25% · expected +0.10 vs actual -1.42
+CNO · 1st half / inning / set total: 3 bets (1 open) · 0-2 · ROI -100.0% · EV when bet +2.6% · CLV +1.1% on 1 · beat close 100% · expected +0.03 vs actual -1.37
+CNO · Moneyline: 2 bets (0 open) · 1-0-1 · ROI +107.2% · EV when bet +1.6% · CLV -2.2% on 2 · beat close 0% · expected +0.00 vs actual +0.29
+CNO · 1st half / set spread: 1 bet (1 open) · EV when bet +2.0%
+Vigilant · Other: 1151 bets (127 open) · 484-506-34 · ROI +1.9% · CLV +1.5% on 581 · beat close 55%
+Vigilant · Spread: 134 bets (18 open) · 52-59-5 · ROI -5.5% · EV when bet +2.5% · CLV +1.1% on 76 · beat close 55% · expected +2.26 vs actual -8.10
+Vigilant · Total: 143 bets (31 open) · 46-58-8 · ROI -7.0% · EV when bet +3.1% · CLV -1.2% on 55 · beat close 45% · expected +2.91 vs actual -15.60
+Vigilant · Moneyline: 23 bets (2 open) · 11-4-6 · ROI +61.8% · EV when bet +0.8% · CLV +0.1% on 21 · beat close 43% · expected -0.01 vs actual +0.27
+Vigilant · Team total: 19 bets (11 open) · 2-4-2 · ROI +40.6% · EV when bet +3.7% · CLV -1.4% on 1 · beat close 0% · expected +0.10 vs actual -1.80
+Vigilant · 1st half / inning / set total: 6 bets (0 open) · 2-3-1 · ROI +40.3% · EV when bet +3.8% · CLV -2.3% on 5 · beat close 40% · expected +0.33 vs actual +1.82
+Vigilant · Player props: 6 bets (1 open) · 2-2-1 · ROI +54.1% · EV when bet +3.1% · CLV +6.8% on 2 · beat close 100% · expected +0.10 vs actual +2.53
+Vigilant · 1st half / set spread: 4 bets (2 open) · 1-0-1 · ROI +356.6% · EV when bet +3.3% · CLV -1.7% on 2 · beat close 50% · expected +0.01 vs actual +0.58
+
+== The bet as placed: close and results split by it (138 of 1527 bets recorded, from v0.45.0; outliers aside) ==
+Bet or bid Bets (taker orders): 1522 bets (196 open) · 615-650-61 · ROI +3.2% · EV when bet +2.7% · CLV +1.1% on 770 · beat close 53% · expected +5.97 vs actual -18.35
+Bet or bid Bids (make orders that filled): 5 bets (0 open) · 4-1 · ROI +61.8% · EV when bet +3.7% · expected +0.04 vs actual +0.69
+Books agreeing not recorded: 1393 bets (128 open) · 592-619-54 · ROI +2.9% · EV when bet +2.5% · CLV +1.2% on 729 · beat close 53% · expected +4.66 vs actual -13.88
+Books agreeing every one (4 of 4): 17 bets (8 open) · 6-2-1 · ROI +83.8% · EV when bet +3.6% · CLV -2.7% on 6 · beat close 67% · expected +0.29 vs actual +6.42
+Books agreeing every one (5 of 5): 10 bets (2 open) · 1-6-1 · ROI -12.9% · EV when bet +2.4% · CLV +1.6% on 4 · beat close 75% · expected +0.07 vs actual -2.35
+Books agreeing every one (3 of 3): 16 bets (10 open) · 1-4-1 · ROI -48.7% · EV when bet +3.4% · CLV -1.8% on 3 · beat close 33% · expected +0.12 vs actual -2.59
+Books agreeing every one (12 of 12): 5 bets (0 open) · 2-3 · ROI -43.4% · EV when bet +2.5% · CLV -1.7% on 4 · beat close 50% · expected +0.06 vs actual -0.97
+Books agreeing every one (7 of 7): 10 bets (6 open) · 3-1 · ROI +81.0% · EV when bet +3.4% · CLV -7.9% on 4 · beat close 25% · expected +0.11 vs actual +2.18
+Books agreeing every one (10 of 10): 9 bets (6 open) · 3-0 · ROI +102.9% · EV when bet +2.9% · CLV -4.6% on 2 · beat close 0% · expected +0.11 vs actual +3.09
+Books agreeing every one (8 of 8): 9 bets (6 open) · 2-1 · ROI +23.8% · EV when bet +2.6% · CLV +5.7% on 3 · beat close 67% · expected +0.02 vs actual +0.27
+Books agreeing every one (11 of 11): 5 bets (2 open) · 1-2 · ROI -29.6% · EV when bet +3.3% · CLV +8.5% on 2 · beat close 100% · expected +0.04 vs actual -0.43
+Books agreeing every one (9 of 9): 3 bets (0 open) · 2-1 · ROI +38.2% · EV when bet +2.0% · CLV +8.8% on 2 · beat close 100% · expected +0.03 vs actual +0.49
+Books agreeing every one (6 of 6): 14 bets (13 open) · 0-1 · ROI -100.1% · EV when bet +3.0% · expected +0.05 vs actual -1.02
+Books agreeing 1 of 10 not agreeing: 2 bets (1 open) · 0-0-1 · ROI +1854.5% · EV when bet +2.0% · CLV -4.2% on 1 · beat close 0%
+Books agreeing 1 of 3 not agreeing: 2 bets (1 open) · 1-0 · ROI +116.3% · EV when bet +2.4% · CLV +4.8% on 1 · beat close 100% · expected +0.01 vs actual +0.46
+Books agreeing every one (16 of 16): 2 bets (1 open) · 0-0-1 · ROI -51.8% · EV when bet +1.9% · CLV -0.4% on 1 · beat close 0%
+Books agreeing every one (18 of 18): 2 bets (1 open) · 0-1 · ROI -100.5% · EV when bet +2.2% · CLV -7.6% on 1 · beat close 0% · expected +0.01 vs actual -0.43
+Books agreeing 1 of 11 not agreeing: 1 bet (0 open) · 0-1 · ROI -188.9% · EV when bet +2.0% · CLV +6.8% on 1 · beat close 100% · expected +0.01 vs actual -0.68
+Books agreeing 1 of 17 not agreeing: 1 bet (0 open) · 1-0 · ROI +119.2% · EV when bet +2.3% · expected +0.01 vs actual +0.45
+Books agreeing 1 of 18 not agreeing: 1 bet (0 open) · 0-1 · ROI -100.1% · EV when bet +1.8% · expected +0.01 vs actual -0.60
+Books agreeing 1 of 5 not agreeing: 1 bet (0 open) · 0-1 · ROI -100.0% · EV when bet +1.0% · expected +0.01 vs actual -0.70
+Books agreeing 1 of 9 not agreeing: 1 bet (0 open) · 0-1 · ROI -100.1% · EV when bet +2.1% · expected +0.02 vs actual -0.73
+Books agreeing 2 of 11 not agreeing: 1 bet (0 open) · 1-0 · ROI +108.1% · EV when bet +3.9% · CLV +5.4% on 1 · beat close 100% · expected +0.02 vs actual +0.55
+Books agreeing 2 of 12 not agreeing: 1 bet (0 open) · 1-0 · ROI +103.4% · EV when bet +1.9% · CLV -2.9% on 1 · beat close 0% · expected +0.01 vs actual +0.37
+Books agreeing 2 of 22 not agreeing: 1 bet (0 open) · 0-0-1 · ROI -17.7% · EV when bet +1.8%
+Books agreeing 2 of 5 not agreeing: 1 bet (0 open) · 0-1 · ROI -100.1% · EV when bet +3.5% · expected +0.05 vs actual -1.54
+Books agreeing 2 of 9 not agreeing: 1 bet (0 open) · 0-1 · ROI -100.1% · EV when bet +3.6% · CLV -1.9% on 1 · beat close 0% · expected +0.07 vs actual -1.86
+Books agreeing 3 of 10 not agreeing: 1 bet (0 open) · 1-0 · ROI +132.6% · EV when bet +1.3% · CLV +24.6% on 1 · beat close 100% · expected +0.00 vs actual +0.38
+Books agreeing 4 of 10 not agreeing: 1 bet (0 open) · 1-0 · ROI +103.6% · EV when bet +1.7% · CLV +0.5% on 1 · beat close 100% · expected +0.01 vs actual +0.33
+Books agreeing every one (17 of 17): 1 bet (0 open) · 0-1 · ROI -100.3% · EV when bet +3.6% · expected +0.06 vs actual -1.67
+Books agreeing every one (2 of 2): 1 bet (0 open) · 0-1 · ROI -100.2% · EV when bet +5.8% · CLV +2.0% on 1 · beat close 100% · expected +0.13 vs actual -2.24
+Books agreeing every one (20 of 20): 1 bet (0 open) · 0-1 · ROI -100.0% · EV when bet +2.6% · expected +0.01 vs actual -0.49
+Books agreeing every one (23 of 23): 1 bet (0 open) · 0-0-1 · ROI -10.1% · EV when bet +1.6%
+Books agreeing every one (31 of 31): 1 bet (0 open) · 0-1 · ROI -100.0% · EV when bet +2.7% · expected +0.01 vs actual -0.47
+Books agreeing 1 of 16 not agreeing: 1 bet (1 open) · EV when bet +3.1%
+Books agreeing 1 of 19 not agreeing: 1 bet (1 open) · EV when bet +2.0%
+Books agreeing 2 of 6 not agreeing: 1 bet (1 open) · EV when bet +2.2%
+Books agreeing 2 of 8 not agreeing: 1 bet (1 open) · EV when bet +1.7%
+Books agreeing 3 of 6 not agreeing: 1 bet (1 open) · EV when bet +2.2%
+Books agreeing 4 of 18 not agreeing: 1 bet (1 open) · EV when bet +3.1%
+Books agreeing 7 of 22 not agreeing: 1 bet (1 open) · EV when bet +2.6%
+Books agreeing every one (13 of 13): 1 bet (1 open) · EV when bet +3.9%
+Books agreeing every one (15 of 15): 1 bet (1 open) · EV when bet +3.7%
+Books agreeing every one (28 of 28): 1 bet (1 open) · EV when bet +3.1%
+Books agreeing every one (30 of 30): 1 bet (1 open) · EV when bet +2.2%
+Books saying not +EV not recorded: 1393 bets (128 open) · 592-619-54 · ROI +2.9% · EV when bet +2.5% · CLV +1.2% on 729 · beat close 53% · expected +4.66 vs actual -13.88
+Books saying not +EV none: 111 bets (59 open) · 21-26-5 · ROI +4.1% · EV when bet +3.0% · CLV -0.5% on 33 · beat close 55% · expected +1.13 vs actual -0.21
+Books saying not +EV 1: 11 bets (4 open) · 2-4-1 · ROI +137.5% · EV when bet +2.1% · CLV +2.5% on 3 · beat close 67% · expected +0.06 vs actual -1.80
+Books saying not +EV 2: 7 bets (2 open) · 2-2-1 · ROI -55.2% · EV when bet +2.7% · CLV +0.2% on 3 · beat close 33% · expected +0.15 vs actual -2.48
+Books saying not +EV 3 or more: 5 bets (3 open) · 2-0 · ROI +117.3% · EV when bet +2.2% · CLV +12.5% on 2 · beat close 100% · expected +0.01 vs actual +0.71
+Sharp veto not recorded: 1507 bets (192 open) · 612-644-59 · ROI +3.1% · EV when bet +2.7% · CLV +1.2% on 759 · beat close 53% · expected +5.90 vs actual -16.82
+[… 51 more lines of this section left out to keep the file under 60 KB; the first (newest/most important) are kept]
+== Bets by what made their fair odds (recorded from v0.36.0) ==
+CNO: 41 bets · EV when bet +2.0% · CLV -1.5% on 27, beat close 41%
+NCAAB tab: 30 bets · EV when bet -1.5% · CLV -0.7% on 25, beat close 36%
+Pinnacle in the fair: 102 bets · EV when bet +3.0% · CLV -0.3% on 57, beat close 49%
+books' average only: 85 bets · EV when bet +3.4% · CLV +0.0% on 37, beat close 51%
+exchange sharp only (BetOnline.ag): 5 bets · EV when bet +2.9% · CLV +15.0% on 2, beat close 100%
+exchange sharp only (BetOnline.ag+ProphetX): 5 bets · EV when bet +2.4% · CLV -5.7% on 3, beat close 0%
+exchange sharp only (Betfair Exchange): 1 bets · EV when bet +1.8% · no true close yet
+exchange sharp only (Betfair Exchange+Matchbook): 2 bets · EV when bet +3.1% · no true close yet
+exchange sharp only (BookMaker.eu): 3 bets · EV when bet +3.1% · no true close yet
+exchange sharp only (BookMaker.eu+LowVig.ag): 1 bets · EV when bet +3.9% · no true close yet
+exchange sharp only (Kalshi): 8 bets · EV when bet +1.9% · CLV +1.8% on 3, beat close 67%
+exchange sharp only (Kalshi+ProphetX): 2 bets · EV when bet +3.4% · CLV +4.3% on 1, beat close 100%
+exchange sharp only (LowVig.ag): 10 bets · EV when bet +3.1% · CLV +3.8% on 5, beat close 60%
+exchange sharp only (LowVig.ag+ProphetX): 2 bets · EV when bet +3.3% · CLV +5.3% on 2, beat close 50%
+exchange sharp only (Matchbook+ProphetX): 1 bets · EV when bet +5.4% · no true close yet
+exchange sharp only (Polymarket): 1 bets · EV when bet +1.7% · CLV -14.3% on 1, beat close 0%
+exchange sharp only (Polymarket+Betfair Exchange): 1 bets · EV when bet +1.8% · no true close yet
+exchange sharp only (Polymarket+Betfair Exchange+BookMaker.eu+LowVig.ag+Matchbook+SBOBET+ProphetX): 1 bets · EV when bet +2.7% · no true close yet
+exchange sharp only (Polymarket+Betfair Exchange+Matchbook): 1 bets · EV when bet +2.7% · CLV +5.3% on 1, beat close 100%
+exchange sharp only (Polymarket+BookMaker.eu+LowVig.ag+ProphetX): 1 bets · EV when bet +1.6% · no true close yet
+exchange sharp only (Polymarket+Kalshi+Betfair Exchange+Matchbook+ProphetX): 1 bets · EV when bet +2.6% · no true close yet
+exchange sharp only (Polymarket+Kalshi+BookMaker.eu+Matchbook+BetOnline.ag+ProphetX): 1 bets · EV when bet +2.1% · CLV +1.2% on 1, beat close 100%
+exchange sharp only (Polymarket+Kalshi+Matchbook): 1 bets · EV when bet +1.7% · no true close yet
+exchange sharp only (Polymarket+Kalshi+Matchbook+ProphetX): 2 bets · EV when bet +1.0% · CLV -10.0% on 2, beat close 0%
+exchange sharp only (Polymarket+Matchbook): 1 bets · EV when bet +1.6% · CLV +12.2% on 1, beat close 100%
+exchange sharp only (ProphetX): 27 bets · EV when bet +3.6% · CLV +1.8% on 16, beat close 75%
+exchange sharp only (SX Bet): 1 bets · EV when bet +2.6% · no true close yet
+exchange sharp only (SX Bet+Betfair Exchange): 1 bets · EV when bet +1.7% · no true close yet
+exchange sharp only (SX Bet+ProphetX): 1 bets · EV when bet +2.5% · CLV +9.5% on 1, beat close 100%
+(1188 older bets: not recorded)
+
+== Vigilant's own bets against the close (newest 30) ==
+Nov 18 · ATP · Total Games: Under 20.5 · +130 · EV +5.8% · fair +117 → close +125 · CLV +2.0% (read before the start) · books' average only · lost
+Nov 18 · NCAAB · Moneyline: West Virginia · +104 · EV +1.7% · fair +101 → close +103 · CLV +0.5% (read before the start) · books' average only · won
+Nov 18 · NCAAB · Total: Under 143.5 · +106 · EV +3.2% · fair +100 → close +102 · CLV +2.1% (read before the start) · exchange sharp only (ProphetX) · lost
+Nov 17 · NBA · Los Angeles Lakers 112.5 TEAM_TOTAL: Under 112.5 · +111 · fair ? → close +133 · CLV -9.5% (read before the start) · lost
+Nov 17 · NBA · Los Angeles Lakers 113.5 TEAM_TOTAL: Under 113.5 · -104 · fair ? → close +113 · CLV -7.9% (read before the start) · lost
+Nov 17 · NBA · Ziaire Williams 8.5 POINTS: Under 8.5 · +130 · fair ? → close +128 · CLV +0.8% (read before the start) · won
+Nov 17 · NBA · Total: Under 224.5 · +115 · EV +2.5% · fair +110 → close +133 · CLV -7.6% (read before the start) · Pinnacle in the fair · lost
+Nov 17 · NBA · Darius Garland 23.5 POINTS: Under 23.5 · +104 · fair ? → close +121 · CLV -7.5% (read before the start) · won
+Nov 17 · NBA · Utah Jazz 109.5 TEAM_TOTAL: Under 109.5 · +106 · fair ? → close +116 · CLV -4.6% (read before the start) · won
+Nov 17 · NHL · Tyler Toffoli 1.5 SHOTS_ON_GOAL: Under 1.5 · +127 · fair ? → close +140 · CLV -5.4% (read before the start) · won
+Nov 17 · NCAAB · Spread: Tennessee +2.5 · +108 · EV +3.9% · fair +101 → close -102 · CLV +5.4% (read before the start) · exchange sharp only (BetOnline.ag) · won
+Nov 17 · NCAAB · Spread: Tennessee +1.5 · +130 · EV +1.8% · fair +126 → close +116 · CLV +6.2% (read before the start) · Pinnacle in the fair · won
+Nov 17 · NCAAB · Spread: Old Dominion +26.5 · +100 · EV -2.5% · fair +105 → close -104 · CLV +2.2% (read before the start) · NCAAB tab · won
+Nov 17 · NCAAB · Total: Over 149.5 · +111 · EV +1.6% · fair +107 → close +172 · CLV -22.7% (read before the start) · Pinnacle in the fair · won
+Nov 17 · NCAAB · UC Davis 77.5 TEAM_TOTAL: Over 77.5 · +102 · fair ? → close +108 · CLV -2.7% (read before the start) · lost
+Nov 17 · NCAAB · Total: Under 143.5 · +115 · EV +5.2% · fair +105 → close +129 · CLV -6.1% (read before the start) · books' average only · won
+Nov 17 · NCAAB · UTAH -12.5: UTAH -12.5 · +106 · fair ? → close -114 · CLV +9.6% (read before the start) · lost
+Nov 17 · NBA · Victor Wembanyama 27.5 POINTS: Under 27.5 · +120 · fair ? → close +130 · CLV -4.5% (read before the start) · won
+Nov 17 · NBA · Jaden McDaniels 25.5 POINTS_REBOUNDS_ASSISTS: Under 25.5 · +120 · fair ? → close +117 · CLV +1.4% (read before the start) · lost
+Nov 17 · NBA · Portland Trail Blazers 113.5 TEAM_TOTAL: Over 113.5 · +122 · fair ? → close +151 · CLV -11.4% (read before the start) · lost
+Nov 17 · NCAAB · Spread: North Dakota -4.5 · +138 · EV +1.7% · fair +134 → close +142 · CLV -1.5% (read before the start) · Pinnacle in the fair · won
+Nov 17 · NCAAB · Spread: Maryland-Eastern Shore +34.5 · -117 · EV -2.3% · fair -112 → close -171 · CLV +17.0% (read before the start) · NCAAB tab · lost
+Nov 17 · NHL · St. Louis Blues 3.5 TEAM_TOTAL: Under 3.5 · -115 · fair ? → close -113 · CLV -0.9% (read before the start) · lost
+Nov 17 · NHL · Nashville Predators 2.5 TEAM_TOTAL: Under 2.5 · -102 · fair ? → close -106 · CLV +1.8% (read before the start) · lost
+Nov 17 · NBA · Toronto Raptors 107.5 TEAM_TOTAL: Over 107.5 · +111 · fair ? → close +109 · CLV +0.5% (read before the start) · lost
+Nov 17 · NCAAB · Moneyline: Indiana · +134 · EV +1.3% · fair +131 → close -114 · CLV +24.6% (DraftKings + FanDuel via ParlayAPI) · exchange sharp only (BetOnline.ag) · won
+Nov 17 · NHL · Jake Guentzel 2.5 SHOTS_ON_GOAL: Under 2.5 · +130 · fair ? → close +116 · CLV +6.3% (Novig's trades) · lost
+Nov 17 · NCAAF · OHIO -9.5: BALL +9.5 · +106 · fair ? → close +116 · CLV -4.4% (Novig's trades) · won
+Nov 17 · NCAAF · BALL @ OHIO t24.5 1H: Over 24.5 · +108 · fair ? → close +112 · CLV -1.5% (Novig's trades) · won
+Nov 17 · NCAAF · Ohio 30.5 TEAM_TOTAL: Under 30.5 · +106 · fair ? → close +104 · CLV +1.0% (Novig's trades) · lost
+
+== Open bets: edge now vs when bet (pregame, current reads only) ==
+All: 6 bets · EV when bet +2.8% → now +3.2% · fair moved toward the bet on 1, away on 3 · still +EV 6
+Vigilant: 6 bets · EV when bet +2.8% → now +3.2% · fair moved toward the bet on 1, away on 3 · still +EV 6
+
+== Memory (the app's heap is fixed: Android ends the app when a request can't fit) ==
+Heap 74 of 256 MB (29%)
+Scan result: 43 priced sides in 35 games
+Kept between scans: 0 fair-odds boards (0 games, 0 book lines) · 0 Novig books + 161 in the books cache
+CrazyNinjaOdds: 1 game pages with every book's odds · Tracker: 1576 bets, 897 book lines
+Heap census (approximate: 14 MB in 325 k objects walked in 1380 ms): ui.cloudUi 8 MB (216 k) · ui.bets 2 MB (65 k) · apiSettler 1 MB (29 k) · ui.chat 1 MB (7 k) · ui.placedIndex 76 KB (0 k) · ui.locks 73 KB (1 k) · ui.claudeInbox 73 KB (1 k) · ui.placed 55 KB (1 k) · ui.cno 31 KB (0 k) · ui.cnoLinks 18 KB (0 k) · ui.cloudHistory 14 KB (0 k) · ui.cloudUsage 13 KB (0 k)
+
+== Phone ==
+Notifications NO · exact alarms yes · battery unrestricted yes · draw over apps NO · Data Saver off · online yes (Wi-Fi + VPN)
+Battery Saver ON · Doze now no · standby bucket active
+
+== How the app last ended (Android's own record, newest first) ==
+Nothing recorded.
+
+== Recent problems (saved across restarts, newest first) ==
+Nov 18, 11:43:50 PM · Vigilant scan: Cloud scan: the list is 351 min old (is the engine running?)
+
+== CONNECTIONS (every call the app made, by host, since Nov 18, 11:42 PM) ==
+host · calls · errors · to first byte p50/p95/max ms · body speed p50 KB/s · downloaded · networks · statuses
+data.novig.com · 665 · 0 (0.0%) · 52/232/521 · 2151 · 78806 KB · Wi-Fi 665 · 206×665
+    /reporting/trade-data/2026-11-14/trades.csv · 320 calls · 0 failed · 58 ms average to first byte · last HTTP 206
+    /reporting/trade-data/2026-11-12/trades.csv · 171 calls · 0 failed · 60 ms average to first byte · last HTTP 206
+    /reporting/trade-data/2026-11-11/trades.csv · 93 calls · 0 failed · 83 ms average to first byte · last HTTP 206
+    /reporting/trade-data/2026-11-13/trades.csv · 81 calls · 0 failed · 54 ms average to first byte · last HTTP 206
+    last hours (calls/failed): 11-18 23h 665/0
+api.novig.com · 590 · 30 (5.1%) · 59/106/229
+[… cut at 60 KB]
+== END OF FILE ==
