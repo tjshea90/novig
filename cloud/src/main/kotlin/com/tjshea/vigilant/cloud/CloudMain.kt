@@ -640,6 +640,7 @@ fun main(args: Array<String>) = runBlocking {
         scope.launch {
             delay(90_000L)
             var logged = 0L
+            var cycle = 0
             while (isActive) {
                 if (rfqCfg.get().mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF) {
                     runCatching { tc.rfqCollateral() }.getOrNull()?.let { rfqCollateral.set(it) }
@@ -647,8 +648,14 @@ fun main(args: Array<String>) = runBlocking {
                     if (rfqCfg.get().mode == com.tjshea.vigilant.data.rfq.RfqConfig.Mode.LIVE && rfqKeyId.isNotEmpty()) runCatching { tc.balance(rfqKeyId) }.getOrNull()?.let { rfqCash.set(it) }
                     // Novig's own view of the maker: tier, the confirm rate it is judged by, any lock and its end (`GET /rfq/v3/maker`, docs api/rfq/confirm-rate).
                     runCatching { tc.rfqMakerInfo() }.getOrNull()?.let { text -> com.tjshea.vigilant.data.rfq.RfqStanding.parse(text)?.let { rfqMaker.onStanding(it) } }
-                    // The result of the maker's real fills decides the loss stop (LIVE only: SHADOW has none).
-                    if (rfqCfg.get().mode == com.tjshea.vigilant.data.rfq.RfqConfig.Mode.LIVE) runCatching { tc.rfqExecutions() }.getOrNull()?.let { text -> rfqMaker.onLedger(com.tjshea.vigilant.data.rfq.RfqLedger.summarize(com.tjshea.vigilant.data.rfq.RfqLedger.parse(text), System.currentTimeMillis())) }
+                    // The maker's own fills (`GET /rfq/v3/executions`, 100 a page): the loss stop in LIVE, and in every mode the result of every parlay it filled (settled, won/lost, profit: the real test of our fair) and the collateral each
+                    // outcome carries across the open ones (the concentration cap). SHADOW reads every third minute (the 13 parlays filled in the first live hours are still settling).
+                    if (rfqCfg.get().mode == com.tjshea.vigilant.data.rfq.RfqConfig.Mode.LIVE || cycle % 3 == 0) runCatching { tc.rfqExecutions() }.getOrNull()?.let { text ->
+                        val execs = com.tjshea.vigilant.data.rfq.RfqLedger.parse(text)
+                        rfqExecs.set(execs)
+                        rfqMaker.onLedger(com.tjshea.vigilant.data.rfq.RfqLedger.summarize(execs, System.currentTimeMillis()))
+                    }
+                    cycle++
                     val now = System.currentTimeMillis()
                     if (now - logged >= 10 * 60_000L) { logged = now; log(rfqMaker.status(rfqSocket.connected) + " · maker registered ${rfqSocket.makerId ?: "no"} · open collateral $${"%.2f".format(rfqCollateral.get())}" + (if (!rfqSocket.connected) " · ${rfqSocket.lastNote}" else "") + " · " + rfqProbe.line())
                         rfqMarket.summary().take(8).takeIf { it.isNotEmpty() }?.let { cs -> log("RFQ market (what the other makers charge over our fair): " + cs.joinToString("; ") { c -> "${c.cls} n=${c.n} nobody=${(c.noQuote * 100).toInt()}%" + (c.median?.let { m -> " median ${"%+.2f".format(m)}pts" } ?: "") }) } }
