@@ -200,9 +200,16 @@ class RfqMaker(
         val capital = if (cfg.mode == RfqConfig.Mode.SHADOW) 0.0 else openCollateral() + inFlight()
         // LIVE sizes a quote to the balance that is there: cash less the collateral of the quotes still out and the reserve (docs: an unbacked quote is passed over, an unfundable fill stops the maker).
         // A balance not read yet is no balance to quote against: LIVE waits for the first reading (within a minute).
-        val cashRoom = if (cfg.mode == RfqConfig.Mode.LIVE) (cash()?.let { it - inFlight() - cfg.cashReserve } ?: -1.0) else null
-        val priced = RfqPricer.decide(e, now, cfg, fairs, capital, market, cashRoom)
-        val d = if (cfg.mode == RfqConfig.Mode.LIVE && priced is RfqDecision.Quote) concentrated(e, priced, cfg, now) ?: priced else priced
+        // MK17: with the wallet as the collateral limit the paper run reads the balance too and judges as the live one would (the cash there is, the share of the wallet one parlay may take).
+        val cashNow = cash()
+        val cashRoom = when {
+            cfg.mode == RfqConfig.Mode.LIVE -> cashNow?.let { it - inFlight() - cfg.cashReserve } ?: -1.0
+            cfg.walletCollateral && cashNow != null -> cashNow - cfg.cashReserve
+            else -> null
+        }
+        val walletTotal = if (cfg.walletCollateral) cashNow?.let { it + openCollateral() } else null
+        val priced = RfqPricer.decide(e, now, cfg, fairs, capital, market, cashRoom, walletTotal)
+        val d = if (cfg.mode == RfqConfig.Mode.LIVE && priced is RfqDecision.Quote) concentrated(e, priced, cfg, now, walletTotal) ?: priced else priced
         offerProbe(e, d, cfg)
         when (d) {
             is RfqDecision.Quote -> priceable++
@@ -255,15 +262,17 @@ class RfqMaker(
      * A decline when a quote would take any of its legs over [RfqConfig.maxLegCollateral]: the collateral that outcome already carries in open parlays and in quotes still out, plus this quote's. Null = fine.
      * Parlays on the same favourite (or the same game) lose together, which the caps on one parlay and on the total do not see.
      */
-    private fun concentrated(e: RfqProtocol.Created, q: RfqDecision.Quote, cfg: RfqConfig, now: Long): RfqDecision.Decline? {
-        if (cfg.maxLegCollateral <= 0.0) return null
+    private fun concentrated(e: RfqProtocol.Created, q: RfqDecision.Quote, cfg: RfqConfig, now: Long, walletTotal: Double? = null): RfqDecision.Decline? {
+        // With the wallet as the limit (MK17) one outcome may carry [RfqConfig.walletLegShare] of the wallet, not a fixed $30.
+        val cap = if (cfg.walletCollateral && walletTotal != null) cfg.walletLegShare * walletTotal else cfg.maxLegCollateral
+        if (cap <= 0.0) return null
         val held = HashMap(exposure())
         synchronized(pending) { for (p in pending.values) if (p.reservedUntilMs > now && p.reserved > 0.0) for (id in p.created.outcomeIds) held.merge(id, p.reserved, Double::plus) }
         val mine = q.maxWager * (1.0 - q.price) / q.price
         val worst = e.outcomeIds.maxByOrNull { (held[it] ?: 0.0) + mine } ?: return null
         val total = (held[worst] ?: 0.0) + mine
-        if (total <= cfg.maxLegCollateral + 1e-9) return null
-        return RfqDecision.Decline("a leg already carries $${"%.2f".format(held[worst] ?: 0.0)} of collateral (this quote adds $${"%.2f".format(mine)}, the cap is $${"%.2f".format(cfg.maxLegCollateral)})", q.fair, q.legs)
+        if (total <= cap + 1e-9) return null
+        return RfqDecision.Decline("a leg already carries $${"%.2f".format(held[worst] ?: 0.0)} of collateral (this quote adds $${"%.2f".format(mine)}, the cap is $${"%.2f".format(cap)})", q.fair, q.legs)
     }
 
     /** A priced RFQ is a candidate for a market probe: SHADOW probes every priced RFQ; LIVE only those it declines (a probe of one it would quote meets its own quote). */
@@ -370,9 +379,17 @@ class RfqMaker(
     fun onLedger(s: RfqLedger.Summary, cfg: RfqConfig = config()) {
         ledger = s
         row("LEDGER", null) { put("settled", s.settled); put("makerWon", s.makerWon); put("makerLost", s.makerLost); put("open", s.open); put("pnl", s.pnlTotal); put("pnl24h", s.pnl24h) }
-        if (cfg.mode == RfqConfig.Mode.LIVE && cfg.dayLossStop > 0.0 && s.pnl24h <= -cfg.dayLossStop) {
-            halt("the maker's settled parlays lost ${"%.2f".format(-s.pnl24h)} dollars in 24 hours (the stop is ${"%.2f".format(cfg.dayLossStop)})", 6 * 3_600_000L)
+        val stop = lossStop(cfg)
+        if (cfg.mode == RfqConfig.Mode.LIVE && stop > 0.0 && s.pnl24h <= -stop) {
+            halt("the maker's settled parlays lost ${"%.2f".format(-s.pnl24h)} dollars in 24 hours (the stop is ${"%.2f".format(stop)})", 6 * 3_600_000L)
         }
+    }
+
+    /** The loss over 24 hours that stops LIVE quoting: the fixed dollars, or with the wallet as the limit (MK17) the larger of that and [RfqConfig.dayLossStopPct] of the wallet. */
+    fun lossStop(cfg: RfqConfig): Double {
+        if (!cfg.walletCollateral) return cfg.dayLossStop
+        val wallet = cash()?.let { it + openCollateral() } ?: return cfg.dayLossStop
+        return maxOf(cfg.dayLossStop, cfg.dayLossStopPct * wallet)
     }
 
     /** The whole state as data for the phone ([RfqStatus]). */
