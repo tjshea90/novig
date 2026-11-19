@@ -5,10 +5,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -54,6 +57,7 @@ fun ParlayMakerView(rfq: RfqStatus?, onSet: (RfqConfig, (String?) -> Unit) -> Un
                 )
             }
         }
+        if (rfq != null) PickingOptions(cfg, rfq, ::apply)
         v.tiles.chunked(2).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) { row.forEach { t -> TileCard(t, Modifier.weight(1f)) } }
         }
@@ -90,5 +94,64 @@ private fun Stepper(label: String, value: String, tag: String, onMinus: () -> Un
         OutlinedButton(onClick = onMinus, modifier = Modifier.testTag("$tag-minus")) { Text("−") }
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, modifier = Modifier.testTag("$tag-value"))
         OutlinedButton(onClick = onPlus, modifier = Modifier.testTag("$tag-plus")) { Text("+") }
+    }
+}
+
+
+/**
+ * How the maker picks parlays (MK17, Tj 2026-11-19: "put these into the app as options that I can change or turn on and off ... I want to use it tonight"): only parlays that finish on today's slate,
+ * longshots only (a win chance up to a limit), and the wallet as the collateral limit. Each is a switch; the numbers have steppers; "Tonight" sets the three at once. These only narrow what the maker
+ * accepts: nothing is quoted unless the mode is Live.
+ */
+@Composable
+private fun PickingOptions(cfg: RfqConfig, rfq: RfqStatus, apply: (RfqConfig) -> Unit) {
+    fun usd(x: Double?) = x?.let { "\$%.2f".format(Locale.US, it) } ?: "not read yet"
+    val tonight = cfg.onlyToday && cfg.longshotsOnly && cfg.walletCollateral
+    Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().testTag("pickingOptions")) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Which parlays it accepts", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text("Narrow what the maker quotes. Nothing is quoted unless the mode above is Live.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(
+                    onClick = { apply(cfg.copy(onlyToday = true, longshotsOnly = true, longshotMaxChance = 0.25, walletCollateral = true, walletShare = 0.30)) },
+                    enabled = !tonight, modifier = Modifier.weight(1f).testTag("optTonight"),
+                ) { Text("Tonight: today, longshots, wallet", maxLines = 2) }
+                OutlinedButton(
+                    onClick = { apply(cfg.copy(onlyToday = false, longshotsOnly = false, walletCollateral = false)) },
+                    enabled = cfg.onlyToday || cfg.longshotsOnly || cfg.walletCollateral, modifier = Modifier.testTag("optNormal"),
+                ) { Text("All off") }
+            }
+            OptionRow("Only parlays that finish today", "The last leg must be a game on today's slate (5 am to 5 am Eastern).", cfg.onlyToday, "optToday") { apply(cfg.copy(onlyToday = it)) }
+            OptionRow(
+                "Longshots only", "Only parlays with at most ${"%.0f".format(Locale.US, cfg.longshotMaxChance * 100)}% chance to win by our odds: fewer of them, a bigger payout, more collateral each.",
+                cfg.longshotsOnly, "optLongshots",
+            ) { apply(cfg.copy(longshotsOnly = it)) }
+            if (cfg.longshotsOnly) Stepper("Win chance at most", "%.0f%%".format(Locale.US, cfg.longshotMaxChance * 100), "optLongshotChance",
+                { apply(cfg.copy(longshotMaxChance = (cfg.longshotMaxChance - 0.05).coerceAtLeast(0.10))) }, { apply(cfg.copy(longshotMaxChance = (cfg.longshotMaxChance + 0.05).coerceAtMost(0.40))) })
+            OptionRow(
+                "Use my wallet as the collateral limit", "It accepts parlays up to the cash in your wallet at any time, instead of the fixed dollar limits below: one parlay may lock up to " +
+                    "${"%.0f".format(Locale.US, cfg.walletShare * 100)}% of the wallet.", cfg.walletCollateral, "optWallet",
+            ) { apply(cfg.copy(walletCollateral = it)) }
+            if (cfg.walletCollateral) {
+                Stepper("One parlay locks at most", "%.0f%% of the wallet".format(Locale.US, cfg.walletShare * 100), "optWalletShare",
+                    { apply(cfg.copy(walletShare = (cfg.walletShare - 0.05).coerceAtLeast(0.10))) }, { apply(cfg.copy(walletShare = (cfg.walletShare + 0.05).coerceAtMost(1.0))) })
+                Text(
+                    "Wallet now: ${usd(rfq.walletCash)} free, ${usd(rfq.walletTotal)} with the collateral already held. One parlay up to ${usd(rfq.walletParlayCap)}, one game's legs together up to ${usd(rfq.walletLegCap)}, " +
+                        "quoting stops for six hours if a day's settled parlays lose ${usd(rfq.lossStopNow)}.",
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("optWalletNumbers"),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun OptionRow(title: String, sub: String, on: Boolean, tag: String, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+            Text(sub, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = on, onCheckedChange = onChange, modifier = Modifier.testTag(tag))
     }
 }
