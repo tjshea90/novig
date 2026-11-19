@@ -102,7 +102,8 @@ object ParlayView {
     fun liveWarning(r: RfqStatus?): String {
         val c = r?.config ?: RfqConfig()
         val have = r?.pricedTrades ?: 0
-        return "Live quotes are real prices on Novig. Each parlay it wins ties up to ${usd(c.maxCollateral)} of the Vigilant wallet (${usd(c.maxOpenCollateral)} in all) until the games finish, and it pays that out if the parlay hits. " +
+        val limits = if (c.walletCollateral) "up to ${"%.0f".format(Locale.US, c.walletShare * 100)}% of the Vigilant wallet (everything posted together up to the cash in it)" else "up to ${usd(c.maxCollateral)} of the Vigilant wallet (${usd(c.maxOpenCollateral)} in all)"
+        return "Live quotes are real prices on Novig. Each parlay it wins ties up $limits until the games finish, and it pays that out if the parlay hits. " +
             (if (have < RfqStatus.EVIDENCE_TRADES) "The record so far is $have of ${RfqStatus.EVIDENCE_TRADES} priced trades: shadow is the cheaper way to learn more first." else "The shadow record has ${RfqStatus.EVIDENCE_TRADES}+ priced trades.")
     }
 }
