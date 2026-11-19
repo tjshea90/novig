@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "cedfff08a970e01a188ffa9a7ce27f0a21a04737",
  "since": 1795047736,
- "beat": 1795083265,
- "beatIso": "2026-11-19T10:14:25Z",
+ "beat": 1795084667,
+ "beatIso": "2026-11-19T10:37:47Z",
  "done": "MK10i: rfq floor 0.7pt (minPoints .007 margin .015 minReturn .004)",
  "next": "next check 09:37: wins/filled and P&L"
 }
