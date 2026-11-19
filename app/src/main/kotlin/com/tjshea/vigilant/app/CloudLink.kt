@@ -663,7 +663,7 @@ class CloudLink(private val c: AppContainer) {
         val text = kotlinx.serialization.json.Json { encodeDefaults = true }.encodeToString(com.tjshea.vigilant.data.rfq.RfqConfig.serializer(), cfg)
         val why = client.putFile(CloudClient.CONFIG_BRANCH, "rfq-maker.json", text.toByteArray(Charsets.UTF_8), "rfq maker config from the app: ${cfg.mode}")
         // MK18: after a write, read the engine's status again at 3, 6 and 10 s so its confirmation shows as soon as it publishes (the loops otherwise wait for their own 5 s clock).
-        if (why == null) scope.launch { for (d in longArrayOf(3_000L, 3_000L, 4_000L)) { delay(d); syncNow() } }
+        if (why == null) runCatching { c.appScope }.getOrNull()?.launch(Dispatchers.IO) { for (d in longArrayOf(3_000L, 3_000L, 4_000L)) { delay(d); syncNow() } }
         return why
     }
 
