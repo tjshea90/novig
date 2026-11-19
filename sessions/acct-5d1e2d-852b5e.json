@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "cc9ca8671206e09274b4b9d50377853efd37905a",
  "since": 1795047736,
- "beat": 1795064070,
- "beatIso": "2026-11-19T04:54:30Z",
+ "beat": 1795064246,
+ "beatIso": "2026-11-19T04:57:26Z",
  "done": "GD1: ChainedScores merges second feed's missing games; tests green",
  "next": "ship in next release; check Tj's open bets grade"
 }
