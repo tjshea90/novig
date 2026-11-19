@@ -33,13 +33,13 @@ class RfqMarketTest {
 
     @Test fun aThinLeagueFallsBackOnTheWholeKindOfParlay() {
         val m = RfqMarketModel()
-        // ATP: 10 answers, the market pays 2 points over our fair; other leagues of the same kind: 100 answers at 0.2 points
-        repeat(10) { m.observe("2|gl|ATP|mid", 0.30, 0.32, 1L) }; repeat(100) { m.observe("2|gl|NHL|mid", 0.30, 0.302, 1L) }
+        // ATP: 10 answers, the market pays 2 points over our fair; other leagues of the same kind: 100 answers at 0.4 points
+        repeat(10) { m.observe("2|gl|ATP|mid", 0.30, 0.32, 1L) }; repeat(100) { m.observe("2|gl|NHL|mid", 0.30, 0.304, 1L) }
         assertEquals(10, m.samples("2|gl|ATP|mid")); assertEquals(110, m.samples("2|gl|*|mid"))
         val cfg = RfqConfig(minReturn = 0.0, minPoints = 0.0, probeMinSamples = 40)
-        // ATP has too few answers of its own, so it prices from the kind of parlay across leagues: just under the 0.2 points the pack pays
+        // ATP has too few answers of its own, so it prices from the kind of parlay across leagues: just under the 0.4 points the pack pays
         val c = m.best("2|gl|ATP|mid", 0.30, 2, 0.0, 0.0005, cfg)!!
-        assertTrue("falls back on the pooled answers (was $c)", c < 0.0025)
+        assertTrue("falls back on the pooled answers (was $c)", c < 0.0045)
         // with 40 of its own the league speaks for itself
         repeat(40) { m.observe("2|gl|ATP|mid", 0.30, 0.32, 1L) }
         assertTrue(m.best("2|gl|ATP|mid", 0.30, 2, 0.0, 0.0005, cfg)!! > 0.015)
