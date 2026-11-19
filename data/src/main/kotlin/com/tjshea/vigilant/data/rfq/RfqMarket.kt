@@ -74,17 +74,17 @@ class RfqMarketModel(private val keep: Int = 600, private val maxAgeMs: Long = 4
         val hold = max(1.0, leadDays + 0.25)
         var bestC: Double? = null
         var bestScore = 0.0
-        var c = max(floorC, 0.0005)
-        val top = floorC + 0.06
-        while (c <= top + 1e-12) {
-            val price = fair + c
-            if (price >= 0.999) break
+        // Prices live on Novig's thousandth grid: walk the grid upward from the first price at or above fair + floor.
+        var price = RfqPricer.up(fair + max(floorC, 0.0005))
+        val top = fair + max(floorC, 0.0005) + 0.06
+        while (price <= top + 1e-12 && price < 0.999) {
+            val c = price - fair
             val winN = obs.count { it.gap == null || it.gap > c + 1e-9 }
             if (winN < MIN_SUPPORT) break                                              // a margin only a few answers support is an outlier's price (the larger c only has fewer wins)
             val win = winN.toDouble() / obs.size
             val net = c - allowance - cfg.minReturn * hold * (1.0 - price)
             if (net > 0.0 && win * net > bestScore + 1e-12) { bestScore = win * net; bestC = c }
-            c += 0.0005
+            price = Math.round((price + 0.001) * 1_000.0) / 1_000.0
         }
         return bestC
     }

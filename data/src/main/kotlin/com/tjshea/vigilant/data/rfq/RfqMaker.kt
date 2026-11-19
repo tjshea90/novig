@@ -67,6 +67,31 @@ class RfqMaker(
     private var modelWouldWin = 0L
     private var modelWouldEdge = 0.0
     @Volatile var lastError: String? = null; private set
+    /** MK13: stop quoting so the quotes already out can finish their last look before the job ends (a closed socket rejects the trade and counts against the 99% confirm rate). */
+    @Volatile var draining = false; private set
+    @Volatile private var lastQuoteAtMs = 0L
+    /** Novig's own view of the maker (`GET /rfq/v3/maker`), read every minute by the engine. */
+    @Volatile var standing: RfqStanding? = null; private set
+    private val refusals = HashMap<String, Long>()
+    /** RFQs this maker already took up: two sockets deliver every RFQ (the pricing socket and a second one), and an RFQ must be priced, probed and quoted once. */
+    private val claimed = LinkedHashSet<String>()
+    /** Quotes whose last look was answered, so a `quote_accepted` that arrives on two sockets is answered once. */
+    private val answeredLooks = LinkedHashSet<String>()
+
+    /** No new quote from now on; the ones out stay answerable. */
+    fun beginDrain() { if (!draining) { draining = true; log("RFQ maker draining: no new quotes, the last looks of the ones out are still answered") } }
+
+    /** How long until the last quote sent has had time to be accepted and confirmed (users accepted 4-29 s after a quote on 2026-11-19), or 0. */
+    fun drainRemainingMs(): Long = if (lastQuoteAtMs == 0L) 0L else maxOf(0L, lastQuoteAtMs + DRAIN_AFTER_QUOTE_MS - clock())
+
+    /** What Novig says of the maker. A lock it reports stops quoting until its stated end (not the 5 minutes the maker used to assume). */
+    fun onStanding(s: RfqStanding) {
+        standing = s
+        val until = s.lockUntilMs
+        if (s.locked && until != null && until > clock()) halt("Novig reports the maker locked (${s.lockSource}) until ${java.time.Instant.ofEpochMilli(until)}", until - clock() + 1_000L)
+        else if (s.locked && until == null && s.lockSource == "admin") halt("Novig locked the maker by hand (admin): contact Novig", null)
+        row("STANDING", null) { put("tier", s.tier ?: ""); put("counted", s.counted); put("confirmed", s.confirmed); put("threshold", s.threshold ?: 0.0); put("minSample", s.minSample); put("lock", s.lockSource ?: "") }
+    }
 
     fun inFlight(): Double = synchronized(pending) { val now = clock(); pending.values.filter { it.reservedUntilMs > now }.sumOf { it.reserved } }
 
@@ -113,7 +138,11 @@ class RfqMaker(
         window = Window(now)
     }
 
-    fun onEvent(e: RfqProtocol.Event) {
+    /**
+     * One frame from Novig. [reply] sends a frame back on the socket this event arrived on (a last look is answered on the line it came in on, so the quiet last-look socket answers its own `quote_accepted`);
+     * null = the maker's own [send].
+     */
+    fun onEvent(e: RfqProtocol.Event, reply: ((String) -> Boolean)? = null) {
         val cfg = config()
         synchronized(this) { val t = clock(); if (window.startMs == 0L) window = Window(t) else if (t - window.startMs >= TALLY_MS) flushTally(t) }
         if (halted != null && clock() >= haltedUntilMs) { halted = null; log("RFQ maker resumes") }
@@ -121,7 +150,7 @@ class RfqMaker(
             is RfqProtocol.Created -> created(e, cfg)
             is RfqProtocol.Closed -> if (synchronized(pending) { pending[e.rfqId]?.journaled } == true) row("CLOSED", e.rfqId) { }
             is RfqProtocol.Executed -> executed(e)
-            is RfqProtocol.QuoteAccepted -> accepted(e, cfg)
+            is RfqProtocol.QuoteAccepted -> accepted(e, cfg, reply ?: send)
             is RfqProtocol.QuoteCreated -> synchronized(pending) { pending[e.rfqId]?.quoteId = e.quoteId }
             is RfqProtocol.QuoteExecuted -> {
                 filled++
@@ -144,6 +173,7 @@ class RfqMaker(
 
     private fun created(e: RfqProtocol.Created, cfg: RfqConfig) {
         if (cfg.mode == RfqConfig.Mode.OFF) return
+        synchronized(claimed) { if (!claimed.add(e.rfqId)) return; while (claimed.size > MAX_PENDING) claimed.remove(claimed.first()) }
         seen++
         val now = clock()
         // SHADOW sends nothing, so the capital the live parlays hold is no limit on what it prices: it judges every RFQ as if the wallet were free (the per-parlay cap still binds), and the evidence (what the market
@@ -187,10 +217,10 @@ class RfqMaker(
                 }
             }
         }
-        if (cfg.mode == RfqConfig.Mode.LIVE && halted == null && d is RfqDecision.Quote && now < e.expiresTs - 400L) {
+        if (cfg.mode == RfqConfig.Mode.LIVE && halted == null && !draining && d is RfqDecision.Quote && now < e.expiresTs - 400L) {
             val perStake = (1.0 - d.price) / d.price
             if (send(RfqProtocol.quote(nonce.incrementAndGet(), e.rfqId, d.price, d.maxWager, e.rfqId))) {
-                quotesSent++
+                quotesSent++; lastQuoteAtMs = now
                 p.quotePrice = d.price; p.quoteMax = d.maxWager
                 p.reserved = d.maxWager * perStake; p.reservedUntilMs = e.expiresTs + RESERVE_AFTER_CLOSE_MS
                 row("QUOTE_SENT", e.rfqId) { put("price", d.price); put("maxWager", d.maxWager); put("fair", d.fair); put("collateral", p.reserved) }
@@ -210,7 +240,9 @@ class RfqMaker(
         pr.offer(RfqProbe.Item(e.rfqId, e.outcomeIds, RfqMarketModel.classOf(legs, fair), fair, ours, e.outcomeIds.size, clock()))
     }
 
-    private fun accepted(e: RfqProtocol.QuoteAccepted, cfg: RfqConfig) {
+    private fun accepted(e: RfqProtocol.QuoteAccepted, cfg: RfqConfig, reply: (String) -> Boolean) {
+        // Two sockets can deliver the same last look: it is answered once (a second answer would only get CONFIRM_ALREADY_DECIDED), unless the first answer could not be sent.
+        if (synchronized(answeredLooks) { e.quoteId in answeredLooks }) { row("CONFIRM", e.rfqId) { put("dup", true); put("quoteId", e.quoteId) }; return }
         accepted++
         val p = synchronized(pending) { pending[e.rfqId] }
         val ours = p?.quotePrice != null && cfg.mode == RfqConfig.Mode.LIVE
@@ -225,7 +257,8 @@ class RfqMaker(
         // which the old 5e-4 bound refused: our own win was rejected, counted against the 99% confirm rate (1 reject in 12 last looks = 92%) and locked the maker for 5 minutes (MAKER_LOCKED, run 44474874762).
         // The bound is 0.0006 (half a thousandth plus slack for the arithmetic): a rounding difference is never a reason to reject our own quote; it fills at OUR price.
         val sound = kotlin.math.abs(e.price - p!!.quotePrice!!) < PRICE_ECHO_TOLERANCE && e.wager <= (p.quoteMax ?: 0.0) + 0.005
-        val ok = send(RfqProtocol.confirm(nonce.incrementAndGet(), e.rfqId, e.quoteId, sound))
+        val ok = reply(RfqProtocol.confirm(nonce.incrementAndGet(), e.rfqId, e.quoteId, sound))
+        if (ok) synchronized(answeredLooks) { answeredLooks.add(e.quoteId); while (answeredLooks.size > 2_000) answeredLooks.remove(answeredLooks.first()) }
         if (sound && ok) confirmed++
         row("CONFIRM", e.rfqId) { put("confirmed", sound); put("sent", ok); put("wager", e.wager); put("price", e.price); put("quoteId", e.quoteId); put("ours", true) }
     }
@@ -269,9 +302,12 @@ class RfqMaker(
 
     private fun refused(e: RfqProtocol.Refused) {
         lastError = "${e.code}${e.message?.let { ": ${it.take(80)}" }.orEmpty()}"
+        synchronized(refusals) { refusals.merge(e.code, 1L, Long::plus) }
         row("REFUSED", null) { put("code", e.code); put("message", e.message ?: ""); put("nonce", e.nonce?.let { JsonPrimitive(it) } ?: JsonNull) }
         when (e.code) {
             "MAKER_LOCKED" -> halt("Novig locked the maker out of quoting for 5 minutes (confirm rate below 99%)", 5 * 60_000L + 5_000L)
+            "MAKER_BARRED" -> halt("Novig says the maker cannot quote right now (MAKER_BARRED): contact Novig", null)
+            "READ_ONLY_KEY" -> halt("the key the RFQ socket uses is read-only (READ_ONLY_KEY): quoting needs the trading key", null)
             "KYC_REQUIRED" -> halt("Novig says the account's identity check is not verified (KYC_REQUIRED)", null)
             "SELF_EXCLUDED" -> halt("The account is self-excluded (SELF_EXCLUDED)", null)
         }
@@ -306,6 +342,9 @@ class RfqMaker(
             probe = probe?.line().orEmpty(),
             market = market?.summary()?.take(12)?.map { c -> "${c.cls} n=${c.n} nobody=${(c.noQuote * 100).toInt()}%" + (c.median?.let { " median ${"%+.2f".format(it)}pts (p25 ${"%+.2f".format(c.p25)}, p75 ${"%+.2f".format(c.p75)})" } ?: "") }.orEmpty(),
             modelWouldWin = modelWouldWin, modelWouldEarnPoints = if (modelWouldWin > 0) modelWouldEdge / modelWouldWin else null,
+            makerTier = standing?.tier, confirmCounted = standing?.counted, confirmConfirmed = standing?.confirmed, confirmThreshold = standing?.threshold, confirmMinSample = standing?.minSample,
+            lockSource = standing?.lockSource, lockUntilMs = standing?.lockUntilMs,
+            refusals = synchronized(refusals) { refusals.entries.sortedByDescending { it.value }.take(5).map { "${it.key} x${it.value}" } },
         )
     }
 
@@ -330,6 +369,8 @@ class RfqMaker(
         const val KEEP = 500
         /** How far Novig's echo of our quote's price may be from the price we sent (it rounds to a thousandth): half a thousandth plus slack for floating point. */
         const val PRICE_ECHO_TOLERANCE = 6e-4
+        /** After the last quote sent, the maker keeps answering for this long before a job ends: users accepted 4 to 29 seconds after a quote (14 fills, 2026-11-19). */
+        const val DRAIN_AFTER_QUOTE_MS = 45_000L
         /** A quote's collateral stays reserved this long after its auction closes (the user may accept a while later). */
         const val RESERVE_AFTER_CLOSE_MS = 120_000L
     }

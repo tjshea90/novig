@@ -47,6 +47,17 @@ data class RfqStatus(
     /** MK12: of [pricedTrades], how many the market model's price would have won (it prices only classes with enough probe answers) and what each would have earned (points of pot) if our fair is true. */
     val modelWouldWin: Long = 0L,
     val modelWouldEarnPoints: Double? = null,
+    /** MK13: Novig's own view of the maker (`GET /rfq/v3/maker`): tier, the confirm rate it is judged by, and any lock with its end. */
+    val makerTier: String? = null,
+    val confirmCounted: Long? = null,
+    val confirmConfirmed: Long? = null,
+    val confirmThreshold: Double? = null,
+    val confirmMinSample: Int? = null,
+    val lockSource: String? = null,
+    val lockUntilMs: Long? = null,
+    /** MK13: the refusal codes Novig answered our frames with (`RFQ_CLOSED x3`...), and the sockets' state in words. */
+    val refusals: List<String> = emptyList(),
+    val sockets: String = "",
 ) {
     companion object {
         /** The evidence rule's count: LIVE is only recommended from this many priced trades (research/novig_rfq_maker_2026-11-18.md). */
