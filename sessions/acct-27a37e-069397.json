@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "1b9f9edae41b47548318d2155e9281a519978c2f",
+ "head": "6cbc0f66e90a5d7e6caad231f429766792050698",
  "since": 1795123003,
- "beat": 1795125892,
- "beatIso": "2026-11-19T22:04:52Z",
+ "beat": 1795126193,
+ "beatIso": "2026-11-19T22:09:53Z",
  "done": "MK17 part 1: onlyToday / longshotsOnly / walletCollateral in the pricer and maker, safe-edge floor, same-day hold, wallet status, rfq_set fields, tests (98 rfq tests green)",
  "next": "MK17: app options on the Maker page (switches + steppers + Tonight preset + wallet numbers), full suite, land, ONE engine reset, app release; Tj flips LIVE himself"
 }
