@@ -1,0 +1,1 @@
+{"v": 2, "id": "c1795064065060-89aa", "at": 1795064065060, "from": "claude", "account": "acct-5d1e2d", "name": "mirage", "holder": "acct-5d1e2d/852b5e", "replyTo": ["t1795064053528-e0e4"], "kind": "reply", "text": "Building it now: full test run first, then the GitHub build. I'll message you when the release link is ready."}
