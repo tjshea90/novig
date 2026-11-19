@@ -1,5 +1,7 @@
 package com.tjshea.vigilant.data.rfq
 
+import com.tjshea.vigilant.data.reference.LineKind
+import com.tjshea.vigilant.data.reference.Side
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.math.ceil
@@ -41,11 +43,12 @@ data class RfqConfig(
     val maxFairAgeMs: Long = 5 * 60_000L,
     val maxLegs: Int = 5,
     /**
-     * Same-game parlays of exactly two legs, a SIDE (spread or moneyline) and the game TOTAL (Tj, 2026-11-19: "do the two leg parlays, price them at a premium for correlation"). The legs' joint probability is the
-     * product of their fairs raised by this much (relative), on top of the usual margin. Measured on 18,063 college games' closing lines, a side and the total are within 2.4% of independent either way
-     * (standard error 1.3%), while Novig's market priced such trades 13% over the independent price (9 of them), so 8% keeps a cushion on both. 0 = decline every same-game parlay (the old rule).
+     * Legs of one game priced together (MK12, Tj 2026-11-19: "figure out 2 leg correlated parlays and what a fair price should be"): two or three game-line legs of one game (a side, the total, a team total, first-half
+     * versions) are joined by [SameGame]'s Gaussian copula, calibrated on closing lines and results (a side and the total are nearly independent: NBA -0.01, NFL +0.03, NHL +0.04, NCAAB -0.01, NCAAF +0.17;
+     * a team's total follows its game's total and margin at 0.6-0.7). This is the premium (relative) put on that joint probability for the model's own error. The market priced a side and the total 3% over independent
+     * on 404 trades, so 2% keeps a margin on both. Before MK12 this was a flat 8% on a side and the total (research/novig_parlay_maker_2026-11-19.md section 4); 0 = no premium.
      */
-    val sameGamePremium: Double = 0.08,
+    val sameGamePremium: Double = 0.02,
     /**
      * Player-prop legs at a premium (Tj, 2026-11-19: "allow prop parlays but price them at a premium as well"). With [allowProps] off, a parlay of up to two prop legs is quoted when its fair probability is raised
      * by this much (relative) for EACH prop leg. The market paid a median +38% over our prop fair (91% of such trades 15% or more over it, research/novig_rfq_maker_2026-11-18.md section 10), so 20% a leg wins the
@@ -83,6 +86,17 @@ data class LegFair(
     val live: Boolean,
     /** Novig's market type for the leg (MONEY, SPREAD, TOTAL, POINTS...); empty = unknown, which counts as not a game line. */
     val marketType: String = "",
+    /** What the line is about and which side of it the leg takes: what [SameGame] needs to price two or three legs of one game together (null = unknown: not modelled). */
+    val kind: LineKind? = null,
+    val side: Side? = null,
+    /** 0 = full game, 1 = first half. */
+    val period: Int = 0,
+    /** A spread leg: the HOME team's handicap (negative = home favoured). */
+    val homeLine: Double? = null,
+    /** A team total: whether it is the AWAY team's. */
+    val awayTeam: Boolean = false,
+    /** Novig's league name (NBA, NFL, NCAAF...): picks the margin/total calibration in [SameGame.SPORTS]. */
+    val league: String = "",
 )
 
 fun interface LegFairs { fun leg(outcomeId: String): LegFair? }
@@ -118,6 +132,23 @@ object RfqPricer {
         return ceil(maxOf(byReturn, byPoints, byMargin) * 10_000.0 - 1e-7) / 10_000.0      // the 1e-7 keeps 0.2 x 1.08 = 0.21600000000000003 at 0.2160
     }
 
+    /**
+     * The fair probability that every leg of [group] (two or three legs of ONE game) wins, with the model's error premium on the dependence, or null when a leg is not a modelled game line (a player prop,
+     * an unknown market) or [RfqConfig.sameGamePremium] is negative (the switch off). A joint below the independent product is never raised to it: the premium only adds.
+     */
+    fun sameGameJoint(group: List<LegFair>, cfg: RfqConfig): Double? {
+        if (cfg.sameGamePremium < 0.0 || group.size !in 2..SameGame.MAX_LEGS) return null
+        val legs = group.map { l ->
+            val kind = l.kind ?: return null
+            val side = l.side ?: return null
+            if (!SameGame.modelled(kind, l.period) || l.marketType !in GAME_LINES && !l.marketType.endsWith("_1H")) return null
+            GameLeg(kind, side, l.awayTeam, l.period, l.probability, l.homeLine)
+        }
+        val sport = SameGame.SPORTS[group[0].league] ?: SameGame.DEFAULT
+        val j = SameGame.joint(legs, sport) ?: return null
+        return minOf(0.999, j * (1.0 + cfg.sameGamePremium))
+    }
+
     fun decide(created: RfqProtocol.Created, now: Long, cfg: RfqConfig, fairs: LegFairs, openCollateral: Double): RfqDecision {
         val ids = created.outcomeIds
         if (ids.size < 2 || ids.size > cfg.maxLegs) return RfqDecision.Decline("${ids.size} legs (this maker prices 2 to ${cfg.maxLegs})")
@@ -132,10 +163,15 @@ object RfqPricer {
         if (premiumProps) p = minOf(0.999, p * Math.pow(1.0 + cfg.propPremium, propLegs.toDouble()))
         fun no(why: String) = RfqDecision.Decline(why, p, legs)
         if (legs.map { it.eventId }.toSet().size != legs.size) {
-            val sideAndTotal = legs.size == 2 && cfg.sameGamePremium > 0.0 && legs[0].eventId == legs[1].eventId &&
-                legs.count { it.marketType == "TOTAL" } == 1 && legs.count { it.marketType == "SPREAD" || it.marketType == "MONEY" } == 1
-            if (!sideAndTotal) return no("two legs in one game (correlation unmodelled)")
-            p = minOf(0.999, p * (1.0 + cfg.sameGamePremium))
+            // Legs of one game are not independent: price each such group through the copula (game lines only), the groups of different games still multiply. A group the model cannot price declines the RFQ.
+            var joint = 1.0
+            for ((_, group) in legs.groupBy { it.eventId }) {
+                if (group.size == 1) { joint *= group[0].probability; continue }
+                val g = sameGameJoint(group, cfg) ?: return no("two legs in one game (correlation unmodelled)")
+                joint *= g
+            }
+            if (premiumProps) joint *= Math.pow(1.0 + cfg.propPremium, propLegs.toDouble())
+            p = minOf(0.999, joint)
         }
         for (l in legs) {
             if (l.live) return no("a leg is in play")
