@@ -182,7 +182,8 @@ class RfqMaker(
         // paid over our fair, what our rule would have won) is about PRICES. With the wallet nearly all in open collateral (2026-11-19: $7 cash, $73 held) 14% of RFQs declined for "the caps allow a $# stake".
         val capital = if (cfg.mode == RfqConfig.Mode.SHADOW) 0.0 else openCollateral() + inFlight()
         // LIVE sizes a quote to the balance that is there: cash less the collateral of the quotes still out and the reserve (docs: an unbacked quote is passed over, an unfundable fill stops the maker).
-        val cashRoom = if (cfg.mode == RfqConfig.Mode.LIVE) cash()?.let { it - inFlight() - cfg.cashReserve } else null
+        // A balance not read yet is no balance to quote against: LIVE waits for the first reading (within a minute).
+        val cashRoom = if (cfg.mode == RfqConfig.Mode.LIVE) (cash()?.let { it - inFlight() - cfg.cashReserve } ?: -1.0) else null
         val d = RfqPricer.decide(e, now, cfg, fairs, capital, market, cashRoom)
         offerProbe(e, d, cfg)
         when (d) {

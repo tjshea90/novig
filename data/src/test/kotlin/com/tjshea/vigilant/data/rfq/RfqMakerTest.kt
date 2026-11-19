@@ -231,6 +231,23 @@ class RfqMakerTest {
         return RfqProtocol.Created(r.clock, id, listOf("a", "b"), r.clock + 3_000L, 10.0)
     }
 
+    @Test fun aQuoteIsSizedToTheCashThatIsThereAndAnUnreadBalanceQuotesNothing() {
+        val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                                   // fair 0.20, price 0.216: $10 of stake needs $36.30 of collateral
+        val roomy = RfqPricer.decide(created("a", "b"), now, cfg, f, 0.0, null, 100.0)
+        assertTrue(roomy is RfqDecision.Quote)
+        val short = RfqPricer.decide(created("a", "b"), now, cfg, f, 0.0, null, 20.0) as RfqDecision.Decline
+        assertTrue(short.reason, short.reason.contains("cash is short") && short.reason.contains("balance covers a $5.51 stake"))
+        assertTrue("null = not known (SHADOW): no cash limit", RfqPricer.decide(created("a", "b"), now, cfg, f, 0.0, null, null) is RfqDecision.Quote)
+        // the maker in LIVE: the balance less the collateral of quotes out and the reserve
+        var balance: Double? = null
+        val rows = ArrayList<RfqRow>(); val sent = ArrayList<String>(); var clock = now
+        val maker = RfqMaker({ cfg.copy(mode = RfqConfig.Mode.LIVE, cashReserve = 3.0) }, { id -> listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4), leg("c", "e3", 0.5), leg("d", "e4", 0.4)).firstOrNull { it.outcomeId == id } }, { 0.0 }, { sent += it; true }, { rows += it }, { _, _ -> }, { clock }, cash = { balance })
+        maker.onEvent(created("a", "b")); assertTrue("no balance read yet: nothing quoted", sent.isEmpty() && rows.single { it.kind == "CREATED" }.data.contains("cash is short"))
+        balance = 60.0
+        maker.onEvent(created("a", "b").copy(rfqId = "rfq-2")); assertEquals("$60 - $3 reserve covers the $36.30", 1, sent.size)
+        maker.onEvent(created("c", "d").copy(rfqId = "rfq-3")); assertEquals("the first quote's $36.30 is promised: $20.70 left cannot back a second", 1, sent.size)
+    }
+
     @Test fun anRfqDeliveredTwiceIsPricedAndQuotedOnce() {
         val r = rig(RfqConfig.Mode.LIVE)
         r.maker.onEvent(created("a", "b")); r.maker.onEvent(created("a", "b"))                  // the same rfqId on two sockets
