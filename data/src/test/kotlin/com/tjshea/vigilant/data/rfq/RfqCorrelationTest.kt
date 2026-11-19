@@ -43,12 +43,12 @@ class RfqCorrelationTest {
         assertEquals(0.125, Gauss.trivariate(0.0, 0.0, 0.0, 0.0, 0.0, 0.0), 1e-9)
     }
 
-    private fun leg(kind: LineKind, side: Side, p: Double, away: Boolean = false, period: Int = 0) = GameLeg(kind, side, away, period, p)
+    private fun leg(kind: LineKind, side: Side, p: Double, away: Boolean = false, period: Int = 0, homeLine: Double? = null) = GameLeg(kind, side, away, period, p, homeLine)
 
     @Test fun aSideAndTheTotalAreNearlyIndependentButATeamTotalAndTheTotalAreNot() {
-        val nfl = SameGame.SPORTS.getValue("NFL")
-        val spread = leg(LineKind.SPREAD, Side.HOME, 0.5); val over = leg(LineKind.TOTAL, Side.OVER, 0.5)
-        assertEquals(0.0, SameGame.correlation(spread, over, nfl)!!, 1e-12)
+        val nfl = SameGame.Sport(1.0, 0.0)                                                          // an NFL-like game with no favourite tilt
+        val spread = leg(LineKind.SPREAD, Side.HOME, 0.5, homeLine = -3.5); val over = leg(LineKind.TOTAL, Side.OVER, 0.5)
+        assertEquals(0.0, SameGame.correlation(spread, over, nfl, true)!!, 1e-12)
         assertEquals(1.0, SameGame.lift(listOf(spread, over), nfl)!!, 1e-9)
         // the home team's total with the game total: corr 1/sqrt(2) when the margin and total are equally spread
         val tt = leg(LineKind.TEAM_TOTAL, Side.OVER, 0.5)
@@ -60,6 +60,24 @@ class RfqCorrelationTest {
         assertEquals(-1.0 / Math.sqrt(2.0), SameGame.correlation(leg(LineKind.TEAM_TOTAL, Side.OVER, 0.5, away = true), spread, nfl)!!, 1e-12)
         // a home spread with the away moneyline contradicts (rho -1 clamps), a home moneyline with the home spread is the same event (rho +1 clamps): neither is a normal pair, Novig refuses both
         assertTrue(SameGame.correlation(spread, leg(LineKind.MONEYLINE, Side.HOME, 0.5), nfl)!! > 0.98)
+    }
+
+    @Test fun collegeFootballFavouritesCoverWithTheOverMoreOftenAndOnlyThere() {
+        val cfb = SameGame.SPORTS.getValue("NCAAF"); val nba = SameGame.SPORTS.getValue("NBA")
+        // home favoured by 7: the favourite covering and the Over go together (1.12 of the independent rate on 858 games, 1.117 measured)
+        val homeCover = leg(LineKind.SPREAD, Side.HOME, 0.5, homeLine = -7.0); val over = leg(LineKind.TOTAL, Side.OVER, 0.5)
+        val lift = SameGame.lift(listOf(homeCover, over), cfb)!!
+        assertTrue("favourite + over lifts a college football price about 11% (was $lift)", lift in 1.09..1.14)
+        // the underdog covering with the Over is the mirror: below independent
+        assertTrue(SameGame.lift(listOf(leg(LineKind.SPREAD, Side.AWAY, 0.5, homeLine = -7.0), over), cfb)!! in 0.86..0.91)
+        // the AWAY team favoured: the sign follows the favourite, not the home team
+        assertEquals(lift, SameGame.lift(listOf(leg(LineKind.SPREAD, Side.AWAY, 0.5, homeLine = 7.0), over), cfb)!!, 1e-9)
+        // a moneyline names the favourite by its probability
+        assertEquals(true, SameGame.homeFavorite(listOf(leg(LineKind.MONEYLINE, Side.HOME, 0.7))))
+        assertEquals(false, SameGame.homeFavorite(listOf(leg(LineKind.MONEYLINE, Side.AWAY, 0.7))))
+        assertNull(SameGame.homeFavorite(listOf(leg(LineKind.TOTAL, Side.OVER, 0.5))))
+        // the NBA has no such tilt
+        assertEquals(1.0, SameGame.lift(listOf(homeCover, over), nba)!!, 1e-9)
     }
 
     @Test fun basketballsTotalIsWiderThanItsMarginSoATeamTotalFollowsItMore() {

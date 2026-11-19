@@ -138,6 +138,8 @@ data class GameLeg(
     val period: Int = 0,
     /** The leg's fair probability. */
     val p: Double,
+    /** A spread leg only: the HOME team's handicap (negative = home favoured), whichever side the leg is on. */
+    val homeLine: Double? = null,
 )
 
 /**
@@ -151,12 +153,19 @@ data class GameLeg(
  * and first-half pairs (correlation 0.6-0.7: the market charges +47% on them) and the small tilts.
  */
 object SameGame {
-    data class Sport(val sdRatio: Double, val rhoMT: Double)
+    /**
+     * [sdRatio]: the standard deviation of the total over that of the margin. [rhoFav]: the correlation of the FAVOURITE's margin with the total (positive: the favourite covering goes with the Over); the home team's
+     * margin has it with the sign of who the favourite is, and 0 when the legs do not say.
+     */
+    data class Sport(val sdRatio: Double, val rhoFav: Double)
 
-    /** Per league (Novig's league names). Values come from [calibration]-style fits on closing lines and results; leagues not listed use [DEFAULT]. */
+    /**
+     * Per league (Novig's league names), measured on closing lines and final scores (research/novig_parlay_maker_2026-11-19.md section 3): NBA 1,489 games ratio 1.30 rho -0.012 (se 0.026); NFL 555: 1.03, +0.030
+     * (0.042); NHL 1,500: 0.87, +0.040 (0.026); NCAAF 858: 1.00, +0.175 (0.034, +0.196 and +0.155 in the two halves: real); NCAAB 17,321: 1.46, -0.014 (0.008). Leagues not listed use [DEFAULT].
+     */
     val SPORTS: Map<String, Sport> = mapOf(
-        "NBA" to Sport(1.45, 0.0), "NCAAB" to Sport(1.46, 0.023), "WNBA" to Sport(1.45, 0.0),
-        "NFL" to Sport(1.0, 0.0), "NCAAF" to Sport(1.0, 0.0), "NHL" to Sport(1.0, 0.0), "MLB" to Sport(1.0, 0.0),
+        "NBA" to Sport(1.30, 0.0), "WNBA" to Sport(1.30, 0.0), "NCAAB" to Sport(1.46, 0.0),
+        "NFL" to Sport(1.03, 0.03), "NCAAF" to Sport(1.0, 0.17), "NHL" to Sport(0.87, 0.04), "MLB" to Sport(1.0, 0.0),
     )
     val DEFAULT = Sport(1.2, 0.0)
 
@@ -180,18 +189,31 @@ object SameGame {
     /** Whether [SameGame] can price this leg: game lines and team totals, whole game or first half. */
     fun modelled(kind: LineKind, period: Int): Boolean = (kind != LineKind.PLAYER_PROP) && period in 0..1
 
-    private fun cov(a: GameLeg, b: GameLeg, sport: Sport): Double {
+    /** The correlation of the HOME margin with the total: [Sport.rhoFav] signed by who the favourite is ([homeFavorite] null = unknown: 0). */
+    private fun rhoMT(sport: Sport, homeFavorite: Boolean?): Double = when (homeFavorite) { true -> sport.rhoFav; false -> -sport.rhoFav; null -> 0.0 }
+
+    private fun cov(a: GameLeg, b: GameLeg, sport: Sport, homeFavorite: Boolean?): Double {
         val t = min(if (a.period == 0) 1.0 else 0.5, if (b.period == 0) 1.0 else 0.5)
         val r = sport.sdRatio
-        return t * (cm(a) * cm(b) + (cm(a) * ct(b) + ct(a) * cm(b)) * sport.rhoMT * r + ct(a) * ct(b) * r * r)
+        return t * (cm(a) * cm(b) + (cm(a) * ct(b) + ct(a) * cm(b)) * rhoMT(sport, homeFavorite) * r + ct(a) * ct(b) * r * r)
     }
 
     /** The correlation of two legs' latent variables, or null when one has no game-line structure. */
-    fun correlation(a: GameLeg, b: GameLeg, sport: Sport = DEFAULT): Double? {
+    fun correlation(a: GameLeg, b: GameLeg, sport: Sport = DEFAULT, homeFavorite: Boolean? = null): Double? {
         if (!modelled(a.kind, a.period) || !modelled(b.kind, b.period)) return null
-        val va = cov(a, a, sport); val vb = cov(b, b, sport)
+        val va = cov(a, a, sport, homeFavorite); val vb = cov(b, b, sport, homeFavorite)
         if (va <= 0.0 || vb <= 0.0) return null
-        return (cov(a, b, sport) / sqrt(va * vb)).coerceIn(-0.99, 0.99)
+        return (cov(a, b, sport, homeFavorite) / sqrt(va * vb)).coerceIn(-0.99, 0.99)
+    }
+
+    /**
+     * Whether the HOME team is the favourite, read from the legs themselves: a spread leg carries the home handicap ([GameLeg.homeLine], negative when home is favoured), a moneyline leg's probability says
+     * who is more likely to win. Null when no leg says (a total with a team total).
+     */
+    fun homeFavorite(legs: List<GameLeg>): Boolean? {
+        legs.firstOrNull { it.kind == LineKind.SPREAD && it.homeLine != null && it.homeLine != 0.0 }?.let { return it.homeLine!! < 0.0 }
+        legs.firstOrNull { it.kind == LineKind.MONEYLINE && abs(it.p - 0.5) > 0.01 }?.let { return (it.side == Side.HOME) == (it.p > 0.5) }
+        return null
     }
 
     /**
@@ -201,7 +223,8 @@ object SameGame {
     fun joint(legs: List<GameLeg>, sport: Sport = DEFAULT): Double? {
         if (legs.size !in 2..MAX_LEGS) return null
         val z = legs.map { Gauss.inv(it.p.coerceIn(0.001, 0.999)) }
-        fun r(i: Int, j: Int) = correlation(legs[i], legs[j], sport)
+        val fav = homeFavorite(legs)
+        fun r(i: Int, j: Int) = correlation(legs[i], legs[j], sport, fav)
         return when (legs.size) {
             2 -> { val r01 = r(0, 1) ?: return null; Gauss.bivariate(z[0], z[1], r01) }
             else -> { val r01 = r(0, 1) ?: return null; val r02 = r(0, 2) ?: return null; val r12 = r(1, 2) ?: return null; Gauss.trivariate(z[0], z[1], z[2], r01, r02, r12) }
