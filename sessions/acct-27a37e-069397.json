@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "a78018e3ff5bb0ff3bb4f8dd0206228faa9cf3ad",
+ "head": "b6e0f556965300177d96980df8f5ceee902a4f40",
  "since": 1795103757,
- "beat": 1795113614,
- "beatIso": "2026-11-19T18:40:14Z",
- "done": "MK13c: per-outcome collateral cap (maxLegCollateral $30, LIVE), executions read in SHADOW (results of the 13 live parlays), rfq_set cashReserve/maxLegCollateral, audit rows 9-10; FULL suite green (4448 tests)",
- "next": "engine_set --reset onto main (only one reset: board says MK12/MK13 and MK11 share the engine), confirm startedAtMs, status.rfq.sockets/standing/settled; then analyse the probe journals"
+ "beat": 1795113665,
+ "beatIso": "2026-11-19T18:41:05Z",
+ "done": "MK13 verified live: standing read 6/6 confirmed, 1 socket no reconnects, executions ledger (3 settled all lost -7.09, 16 open), probe 177/177",
+ "next": "paper research: after 17:00Z 11-20 read rfq-market SUMMARY and the evidence rule for marketPricing; watch priceable share by league; Tj adds money -> dedicated maker subaccount + verify last-look routing"
 }
