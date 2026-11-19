@@ -65,6 +65,24 @@ class ParlayOptionsUiTest {
         assertFalse(saved!!.onlyToday || saved!!.longshotsOnly || saved!!.walletCollateral)
     }
 
+    /** MK18 (Tj: "the controls take a long time to change"): the page shows what was tapped at once, and the next tap builds on it, even while the engine has not reported anything yet. */
+    @Test fun `a tap shows at once and two quick taps build on each other while the engine has not echoed`() {
+        compose.setContent {
+            VigilantTheme(darkTheme = true) {
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+                    // the engine's status never changes in this test: it is the slow side
+                    ParlayMakerView(RfqStatus(config = RfqConfig(mode = RfqConfig.Mode.SHADOW, longshotsOnly = true), connected = true), { n, done -> saved = n; done(null) })
+                }
+            }
+        }
+        compose.onNodeWithTag("optLongshotChance-minus").performScrollTo().performClick()
+        compose.onNodeWithTag("optLongshotChance-minus").performClick()
+        assertEquals("the second tap started from the first (0.25 -> 0.20 -> 0.15), not from the engine's old 0.25", 0.15, saved!!.longshotMaxChance, 1e-9)
+        compose.onNodeWithTag("optLongshotChance-value").assertIsDisplayed()
+        compose.onNodeWithText("15%").assertExists()
+        compose.onNodeWithTag("parlayNote").assertIsDisplayed()
+    }
+
     @Test fun `each switch and stepper changes only its own setting`() {
         show(RfqConfig(mode = RfqConfig.Mode.SHADOW, longshotsOnly = true))
         compose.onNodeWithTag("optToday").performScrollTo().performClick()

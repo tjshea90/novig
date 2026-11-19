@@ -649,7 +649,7 @@ fun main(args: Array<String>) = runBlocking {
         while (isActive) {
             val c = com.tjshea.vigilant.data.rfq.RfqConfig.parse(config.rfqText) ?: com.tjshea.vigilant.data.rfq.RfqConfig()
             if (c != rfqCfg.get()) { log("RFQ maker config: ${c.mode} margin ${c.margin} stake ${c.maxStake} collateral ${c.maxCollateral}/${c.maxOpenCollateral}"); rfqCfg.set(c) }
-            delay(5_000L)
+            delay(1_000L)      // a string comparison against what the config reader holds (it fetches when the branch moves, every 3 s): a change from the phone applies within ~4 s, not ~8 (MK18)
         }
     }
     rfqSocket.start(); rfqLastLook.start()
