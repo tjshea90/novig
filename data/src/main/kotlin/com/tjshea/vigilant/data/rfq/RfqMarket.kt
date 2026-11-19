@@ -102,6 +102,7 @@ class RfqProbe(
     private val gapMs: Long = 1_150L,
     private val dedupeMs: Long = 40_000L,
     private val perClassQueue: Int = 4,
+    startDelayMs: Long = 2_000L,
 ) {
     class Item(val rfqId: String, val ids: List<String>, val cls: String, val fair: Double, val ourPrice: Double?, val nLegs: Int, val queuedMs: Long)
 
@@ -151,7 +152,7 @@ class RfqProbe(
     init {
         repeat(workers) { w ->
             scope.launch {
-                delay(2_000L + 300L * w)
+                delay(startDelayMs + 300L * w)
                 while (isActive) {
                     val t = if (enabled()) take() else null
                     if (t == null) { delay(250L); continue }
