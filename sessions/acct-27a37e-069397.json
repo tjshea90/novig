@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "64fa39c7a9a04d503055b248ee129a386e42aaab",
+ "head": "4e472a9d7bc6e42cb32ee23a4206effc549f751e",
  "since": 1795103757,
- "beat": 1795112812,
- "beatIso": "2026-11-19T18:26:52Z",
+ "beat": 1795113038,
+ "beatIso": "2026-11-19T18:30:38Z",
  "done": "MK13b: docs audit written (research/novig_rfq_docs_audit_2026-11-19.md), NOVIG_API.md 33.3, CHANGES/TASKS, LEVERS; cash-aware LIVE sizing + optional dedicated maker key wired in CloudMain; FULL suite green (4446 tests)",
  "next": "land, engine reset, then: concentration cap per leg (6 of 13 live fills rode the Houston game), read executions in SHADOW for the 13 live parlays' results"
 }
