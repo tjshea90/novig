@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "a78018e3ff5bb0ff3bb4f8dd0206228faa9cf3ad",
+ "head": "9918e3ca20ae8742716c792c5fc5cbc2ac509c9e",
  "since": 1795047736,
- "beat": 1795114276,
- "beatIso": "2026-11-19T18:51:16Z",
+ "beat": 1795115445,
+ "beatIso": "2026-11-19T19:10:45Z",
  "done": "MK11 17:38: ladder lifts priced trades 0.5% -> 19% on paper",
  "next": "next: premium vs win rate by prop legs; LIVE only after Tj adds money"
 }
