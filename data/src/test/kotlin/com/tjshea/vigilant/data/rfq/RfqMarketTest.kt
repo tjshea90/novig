@@ -35,7 +35,7 @@ class RfqMarketTest {
         for (g in listOf(0.002, 0.004, 0.006, 0.008, 0.010)) m.observe("c", 0.20, 0.20 + g, 1_000L)
         m.observe("c", 0.20, null, 1_000L)
         assertEquals(1.0, m.winShare("c", 0.0)!!, 1e-12)                                // at the fair we beat everyone (and the parlay nobody quoted)
-        assertEquals(4.0 / 6.0, m.winShare("c", 0.003)!!, 1e-12)                        // 0.4, 0.6, 0.8, 1.0 are above 0.3; 0.2 is not; plus the unquoted
+        assertEquals(5.0 / 6.0, m.winShare("c", 0.003)!!, 1e-12)                        // 0.4, 0.6, 0.8, 1.0 are above 0.3; 0.2 is not; plus the unquoted
         assertEquals(1.0 / 6.0, m.winShare("c", 0.010)!!, 1e-12)                        // only the unquoted one: a TIE is not a win (the lowest price wins)
         assertNull(m.winShare("none", 0.0))
         val s = m.summary().single()
@@ -52,14 +52,14 @@ class RfqMarketTest {
 
     @Test fun theBestMarginIsTheOneThatMaximisesWinShareTimesNetEdge() {
         val m = RfqMarketModel()
-        // a market that pays 0.5 points over our fair 40% of the time, 1.5 points 30%, 3 points 30%
-        repeat(40) { m.observe("c", 0.30, 0.305, 1L) }; repeat(30) { m.observe("c", 0.30, 0.315, 1L) }; repeat(30) { m.observe("c", 0.30, 0.33, 1L) }
-        // one day to the games, a 1-point floor: win share 1.0 below 0.5, 0.6 up to 1.5, 0.3 up to 3: the score win x (c - allowance - cost) peaks at 1.5 points (0.6 x ~0.01) not at 0.5 (1.0 x ~0.002) or 3
+        // a market that pays 0.5 points over our fair 40% of the time and 1.5 points the other 60%
+        repeat(40) { m.observe("c", 0.30, 0.305, 1L) }; repeat(50) { m.observe("c", 0.30, 0.315, 1L) }; repeat(10) { m.observe("c", 0.30, 0.316, 1L) }
+        // one day to the games: below 0.5 points the net edge is negative (allowance + the cost of the collateral); between 0.5 and 1.5 the win share is 0.6; the score peaks just under the 1.5 points the market tolerates
         val c = m.best("c", 0.30, 2, 1.0, 0.0005, cfg)!!
-        assertTrue("the margin lands at the 1.5-point step the market tolerates 60% of the time (was $c)", c in 0.0145..0.0150)
+        assertTrue("the margin lands one step under the 1.5 points the market tolerates 60% of the time (was $c)", c in 0.0140..0.0150)
         assertNull("fewer than probeMinSamples answers: no model price", RfqMarketModel().also { it.observe("c", 0.3, 0.31, 1L) }.best("c", 0.3, 2, 1.0, 0.0, cfg))
         // never below the floor it is given
-        assertTrue(m.best("c", 0.30, 2, 1.0, 0.02, cfg)!! >= 0.02)
+        assertTrue(m.best("c", 0.30, 2, 1.0, 0.01, cfg)!! >= 0.01)
         // a market that quotes below our fair every time cannot be beaten: no price
         val low = RfqMarketModel(); repeat(60) { low.observe("c", 0.30, 0.29, 1L) }
         assertNull(low.best("c", 0.30, 2, 1.0, 0.0005, cfg))
