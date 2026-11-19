@@ -1742,4 +1742,9 @@ PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 mi
 ## 2026-11-19T18:51:19Z
 ```
 PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 minutes, price more legs, change safeguards and criteria; the maker is on PAPER (SHADOW) until Tj adds money, keep improving it). In /home/user/novig: git fetch -q origin +cloud-feed:refs/remotes/origin/cloud-feed; read status.json rfq (seen, priceable, pricedTrades, wouldWin, wouldEarnPoints, declines with shares, openCollateral, settled) and compare with the last MK10/MK11 lines in research/review/CHANGES.md. Fix the biggest decline class with evidence (journals in cloud-archive-YYYY-MM-DD Releases; tools/rfq_legs.py, tools/rfq_summary.py) via rfq_set.py or code (tests, tools/test.sh, ckpt, push, engine_set.py --reset, CONFIRM the new job's startedAtMs and that a job is running before saying it restarted). Another session (acct-27a37e, MK12) works on the same maker: read the board (tools/coord.py board) first and do not reset the engine twice. Log in CHANGES.md and tell Tj in the app chat with chat.py say, once, only what changed.
+## 2026-11-19T18:41:30Z
+```
+Right now the parlay  engine is on paper because  I'm low on money, continue to improve and research the system even though it is on paper 
+Also very carefully review the novig docs. Make sure the parlay system is correctly and accurately using the novig api and following all of its rules and guidance perfectly. The system must use the api exactly how the docs describe 
+When you are finished, continue to monitor and improve the parlay system . Make sure it can price as much as possible. Make sure it is within the api limits and docs. Tune it for volume and profitability. Log it and tell me how well it is running and expected profitability for when i add money to it 
 ```
