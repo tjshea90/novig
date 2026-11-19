@@ -254,13 +254,17 @@ class UsageMeter(
         if (serverUsed != null && serverRemaining != null) {
             val drop = u.used - serverUsed
             val sinceLast = u.lastCallMs?.let { now - it } ?: Long.MAX_VALUE
-            if (u.remaining != null && drop > 0 && drop <= STALE_SLACK && sinceLast < STALE_WINDOW_MS) {
+            val slack = staleSlack(u.limit)
+            if (u.remaining != null && drop > 0 && drop <= slack && sinceLast < STALE_WINDOW_MS) {
                 // An answer to a call made before one already recorded (calls in parallel on one key: a big props reply landing after
                 // two small game-line ones, Tj's diagnostics 2026-09-30): its figures are older than the ones kept, so they're left out.
             } else {
                 // The server's count went DOWN without our period changing: this key runs on its own
                 // cycle (a paid plan's billing date), so follow the server from here.
-                if (serverUsed + cost < u.used) x = x.copy(periodStart = now)
+                // (MK19, Tj 2026-11-19: "Parlayapi should be on a much higher Paid plan"): only a fall of more than the answers' lag is a new cycle. The Business key (1,000,000 credits, 88,000 calls) had its period start
+                // moved to NOW by every late reply that fell short of the count kept, so its pace restarted its month at each call, thought 909,000 credits had to stay in the key, and held 656,000 credits back
+                // ("spent today's share") while the plan ran out on Nov 20.
+                if (serverUsed + cost < u.used - slack) x = x.copy(periodStart = now)
                 x = x.copy(used = serverUsed, remaining = serverRemaining, limit = serverUsed + serverRemaining)
             }
         } else if (serverRemaining != null) {
@@ -299,7 +303,7 @@ class UsageMeter(
         }
         // An account read sent before a call whose answer is already kept (both in flight at once): the call's figures are newer.
         val sinceLast = u.lastCallMs?.let { now - it } ?: Long.MAX_VALUE
-        if (!exhausted && !inactive && used != null && u.remaining != null && used < u.used && u.used - used <= STALE_SLACK && sinceLast < STALE_WINDOW_MS) return@edit x
+        if (!exhausted && !inactive && used != null && u.remaining != null && used < u.used && u.used - used <= staleSlack(u.limit) && sinceLast < STALE_WINDOW_MS) return@edit x
         val lim = limit ?: if (remaining != null && used != null) remaining + used else x.limit
         if (remaining != null) x = x.copy(remaining = remaining, used = used ?: lim?.let { (it - remaining).coerceAtLeast(0) } ?: x.used, limit = lim, figureAtMs = now)
         else if (lim != null) x = x.copy(limit = lim)
@@ -424,6 +428,8 @@ class UsageMeter(
         /** A lower count from the server this soon after the last answer, and by no more than [STALE_SLACK], is a late reply, not a new cycle. */
         const val STALE_WINDOW_MS = 2 * 60_000L
         const val STALE_SLACK = 100
+        /** How far a server's count may lag behind the one kept and still be a late reply: 100 credits, or half a percent of a big plan's allowance (5,000 of a million: its props replies cost hundreds each, several in flight at once). */
+        fun staleSlack(limit: Int?): Int = maxOf(STALE_SLACK, (limit ?: 0) / 200)
 
         const val MINUTE = 60_000L
         const val HOUR = 3_600_000L
