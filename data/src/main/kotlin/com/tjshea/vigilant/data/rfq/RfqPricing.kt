@@ -79,6 +79,26 @@ data class RfqConfig(
      * bias: our 70-85% legs hit 82%, and our price won 42% of the trades with a leg over 90% against 17% of all). 0.90.
      */
     val maxLegFair: Double = 0.90,
+    /**
+     * MK17 (Tj 2026-11-19: "only accepts parlays that will finish today (the latest leg is a game on todays slate)"): quote only a parlay whose LAST leg starts before today's slate ends (the sports day
+     * runs 5 am to 5 am Eastern, like the Tracker's). Off = any game within [maxDaysAhead].
+     */
+    val onlyToday: Boolean = false,
+    /** MK17 (Tj: "accept fewer parlays but at longer odds ... more of a longshot, such as 25% or less chance to win"): quote only a parlay we give at most [longshotMaxChance] to win. Off = the [maxFair] cap alone. */
+    val longshotsOnly: Boolean = false,
+    val longshotMaxChance: Double = 0.25,
+    /**
+     * MK17 (Tj: "the engine has to have a way to calculate this within the amount in my wallet so that it can accept parlays up to the collateral amount available in my wallet at any time"): the WALLET is
+     * the collateral limit instead of the fixed dollar caps. With it on: one parlay may lock up at most [walletShare] of the wallet (cash + the collateral already held), one outcome (a leg shared by many
+     * parlays) at most [walletLegShare] of it, the open total is whatever cash is available (the quote is sized to the balance that is there), and the loss stop is [dayLossStopPct] of the wallet when that is more
+     * than [dayLossStop]. The balance is read every minute (LIVE, or SHADOW with this on, so the paper run judges as the live one would).
+     */
+    val walletCollateral: Boolean = false,
+    val walletShare: Double = 0.30,
+    val walletLegShare: Double = 0.50,
+    val dayLossStopPct: Double = 0.20,
+    /** The shortest lock-up (days) the return hurdle is charged for: 1 = a day however soon the games are; a same-day mode charges its real hold (about a quarter of a day). */
+    val holdFloorDays: Double = 1.0,
     /** The loss over the last 24 hours of SETTLED parlays (dollars, from Novig's executions) at which LIVE quoting stops for six hours ([RfqMaker.onLedger]); 0 = no stop. */
     val dayLossStop: Double = 20.0,
     /**
@@ -172,6 +192,19 @@ sealed interface RfqDecision {
  * every leg priced from a fresh line behind enough companies, pregame and not about to start, no two legs in one game (their correlation is unknown: Novig allows the combination, the books charge
  * for it, and an independent product would misprice it), a probability inside the band, and a stake the caps allow and the minimum stake does not exceed.
  */
+/** The sports day (MK17): the Tracker's slate, 5 am to 5 am Eastern. */
+object RfqSlate {
+    private val ET = java.time.ZoneId.of("America/New_York")
+
+    /** The end (ms) of the sports day [now] is in: the next 5:00 am Eastern. */
+    fun endMs(now: Long): Long {
+        val t = java.time.ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(now), ET)
+        var end = t.toLocalDate().atTime(5, 0).atZone(ET)
+        if (!t.isBefore(end)) end = end.plusDays(1)
+        return end.toInstant().toEpochMilli()
+    }
+}
+
 object RfqPricer {
     /** The market types whose fair the maker trusts (the Novig types the first shadow day measured at 0.94 points over our fair: moneyline, spread, total, team total, first-half versions, three-way moneyline). */
     val GAME_LINES = setOf("MONEY", "SPREAD", "TOTAL", "TEAM_TOTAL", "MONEY_1H", "SPREAD_1H", "TOTAL_1H", "MONEYLINE_3_WAY_WIN")
@@ -184,7 +217,7 @@ object RfqPricer {
 
     fun quotePrice(fair: Double, n: Int, leadMs: Long, cfg: RfqConfig): Double {
         val days = leadMs.coerceAtLeast(0L) / 86_400_000.0 + 0.25
-        val r = cfg.minReturn * maxOf(1.0, days)
+        val r = cfg.minReturn * maxOf(cfg.holdFloorDays, days)
         val byReturn = (fair + r) / (1.0 + r)
         val byPoints = fair + cfg.minPoints * (n - 1).coerceAtLeast(1)
         val byMargin = fair * (1.0 + cfg.margin)
@@ -213,7 +246,7 @@ object RfqPricer {
      * a quote whose collateral for the FULL `maxWager` the balance cannot cover (`quote_dropped unbacked`, docs api/rfq/overview) and fails a won quote it cannot fund at the fill (`quote_unfilled maker_insolvent`,
      * which stops the maker for 30 minutes): a quote is never sized beyond the cash that is there.
      */
-    fun decide(created: RfqProtocol.Created, now: Long, cfg: RfqConfig, fairs: LegFairs, openCollateral: Double, market: RfqMarketModel? = null, cashRoom: Double? = null): RfqDecision {
+    fun decide(created: RfqProtocol.Created, now: Long, cfg: RfqConfig, fairs: LegFairs, openCollateral: Double, market: RfqMarketModel? = null, cashRoom: Double? = null, walletTotal: Double? = null): RfqDecision {
         val ids = created.outcomeIds
         if (ids.size < 2 || ids.size > cfg.maxLegs) return RfqDecision.Decline("${ids.size} legs (this maker prices 2 to ${cfg.maxLegs})")
         val legs = ArrayList<LegFair>(ids.size)
@@ -258,14 +291,24 @@ object RfqPricer {
             if (now - asOf > cfg.maxFairAgeMs) return no("a leg's fair is ${(now - asOf) / 60_000L} min old")
             if (l.probability > cfg.maxLegFair) return no("a leg is too likely to win (${"%.0f".format(l.probability * 100)}% against the ${"%.0f".format(cfg.maxLegFair * 100)}% cap)")
         }
+        if (cfg.longshotsOnly && p > cfg.longshotMaxChance) return no("longshots only: the parlay wins ${"%.0f".format(p * 100)}% of the time, over the ${"%.0f".format(cfg.longshotMaxChance * 100)}% limit")
         if (p > cfg.maxFair) return no("the parlay is too likely to win (${"%.0f".format(p * 100)}% against the ${"%.0f".format(cfg.maxFair * 100)}% cap)")
+        if (cfg.onlyToday) {
+            val end = RfqSlate.endMs(now)
+            val late = legs.maxOf { it.startsMs }
+            if (late > end) return no("its last leg starts after today's slate ends (${(late - end) / 3_600_000L} h later)")
+        }
         if (p < cfg.minFair) return no("the parlay is too unlikely to win (${"%.1f".format(p * 100)}% against the ${"%.0f".format(cfg.minFair * 100)}% floor)")
         val leadMs = legs.maxOf { it.startsMs } - now
         // LIVE quotes demand the capital hurdle; SHADOW quotes at the looser rule (paper evidence) and records what the hurdle would have asked.
-        val hurdleCfg = if (cfg.liveMinReturn > cfg.minReturn) cfg.copy(minReturn = cfg.liveMinReturn) else cfg
-        val effCfg = if (cfg.mode == RfqConfig.Mode.LIVE) hurdleCfg else cfg
-        val rulePrice = quotePrice(p, ids.size, leadMs, effCfg)
-        val livePrice = if (effCfg === cfg && hurdleCfg !== cfg) quotePrice(p, ids.size, leadMs, hurdleCfg) else null
+        val sameDay = if (cfg.onlyToday) cfg.copy(holdFloorDays = minOf(cfg.holdFloorDays, 0.25)) else cfg
+        val hurdleCfg = if (cfg.liveMinReturn > cfg.minReturn) sameDay.copy(minReturn = cfg.liveMinReturn) else sameDay
+        val effCfg = if (cfg.mode == RfqConfig.Mode.LIVE) hurdleCfg else sameDay
+        // The safe-edge floor (MK17, "truly positive EV"): a real quote asks at least one standard error of the fair on top of it (relative error x sqrt(legs), the market model's own floor): the rule's 1.5% margin
+        // is under that for any parlay of two legs or more (2% x sqrt(2) = 2.8%), and the trades we win are the ones where our fair is lowest against the market's (the winner's curse).
+        val safe = up(p * (1.0 + cfg.fairErrorRel * Math.sqrt(ids.size.toDouble())))
+        val rulePrice = if (cfg.mode == RfqConfig.Mode.LIVE) maxOf(quotePrice(p, ids.size, leadMs, effCfg), safe) else quotePrice(p, ids.size, leadMs, effCfg)
+        val livePrice = if (cfg.mode != RfqConfig.Mode.LIVE) maxOf(quotePrice(p, ids.size, leadMs, hurdleCfg), safe).takeIf { it != rulePrice } else null
         // The market model's price (MK12): the margin that maximises win share x net edge on what the collateral costs, from the probes' answers for this class; computed whenever a model exists so SHADOW journals both,
         // used only when the config says so and never below the rule's floors.
         val errFloor = maxOf(p * cfg.margin, p * cfg.fairErrorRel * Math.sqrt(ids.size.toDouble()))
@@ -278,8 +321,9 @@ object RfqPricer {
         // would only be tied up. The maker's collateral for a stake w is w (1 - P) / P.
         val want = created.minWager.coerceAtLeast(10.0)
         val perStake = (1.0 - price) / price
-        val byParlay = cfg.maxCollateral / perStake
-        val byOpen = (cfg.maxOpenCollateral - openCollateral) / perStake
+        val wallet = if (cfg.walletCollateral) walletTotal else null
+        val byParlay = (if (wallet != null) cfg.walletShare * wallet else cfg.maxCollateral) / perStake
+        val byOpen = if (wallet != null) Double.MAX_VALUE else (cfg.maxOpenCollateral - openCollateral) / perStake      // the wallet's cash (byCash) is the open limit then
         val byCash = cashRoom?.let { it.coerceAtLeast(0.0) / perStake } ?: Double.MAX_VALUE
         val room = floor(minOf(cfg.maxStake, byParlay, byOpen, byCash) * 100.0) / 100.0
         if (room < want) return no(if (byCash < minOf(cfg.maxStake, byParlay, byOpen) && byCash < want) "the balance covers a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked (cash is short)" else "the caps allow a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked")
