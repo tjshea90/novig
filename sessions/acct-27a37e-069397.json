@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "c800e407532a428c32619d206ba65ebcbf003cb2",
+ "head": "dbea1c1c9cbb0703972707f626375ae2683d6146",
  "since": 1795103757,
- "beat": 1795114699,
- "beatIso": "2026-11-19T18:58:19Z",
- "done": "MK13 verified live: standing read 6/6 confirmed, 1 socket no reconnects, executions ledger (3 settled all lost -7.09, 16 open), probe 177/177",
- "next": "paper research: after 17:00Z 11-20 read rfq-market SUMMARY and the evidence rule for marketPricing; watch priceable share by league; Tj adds money -> dedicated maker subaccount + verify last-look routing"
+ "beat": 1795114723,
+ "beatIso": "2026-11-19T18:58:43Z",
+ "done": "MK14: LIVE capital hurdle liveMinReturn .03 (+ paper journaling), leg + EXEC_RESULT journaling, tools/rfq_outcomes.py graded from ESPN (rfq-market.yml), expected-profit study; FULL suite green (4449)",
+ "next": "rides the next engine handover (no reset); after tonight's games read OUTCOMES.md (would-win adverse selection); 24 h probes -> marketPricing/propPairsFromMarket; coverage: prop legs (MK11 ladder) and prop+prop same-game pairs"
 }
