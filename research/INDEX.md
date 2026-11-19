@@ -8,7 +8,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
-| 2026-11-19 | `novig_parlay_maker_2026-11-19.md` | The parlay maker, round 2: pricing, coverage, same-game legs and the quote that fills (MK12, Tj 2026-11-19) - Tj (2026-11-19, tj Gmail session, six asks): deep research online for everything the parlay system needs (pricing, ho... | CODE |
+| 2026-11-19 | `novig_parlay_maker_2026-11-19.md` | The parlay maker, round 2: pricing, coverage, same-game legs and the quote that fills (MK12, Tj 2026-11-19) - Tj (2026-11-19, tj Gmail session, six asks): deep research online for everything the parlay system needs (pricing, ho... | LEVER CODE |
 | 2026-11-18 | `novig_rfq_maker_2026-11-18.md` | Becoming a Novig parlay maker: how it works, what it can earn, what it risks, the plan (MK, Tj 2026-11-18) - Tj: "I want to become a parlay maker and try to profit from it. Research and build it." | APPLIED LEVER WATCH CODE |
 | 2026-11-18 | `novig_propline_review_2026-11-18.md` | Novig and PropLine: API and socket review, what changed in Novig's docs (NVR, Tj 2026-11-18) - Tj: "Review that both novig api and socket and propline api and socket are used correctly and to their full potential by the app and... | APPLIED LEVER |
 | 2026-11-17 | `propline_unused_features_2026-11-17.md` | PropLine: what the recipes page adds, and every feature Vigilant does not use yet (PLR, Tj 2026-11-17) - Tj: "https://prop-line.com/recipes See what can be used from this also. Then look into all the features offered by proplin... | LEVER CODE |
