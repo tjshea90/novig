@@ -1,22 +1,24 @@
-# CHECKPOINT 4676 — read me first, then TASKS.md
+# CHECKPOINT 4677 — read me first, then TASKS.md
 
-**Written:** 2026-11-19T07:05:33Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-aoglz9` · **builds on:** `a1da25772` (this checkpoint is the commit after it)
+**Written:** 2026-11-19T07:10:46Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-aoglz9` · **builds on:** `042248283` (this checkpoint is the commit after it)
 
 ## Just done
-MK11 logged; ladder-rung finding
+MK10f: rfq maxLegs 7 minFair 0.01 (long all-priced parlays)
 
 ## Do this next
-read 06:51 run journal; build prop ladder interpolation for rfq leg fairs
+next check: quotes won, collateral use; ladder model only if props matter
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M research/review/CHANGES.md
+     M tools/rfq_set.py
 
 ## Last ten checkpoints
 ```
+  ffb9aec70 ckpt 4676: MK11 logged; ladder-rung finding
   a1da25772 ckpt 4675: parlay 30-min check in ROUTINE.md + session cron
   c26f92a5c ckpt 4674: MK10e: rfq caps 75/150 per Tj
   94cbb445b ckpt 4673: MK10d logged
@@ -26,5 +28,7 @@ read 06:51 run journal; build prop ladder interpolation for rfq leg fairs
   9edcaab92 ckpt 4669: MK10b: rfq maxFairAge 10min, maxLegs 5 (rfq_set)
   b8f1b4122 ckpt 4668: v1.0.140 recorded; MK10 coverage shipped to engine, reset
   6c5b2b557 ckpt 4667: MK10: parlay leg fair index uses every priced outcome (not only ones Novig 
-  ee40cd183 ckpt 4666: GD2 + TR5 shipped v1.0.140; MK10 parlay data read
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
