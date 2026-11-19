@@ -88,6 +88,11 @@ data class RfqConfig(
     val longshotsOnly: Boolean = false,
     val longshotMaxChance: Double = 0.25,
     /**
+     * The safety premium (relative) a longshot parlay's fair carries in [longshotsOnly] (MK17, the positive-EV pass): of the 2,025 parlays graded from final scores, the ones we gave 0-10% hit 5.2% against a 4.6% fair
+     * and the 10-20% ones 15.1% against 13.8% (our fair too low by about a point, the size of our whole edge; clustered, not yet significant). 5% on the fair makes the quote safe if that is real; 0 = none.
+     */
+    val longshotPremium: Double = 0.05,
+    /**
      * MK17 (Tj: "the engine has to have a way to calculate this within the amount in my wallet so that it can accept parlays up to the collateral amount available in my wallet at any time"): the WALLET is
      * the collateral limit instead of the fixed dollar caps. With it on: one parlay may lock up at most [walletShare] of the wallet (cash + the collateral already held), one outcome (a leg shared by many
      * parlays) at most [walletLegShare] of it, the open total is whatever cash is available (the quote is sized to the balance that is there), and the loss stop is [dayLossStopPct] of the wallet when that is more
@@ -299,6 +304,7 @@ object RfqPricer {
             if (late > end) return no("its last leg starts after today's slate ends (${(late - end) / 3_600_000L} h later)")
         }
         if (p < cfg.minFair) return no("the parlay is too unlikely to win (${"%.1f".format(p * 100)}% against the ${"%.0f".format(cfg.minFair * 100)}% floor)")
+        if (cfg.longshotsOnly && cfg.longshotPremium > 0.0) p = minOf(0.999, p * (1.0 + cfg.longshotPremium))
         val leadMs = legs.maxOf { it.startsMs } - now
         // LIVE quotes demand the capital hurdle; SHADOW quotes at the looser rule (paper evidence) and records what the hurdle would have asked.
         val sameDay = if (cfg.onlyToday) cfg.copy(holdFloorDays = minOf(cfg.holdFloorDays, 0.25)) else cfg

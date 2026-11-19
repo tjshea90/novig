@@ -201,6 +201,11 @@ class RfqMakerTest {
         assertEquals(0.3, tooLikely.fair!!, 1e-9)
         assertTrue("off: the 30% parlay is quoted", RfqPricer.decide(created("a", "b"), now, cfg, fairs(leg("a", "e1", 0.6), leg("b", "e2", 0.5)), 0.0) is RfqDecision.Quote)
         assertTrue("the limit is a setting", RfqPricer.decide(created("a", "b"), now, ls.copy(longshotMaxChance = 0.35), fairs(leg("a", "e1", 0.6), leg("b", "e2", 0.5)), 0.0) is RfqDecision.Quote)
+        // the longshot premium: a 20% parlay is priced as 21% (5% safety on our fair), and the cap is judged on OUR fair (a 24% parlay is still a longshot at 25%)
+        val q = RfqPricer.decide(created("a", "b"), now, ls, fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4)), 0.0) as RfqDecision.Quote
+        assertEquals(0.21, q.fair, 1e-9)
+        assertEquals(0.2, (RfqPricer.decide(created("a", "b"), now, ls.copy(longshotPremium = 0.0), fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4)), 0.0) as RfqDecision.Quote).fair, 1e-9)
+        assertTrue(RfqPricer.decide(created("a", "b"), now, ls, fairs(leg("a", "e1", 0.6), leg("b", "e2", 0.4)), 0.0) is RfqDecision.Quote)       // 24%
     }
 
     @Test fun aSameDayParlayIsChargedItsRealHoldNotAFullDayForTheCapitalHurdle() {
