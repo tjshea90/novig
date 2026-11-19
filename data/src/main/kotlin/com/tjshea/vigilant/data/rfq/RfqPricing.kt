@@ -87,6 +87,8 @@ data class RfqConfig(
      * priced the long parlays, 55% of all trades, out of every auction. Used only when [marketPricing] is on; the rule keeps its floors.
      */
     val fairErrorRel: Double = 0.02,
+    /** MK13: dollars of the maker's balance a LIVE quote leaves untouched (fees, the engine's own bids); quotes are sized to the cash that is there beyond it. */
+    val cashReserve: Double = 3.0,
 ) {
     enum class Mode { OFF, SHADOW, LIVE }
 
@@ -177,7 +179,12 @@ object RfqPricer {
         return minOf(0.999, j * (1.0 + cfg.sameGamePremium))
     }
 
-    fun decide(created: RfqProtocol.Created, now: Long, cfg: RfqConfig, fairs: LegFairs, openCollateral: Double, market: RfqMarketModel? = null): RfqDecision {
+    /**
+     * [cashRoom]: the dollars of the maker's subaccount balance not already promised (its cash less the collateral of quotes still out, less [RfqConfig.cashReserve]), or null when not known (SHADOW). Novig passes over
+     * a quote whose collateral for the FULL `maxWager` the balance cannot cover (`quote_dropped unbacked`, docs api/rfq/overview) and fails a won quote it cannot fund at the fill (`quote_unfilled maker_insolvent`,
+     * which stops the maker for 30 minutes): a quote is never sized beyond the cash that is there.
+     */
+    fun decide(created: RfqProtocol.Created, now: Long, cfg: RfqConfig, fairs: LegFairs, openCollateral: Double, market: RfqMarketModel? = null, cashRoom: Double? = null): RfqDecision {
         val ids = created.outcomeIds
         if (ids.size < 2 || ids.size > cfg.maxLegs) return RfqDecision.Decline("${ids.size} legs (this maker prices 2 to ${cfg.maxLegs})")
         val legs = ArrayList<LegFair>(ids.size)
@@ -238,8 +245,9 @@ object RfqPricer {
         val perStake = (1.0 - price) / price
         val byParlay = cfg.maxCollateral / perStake
         val byOpen = (cfg.maxOpenCollateral - openCollateral) / perStake
-        val room = floor(minOf(cfg.maxStake, byParlay, byOpen) * 100.0) / 100.0
-        if (room < want) return no("the caps allow a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked")
+        val byCash = cashRoom?.let { it.coerceAtLeast(0.0) / perStake } ?: Double.MAX_VALUE
+        val room = floor(minOf(cfg.maxStake, byParlay, byOpen, byCash) * 100.0) / 100.0
+        if (room < want) return no(if (byCash < minOf(cfg.maxStake, byParlay, byOpen) && byCash < want) "the balance covers a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked (cash is short)" else "the caps allow a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked")
         val stake = ceil(want * 100.0 - 1e-7) / 100.0
         return RfqDecision.Quote(price, stake, p, legs, rulePrice, modelPrice, via)
     }

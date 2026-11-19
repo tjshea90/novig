@@ -565,6 +565,16 @@ object CloudKeys {
     const val TRADE_KEY_PEM = "NOVIG_TRADE_KEY_PEM"
     val TRADE = listOf(TRADE_KEY_ID, TRADE_KEY_PEM)
 
+    /**
+     * OPTIONAL: a DEDICATED parlay-maker subaccount's `trading` key (MK13, docs api/concepts/account-model and api/rfq/makers: "A subaccount is a separate wallet: balance, positions, orders", "To run more than one
+     * maker, open more subaccounts and register each one", and each subaccount has its own throttles and its own 10 sockets). With these two secrets the RFQ maker quotes from ITS balance and reads ITS collateral,
+     * executions and standing, so the parlay money never competes with the engine's bets and bids for one wallet (2026-11-19: $7 of cash with $73 held as parlay collateral) and its profit is that wallet's change.
+     * Absent, the maker uses the Vigilant subaccount's key as before. Opening and funding the subaccount moves money: Tj's, with his management key in the Novig app.
+     */
+    const val MAKER_KEY_ID = "NOVIG_MAKER_KEY_ID"
+    const val MAKER_KEY_PEM = "NOVIG_MAKER_KEY_PEM"
+    val MAKER = listOf(MAKER_KEY_ID, MAKER_KEY_PEM)
+
     /** The secret holding each meter's keys (the dashboard needs the keys' order to say which one is active). A policy with no secret here has no key on GitHub. */
     fun envFor(policyId: String): String? = when (policyId) {
         "sgo" -> SGO; "oddspapi_free" -> ODDSPAPI_FREE; "pinnwire" -> PINNWIRE; "pinnacle" -> PINNAPI; "pinnodds" -> PINNODDS

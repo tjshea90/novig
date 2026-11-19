@@ -35,6 +35,8 @@ class RfqMaker(
     /** What the other makers charge, per class of parlay, learned by [probe] (MK12); null = no market model. */
     private val market: RfqMarketModel? = null,
     private val probe: RfqProbe? = null,
+    /** The maker's subaccount balance, dollars (read every minute by the engine), or null when unknown. Used only in LIVE: SHADOW judges prices as if the wallet were free. */
+    private val cash: () -> Double? = { null },
 ) {
     private class Pending(val created: RfqProtocol.Created, val decision: RfqDecision, val seenMs: Long, val journaled: Boolean, val classes: List<String>) {
         var quotePrice: Double? = null
@@ -179,7 +181,9 @@ class RfqMaker(
         // SHADOW sends nothing, so the capital the live parlays hold is no limit on what it prices: it judges every RFQ as if the wallet were free (the per-parlay cap still binds), and the evidence (what the market
         // paid over our fair, what our rule would have won) is about PRICES. With the wallet nearly all in open collateral (2026-11-19: $7 cash, $73 held) 14% of RFQs declined for "the caps allow a $# stake".
         val capital = if (cfg.mode == RfqConfig.Mode.SHADOW) 0.0 else openCollateral() + inFlight()
-        val d = RfqPricer.decide(e, now, cfg, fairs, capital, market)
+        // LIVE sizes a quote to the balance that is there: cash less the collateral of the quotes still out and the reserve (docs: an unbacked quote is passed over, an unfundable fill stops the maker).
+        val cashRoom = if (cfg.mode == RfqConfig.Mode.LIVE) cash()?.let { it - inFlight() - cfg.cashReserve } else null
+        val d = RfqPricer.decide(e, now, cfg, fairs, capital, market, cashRoom)
         offerProbe(e, d, cfg)
         when (d) {
             is RfqDecision.Quote -> priceable++
