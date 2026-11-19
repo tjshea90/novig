@@ -14,6 +14,13 @@ class RfqLedgerTest {
             (result?.let { """"result":"$it",""" } ?: "") + (fmv?.let { """"fmvValue":"$it",""" } ?: "") + (settledAgoH?.let { """"settledTs":${now - (it * 3_600_000L).toLong()},""" } ?: "") + """"x":1}"""
     private fun page(vararg items: String) = """{"items":[${items.joinToString(",")}],"next":"n"}"""
 
+    @Test fun openParlaysCarryTheirCollateralOnEveryLegAndSettledOnesCarryNone() {
+        val execs = RfqLedger.parse(page(item("r1", "0.4", "15", "10", "open"), item("r2", "0.5", "10", "10", "open"), item("r3", "0.4", "99", "10", "settled", "loss", settledAgoH = 1.0)))
+        assertEquals(listOf("a", "b"), execs.first().outcomeIds)
+        val m = RfqLedger.exposure(execs)
+        assertEquals("both open parlays are on a and b: 15 + 10; the settled one is gone", mapOf("a" to 25.0, "b" to 25.0), m)
+    }
+
     @Test fun theDocumentedItemsParseAndAnythingElseReadsAsNone() {
         val e = RfqLedger.parse(page(item("r1", "0.4", "15", "10", "settled", "loss", settledAgoH = 2.0), item("r2", "0.4", "15", "10", "open"))).let { it.first() to it.last() }
         assertEquals(15.0, e.first.cost, 0.0); assertEquals(10.0, e.first.userCost, 0.0); assertTrue(e.first.settled); assertEquals("loss", e.first.result); assertTrue(!e.second.settled)

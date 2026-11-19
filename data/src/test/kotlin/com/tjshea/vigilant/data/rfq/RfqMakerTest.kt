@@ -248,6 +248,29 @@ class RfqMakerTest {
         maker.onEvent(created("c", "d").copy(rfqId = "rfq-3")); assertEquals("the first quote's $36.30 is promised: $20.70 left cannot back a second", 1, sent.size)
     }
 
+    @Test fun aLegAlreadyCarryingTooMuchCollateralIsNotQuotedAgainInLiveOnly() {
+        // the parlay of fair 0.20 at price 0.216 on a $10 stake needs $36.30 of collateral: take caps that let it through, and a per-leg cap of $40
+        val big = cfg.copy(maxCollateral = 80.0, maxOpenCollateral = 400.0, maxLegCollateral = 40.0)
+        var held = mapOf<String, Double>()
+        fun maker(mode: RfqConfig.Mode, sent: MutableList<String>, rows: MutableList<RfqRow>) = RfqMaker({ big.copy(mode = mode) }, { id -> listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4), leg("c", "e3", 0.5)).firstOrNull { it.outcomeId == id } }, { 0.0 }, { sent += it; true }, { rows += it }, { _, _ -> }, { now }, cash = { 1_000.0 }, exposure = { held })
+        val sent = ArrayList<String>(); val rows = ArrayList<RfqRow>()
+        val m = maker(RfqConfig.Mode.LIVE, sent, rows)
+        m.onEvent(created("a", "b")); assertEquals("nothing held on the legs: quoted", 1, sent.size)
+        // the $36.30 now out on a and b (a quote in flight) plus a new parlay on a and c: a would carry $72.60 > $40
+        m.onEvent(created("a", "c").copy(rfqId = "rfq-2"))
+        assertEquals("a already carries the first quote's collateral: not quoted", 1, sent.size)
+        assertTrue(rows.last { it.kind == "CREATED" }.data.contains("a leg already carries"))
+        // the same from open parlays Novig reports (an executions read after a restart): b carries $38 already
+        held = mapOf("b" to 38.0); sent.clear(); rows.clear()
+        val m2 = maker(RfqConfig.Mode.LIVE, sent, rows)
+        m2.onEvent(created("a", "b")); assertTrue("b would reach 74: not quoted", sent.isEmpty())
+        m2.onEvent(created("a", "c").copy(rfqId = "rfq-3")); assertEquals("a and c are clear: quoted", 1, sent.size)
+        // SHADOW judges prices and ignores the cap; the cap off (0) also ignores it
+        sent.clear(); rows.clear()
+        maker(RfqConfig.Mode.SHADOW, sent, rows).also { it.onEvent(created("a", "b")) }
+        assertTrue(rows.single { it.kind == "CREATED" }.data.contains("\"decision\":\"quote\""))
+    }
+
     @Test fun anRfqDeliveredTwiceIsPricedAndQuotedOnce() {
         val r = rig(RfqConfig.Mode.LIVE)
         r.maker.onEvent(created("a", "b")); r.maker.onEvent(created("a", "b"))                  // the same rfqId on two sockets
