@@ -278,7 +278,7 @@ if __name__ == "__main__":
     if a == ["selftest"]:
         sys.exit(selftest())
     if len(a) >= 3 and a[0] == "run":
-        cats = [json.load(gzip.open(p, "rt")) for p in a[1].split(",")]
+        cats = [json.load(gzip.open(p, "rt")) for p in a[1].split(",") if p and p != "none"]
         rows, sk = build(cats, a[2:])
         print(report(rows, sk)); sys.exit(0)
     print(__doc__)
