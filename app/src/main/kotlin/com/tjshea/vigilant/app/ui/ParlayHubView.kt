@@ -124,16 +124,16 @@ private fun hubTiles(hub: ParlayHub.Hub, now: Long): List<DashboardModel.Tile> {
     fun usd(x: Double) = "\$" + String.format(Locale.US, "%.2f", x)
     val tiles = ArrayList<DashboardModel.Tile>()
     tiles += DashboardModel.Tile(
-        "Money tied up now", usd(s.collateral), if (s.open == 0) "no open parlays" else "${s.open} open parlays" + (s.maxOpenCollateral?.let { " · limit ${"\$%.0f".format(Locale.US, it)}" } ?: ""),
+        "Money tied up now", usd(s.collateral), if (s.open == 0) "no open parlays" else if (s.open == 1) "1 open parlay" else "${s.open} open parlays" + (s.maxOpenCollateral?.let { " · limit ${"\$%.0f".format(Locale.US, it)}" } ?: ""),
         s.maxOpenCollateral.let { lim -> if (lim != null && s.collateral > lim * 0.9) Tone.WARN else Tone.NEUTRAL },
     )
-    tiles += DashboardModel.Tile("If every open parlay loses", ParlayHub.signed(s.ifAllBuyersLose), "the buyers' stakes are yours, and your ${usd(s.collateral)} comes back", if (s.ifAllBuyersLose > 0.005) Tone.GOOD else Tone.NEUTRAL)
+    tiles += DashboardModel.Tile("If every open parlay loses", ParlayHub.signed(s.ifAllBuyersLose), "you keep the stakes and your collateral comes back", if (s.ifAllBuyersLose > 0.005) Tone.GOOD else Tone.NEUTRAL)
     tiles += DashboardModel.Tile("Worst case", ParlayHub.signed(s.worstCase), "if every parlay still alive wins for its buyer", if (s.worstCase < -0.005) Tone.BAD else Tone.NEUTRAL)
     tiles += DashboardModel.Tile("Expected on the open ones", ParlayHub.signed(s.expectedOpen), "at our odds, after the legs already decided", if (s.expectedOpen > 0.005) Tone.GOOD else if (s.expectedOpen < -0.005) Tone.BAD else Tone.NEUTRAL)
-    if (s.lockedInCount > 0) tiles += DashboardModel.Tile("Already won", ParlayHub.signed(s.lockedIn), "${s.lockedInCount} open parlays where the buyer lost a leg: yours when Novig settles them", Tone.GOOD)
+    if (s.lockedInCount > 0) tiles += DashboardModel.Tile("Already won", ParlayHub.signed(s.lockedIn), (if (s.lockedInCount == 1) "1 parlay" else "${s.lockedInCount} parlays") + " the buyer already lost: yours once Novig settles", Tone.GOOD)
     s.lastFinalMs?.let { last ->
         tiles += DashboardModel.Tile(
-            "All open parlays final", ParlayHub.relative(last, now).removePrefix("in "), "about ${ParlayHub.clock(last, now, zone)}" + (s.nextFinalMs?.takeIf { it != last }?.let { " · the first ${ParlayHub.relative(it, now)}" } ?: "") + " (games' usual length)",
+            "All open parlays final", ParlayHub.relative(last, now).removePrefix("in "), "about ${ParlayHub.clock(last, now, zone)}" + (s.nextFinalMs?.takeIf { it != last }?.let { " · the first ${ParlayHub.relative(it, now)}" } ?: ""),
         )
     }
     tiles += DashboardModel.Tile("Settled", "${s.settled}", "${s.makerWon} won · ${s.makerLost} lost" + (if (s.settled > 0) " · last 24 h ${ParlayHub.signed(s.pnl24h)}" else ""), if (s.makerLost > s.makerWon) Tone.WARN else Tone.NEUTRAL)
