@@ -216,7 +216,7 @@ class RfqMaker(
             when (d) {
                 is RfqDecision.Quote -> {
                     put("decision", "quote"); put("price", d.price); put("maxWager", d.maxWager); put("fair", d.fair); put("edge", d.edge)
-                    put("rulePrice", d.rulePrice); d.modelPrice?.let { put("modelPrice", it) }; if (d.via.isNotEmpty()) put("via", d.via)
+                    put("rulePrice", d.rulePrice); d.modelPrice?.let { put("modelPrice", it) }; d.livePrice?.let { put("livePrice", it) }; if (d.via.isNotEmpty()) put("via", d.via)
                     put("legs", buildJsonArray { d.legs.forEach { l -> add(legJson(l)) } })
                 }
                 is RfqDecision.Decline -> {
@@ -316,6 +316,7 @@ class RfqMaker(
             (p?.decision as? RfqDecision.Quote)?.let { q ->
                 put("ourPrice", q.price); put("wouldWin", q.price <= e.price + 1e-9)
                 put("rulePrice", q.rulePrice); put("ruleWouldWin", q.rulePrice <= e.price + 1e-9)
+                q.livePrice?.let { lp -> put("livePrice", lp); put("liveWouldWin", lp <= e.price + 1e-9) }
                 q.modelPrice?.let { m -> put("modelPrice", m); put("modelWouldWin", m <= e.price + 1e-9) }
             }
         }

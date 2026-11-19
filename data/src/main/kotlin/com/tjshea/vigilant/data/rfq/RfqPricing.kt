@@ -24,6 +24,14 @@ data class RfqConfig(
     /** The return on the maker's collateral a quote must offer if the fair is true: price >= (fair + r) / (1 + r), where r = this x max(1, days the collateral stays tied up + 0.25). */
     val minReturn: Double = 0.06,
     /**
+     * The return on collateral per day a LIVE quote must offer (MK14, Tj 2026-11-19: "tune it for volume and profitability"). The market asks for far more collateral than a small maker has: on 11-19 the quoteable
+     * trades alone needed about $1,100 of new collateral an hour, held 18 hours on average, against $80 of cash, so the capital is the scarce thing and a trade that ties it up for little is a trade given away.
+     * Simulated on the 123 trades the rule would have won in 1.35 hours: a 2%/day hurdle keeps 90% of the expected profit on 57% of the collateral (return on capital 2.1% -> 3.9% a day), 3% keeps 77% on 37%
+     * (4.7%), 5% keeps 52% on 16% (9.5%). SHADOW keeps quoting at [minReturn] (the volume of paper evidence) and journals what the LIVE hurdle would have quoted (`livePrice`, `liveWouldWin`); LIVE uses
+     * max([minReturn], this) in the rule and in the market model's cost of collateral.
+     */
+    val liveMinReturn: Double = 0.03,
+    /**
      * Whether a parlay with a player-prop or any other leg that is not a game line may be quoted. OFF: on game lines the market paid a median 0.94 points of pot over our fair (p90 2.6), on parlays with a
      * player prop 6.0 points (+38%, 91% of them 15% or more above it): our prop fair runs high (prop Overs lose at Novig, research/propline_vs_vigilant_2026-10-16.md), so quoting those would win exactly the trades
      * where our fair is wrong (research/novig_rfq_maker_2026-11-18.md section 10).
@@ -138,7 +146,7 @@ fun interface LegFairs { fun leg(outcomeId: String): LegFair? }
 
 sealed interface RfqDecision {
     /** [price] is the probability the parlay wins that we quote, [maxWager] the stake we cover, [fair] the parlay's fair probability. */
-    data class Quote(val price: Double, val maxWager: Double, val fair: Double, val legs: List<LegFair>, val rulePrice: Double = price, val modelPrice: Double? = null, val via: String = "") : RfqDecision {
+    data class Quote(val price: Double, val maxWager: Double, val fair: Double, val legs: List<LegFair>, val rulePrice: Double = price, val modelPrice: Double? = null, val via: String = "", val livePrice: Double? = null) : RfqDecision {
         /** Our EV per $1 of the pot if the fair is true: what winning the auction is worth. */
         val edge: Double get() = price - fair
     }
@@ -238,11 +246,15 @@ object RfqPricer {
         }
         if (p < cfg.minFair || p > cfg.maxFair) return no("the parlay's fair probability ${"%.3f".format(p)} is outside ${cfg.minFair}-${cfg.maxFair}")
         val leadMs = legs.maxOf { it.startsMs } - now
-        val rulePrice = quotePrice(p, ids.size, leadMs, cfg)
+        // LIVE quotes demand the capital hurdle; SHADOW quotes at the looser rule (paper evidence) and records what the hurdle would have asked.
+        val hurdleCfg = if (cfg.liveMinReturn > cfg.minReturn) cfg.copy(minReturn = cfg.liveMinReturn) else cfg
+        val effCfg = if (cfg.mode == RfqConfig.Mode.LIVE) hurdleCfg else cfg
+        val rulePrice = quotePrice(p, ids.size, leadMs, effCfg)
+        val livePrice = if (effCfg === cfg && hurdleCfg !== cfg) quotePrice(p, ids.size, leadMs, hurdleCfg) else null
         // The market model's price (MK12): the margin that maximises win share x net edge on what the collateral costs, from the probes' answers for this class; computed whenever a model exists so SHADOW journals both,
         // used only when the config says so and never below the rule's floors.
         val errFloor = maxOf(p * cfg.margin, p * cfg.fairErrorRel * Math.sqrt(ids.size.toDouble()))
-        val modelPrice = market?.best(RfqMarketModel.classOf(legs, p), p, ids.size, leadMs.coerceAtLeast(0L) / 86_400_000.0, errFloor, 0.5 * errFloor, cfg)
+        val modelPrice = market?.best(RfqMarketModel.classOf(legs, p), p, ids.size, leadMs.coerceAtLeast(0L) / 86_400_000.0, errFloor, 0.5 * errFloor, effCfg)
             ?.let { up(p + it) }
         // With `marketPricing` the model's price is the quote (it never goes under its own floor: relative error x sqrt(legs)); without, the rule's.
         val price = if (cfg.marketPricing && modelPrice != null) modelPrice else rulePrice
@@ -257,6 +269,6 @@ object RfqPricer {
         val room = floor(minOf(cfg.maxStake, byParlay, byOpen, byCash) * 100.0) / 100.0
         if (room < want) return no(if (byCash < minOf(cfg.maxStake, byParlay, byOpen) && byCash < want) "the balance covers a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked (cash is short)" else "the caps allow a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked")
         val stake = ceil(want * 100.0 - 1e-7) / 100.0
-        return RfqDecision.Quote(price, stake, p, legs, rulePrice, modelPrice, via)
+        return RfqDecision.Quote(price, stake, p, legs, rulePrice, modelPrice, via, livePrice)
     }
 }
