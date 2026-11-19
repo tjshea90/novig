@@ -519,7 +519,7 @@ fun main(args: Array<String>) = runBlocking {
     val rfqJournal = DayJournal(File(out, "cloud"), "rfq", com.tjshea.vigilant.data.rfq.RfqRow.serializer()) { it.atMs }
     val rfqCollateral = java.util.concurrent.atomic.AtomicReference(0.0)
     val rfqSocketRef = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.rfq.RfqSocket?>(null)
-    val rfqLegFairs = object : com.tjshea.vigilant.data.rfq.LegFairs {
+    val rfqDirectFairs = object : com.tjshea.vigilant.data.rfq.LegFairs {
         private var indexedFor: List<com.tjshea.vigilant.data.scanner.Opportunity>? = null
         private var index: Map<String, com.tjshea.vigilant.data.rfq.LegFair> = emptyMap()
         @Synchronized override fun leg(outcomeId: String): com.tjshea.vigilant.data.rfq.LegFair? {
@@ -552,6 +552,55 @@ fun main(args: Array<String>) = runBlocking {
         enabled = { rfqCfg.get().let { it.probe && it.mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF } },
         ask = { ids -> com.tjshea.vigilant.data.novig.NovigParlay.quote(http, ids) },
     )
+    // MK11 (Tj 2026-11-19, high priority: "paying for apis and the system can't even price legs"): a player-prop rung Novig lists and the books do not post is priced from the posted rungs of the same player and stat
+    // (`RfqLadder`: interpolation between two posted rungs, never extrapolated). The targets are Novig's open prop markets (public catalog, every 10 minutes), the posted rungs are the scan's priced props.
+    val ladderTargets = java.util.concurrent.atomic.AtomicReference<Map<String, com.tjshea.vigilant.data.rfq.RfqLadder.Target>>(emptyMap())
+    val ladderRungs = object {
+        private var builtFor: List<com.tjshea.vigilant.data.scanner.Opportunity>? = null
+        private var map: Map<String, List<com.tjshea.vigilant.data.rfq.RfqLadder.Rung>> = emptyMap()
+        @Synchronized fun get(): Map<String, List<com.tjshea.vigilant.data.rfq.RfqLadder.Rung>> {
+            val list = latestFair.get()
+            if (list !== builtFor) {
+                val m = HashMap<String, MutableList<com.tjshea.vigilant.data.rfq.RfqLadder.Rung>>()
+                for (o in list) {
+                    val strike = o.market.strike ?: continue
+                    if (o.market.marketType !in com.tjshea.vigilant.data.reference.PropLineProps.STATS) continue
+                    val p = o.fairProbability ?: continue
+                    val asOf = o.fairAsOfMs ?: o.fairUpdatedMs ?: continue
+                    val over = o.outcome.name.startsWith("Over", ignoreCase = true)
+                    if (!over && !o.outcome.name.startsWith("Under", ignoreCase = true)) continue
+                    val g = com.tjshea.vigilant.data.rfq.RfqLadder.group(o.market.eventId, o.market.marketType, o.market.description, strike)
+                    val rungs = m.getOrPut(g) { ArrayList() }
+                    val overProb = if (over) p else 1.0 - p
+                    if (over || rungs.none { it.strike == strike }) { rungs.removeAll { it.strike == strike }; rungs += com.tjshea.vigilant.data.rfq.RfqLadder.Rung(strike, overProb, o.fair?.booksUsed?.size ?: 0, asOf) }
+                }
+                map = m; builtFor = list
+            }
+            return map
+        }
+    }
+    val rfqLegFairs = com.tjshea.vigilant.data.rfq.RfqLadder.Fairs(rfqDirectFairs, { ladderTargets.get() }, { ladderRungs.get() })
+    scope.launch {
+        delay(90_000L)
+        while (isActive) {
+            val s = latestSettings.get()
+            val now = System.currentTimeMillis()
+            if (s != null && rfqCfg.get().mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF && novigKeyed?.addressRefused(now) != true) {
+                runCatching {
+                    val ms = novig.markets(s.leagues.toList(), com.tjshea.vigilant.data.reference.PropLineProps.STATS.toList(), listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME), now + 5 * 86_400_000L)
+                    val m = HashMap<String, com.tjshea.vigilant.data.rfq.RfqLadder.Target>(ms.size * 2)
+                    for (mk in ms) {
+                        val strike = mk.strike ?: continue
+                        val g = com.tjshea.vigilant.data.rfq.RfqLadder.group(mk.eventId, mk.marketType, mk.description, strike)
+                        for (o in mk.outcomes) m[o.outcomeId] = com.tjshea.vigilant.data.rfq.RfqLadder.Target(g, strike, o.name.startsWith("Over", ignoreCase = true), mk.eventId, mk.marketType, mk.startsTs)
+                    }
+                    ladderTargets.set(m)
+                    log("RFQ ladder: ${m.size} prop outcomes known to price from the posted rungs")
+                }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("RFQ ladder catalog not read: ${e.message?.take(120)}") }
+            }
+            delay(10 * 60_000L)
+        }
+    }
     val rfqMaker = com.tjshea.vigilant.data.rfq.RfqMaker(
         config = { rfqCfg.get() }, fairs = rfqLegFairs, openCollateral = { rfqCollateral.get() }, send = { rfqSocketRef.get()?.send(it) == true },
         journal = { runCatching { rfqJournal.append(it) } },
