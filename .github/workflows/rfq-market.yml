@@ -30,12 +30,14 @@ jobs:
         run: |
           set -eu
           mkdir -p j
+          # The repository's workflow token shares ONE budget (1,000 requests an hour) with the engine, which spends most of it: a refused call is retried after a pause, three times.
+          retry() { for t in 1 2 3; do "$@" && return 0; echo "retry $t of 3 after a pause"; sleep 120; done; return 1; }
           for d in "$(date -u +%F)" "$(date -u -d yesterday +%F)"; do
-            gh release download "cloud-archive-$d" --pattern "rfq-*.jsonl.gz" --dir j --clobber 2>/dev/null || echo "no rfq journals in cloud-archive-$d"
+            retry gh release download "cloud-archive-$d" --pattern "rfq-*.jsonl.gz" --dir j --clobber || echo "no rfq journals read from cloud-archive-$d"
           done
           ls j | wc -l
           { echo "# What the other makers charge (probe), $(date -u +%F' '%H:%M) UTC"; echo; python3 -I tools/rfq_market.py run 'j/*.jsonl.gz'; } > SUMMARY.md
           cat SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
           tag="rfq-market"
-          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "Parlay maker: what the other makers charge" --notes "SUMMARY.md, rewritten every 6 hours by rfq-market.yml from the engine's rfq journals (tools/rfq_market.py). Never delete."
-          gh release upload "$tag" SUMMARY.md --clobber
+          retry gh release view "$tag" >/dev/null 2>&1 || retry gh release create "$tag" --title "Parlay maker: what the other makers charge" --notes "SUMMARY.md, rewritten every 6 hours by rfq-market.yml from the engine's rfq journals (tools/rfq_market.py). Never delete."
+          retry gh release upload "$tag" SUMMARY.md --clobber
