@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "bfea02df67bbfba2c85ad387a1d1f8bd38e9e8c2",
+ "head": "6c5b2b5571e3f78c884c1da8a9df285ce38ee4c2",
  "since": 1795047736,
- "beat": 1795066242,
- "beatIso": "2026-11-19T05:30:42Z",
- "done": "GD2 + TR5 shipped v1.0.140; MK10 parlay data read",
- "next": "MK10: same-game pricing in SHADOW from propline-sgp logs"
+ "beat": 1795066262,
+ "beatIso": "2026-11-19T05:31:02Z",
+ "done": "MK10: parlay leg fair index uses every priced outcome (not only ones Novig asks)",
+ "next": "engine reset to pick up; read status.rfq declines"
 }
