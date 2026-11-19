@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "b6e0f556965300177d96980df8f5ceee902a4f40",
+ "head": "d8474f5678455ea6f69cbe2d233aa6c325f4fbfb",
  "since": 1795103757,
- "beat": 1795113665,
- "beatIso": "2026-11-19T18:41:05Z",
+ "beat": 1795113702,
+ "beatIso": "2026-11-19T18:41:42Z",
  "done": "MK13 verified live: standing read 6/6 confirmed, 1 socket no reconnects, executions ledger (3 settled all lost -7.09, 16 open), probe 177/177",
  "next": "paper research: after 17:00Z 11-20 read rfq-market SUMMARY and the evidence rule for marketPricing; watch priceable share by league; Tj adds money -> dedicated maker subaccount + verify last-look routing"
 }
