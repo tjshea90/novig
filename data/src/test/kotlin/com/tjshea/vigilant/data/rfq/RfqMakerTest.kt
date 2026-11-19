@@ -425,7 +425,7 @@ class RfqMakerTest {
         assertEquals("LIVE quotes the hurdle's price", 0.224, live.price, 1e-9)
         assertNull("nothing to compare in LIVE", live.livePrice)
         // a longer lock-up asks more: two days out is 2.25 days of collateral, r = 6.75%
-        val far = fairs(leg("a", "e1", 0.5, startsMs = now + 48 * 3_600_000L), leg("b", "e2", 0.4, startsMs = now + 48 * 3_600_000L))
+        val far = fairs(leg("a", "e1", 0.5, startsInMs = 48 * 3_600_000L), leg("b", "e2", 0.4, startsInMs = 48 * 3_600_000L))
         val longHold = RfqPricer.decide(created("a", "b"), now, loose.copy(mode = RfqConfig.Mode.LIVE), far, 0.0, cashRoom = 1_000.0) as RfqDecision.Quote
         assertEquals(RfqPricer.up((0.20 + 0.03 * 2.25) / (1 + 0.03 * 2.25)), longHold.price, 1e-9)
         // a hurdle at or under the rule's own return changes nothing and records nothing
