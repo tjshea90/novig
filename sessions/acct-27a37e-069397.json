@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "fdddd1d2c39cc63c321c42387c86a96512098b1f",
+ "head": "16075cbad7565d46d3a97f3df9da96c20456e015",
  "since": 1795103757,
- "beat": 1795105991,
- "beatIso": "2026-11-19T16:33:11Z",
+ "beat": 1795106171,
+ "beatIso": "2026-11-19T16:36:11Z",
  "done": "MK12: research index rebuilt and LEVERS.md cites the new study; all 10 fast checks green",
  "next": "engine deploy: confirm landing on main, engine_set --reset, verify job + PROBE rows"
 }
