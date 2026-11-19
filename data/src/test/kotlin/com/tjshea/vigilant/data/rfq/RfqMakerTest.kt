@@ -85,6 +85,16 @@ class RfqMakerTest {
         assertTrue((RfqPricer.decide(created("a", "b"), now, cfg, other, 0.0) as RfqDecision.Decline).reason.contains("one game"))
     }
 
+    @Test fun propLegsArePricedWithAPremiumAPropLeg() {
+        val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.5, type = "RECEIVING_YARDS"))
+        val q = RfqPricer.decide(created("a", "b"), now, cfg, f, 0.0) as RfqDecision.Quote
+        assertEquals("one prop leg: the fair raised 20%", 0.25 * 1.2, q.fair, 1e-9)
+        val off = RfqPricer.decide(created("a", "b"), now, cfg.copy(propPremium = 0.0), f, 0.0) as RfqDecision.Decline
+        assertTrue(off.reason.contains("not a game line"))
+        val three = fairs(leg("a", "e1", 0.6, type = "POINTS"), leg("b", "e2", 0.6, type = "ASSISTS"), leg("c", "e3", 0.6, type = "REBOUNDS"))
+        assertTrue((RfqPricer.decide(created("a", "b", "c"), now, cfg, three, 0.0) as RfqDecision.Decline).reason.contains("not a game line"))
+    }
+
     @Test fun everythingItCannotPriceIsDeclinedWithAReason() {
         fun why(c: RfqProtocol.Created, vararg l: LegFair, conf: RfqConfig = cfg) = (RfqPricer.decide(c, now, conf, fairs(*l), 0.0) as RfqDecision.Decline).reason
         assertTrue(why(created("a", "zzz"), leg("a", "e1", 0.5)).contains("no fair line"))

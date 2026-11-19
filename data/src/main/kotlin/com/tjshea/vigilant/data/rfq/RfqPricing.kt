@@ -46,6 +46,12 @@ data class RfqConfig(
      * (standard error 1.3%), while Novig's market priced such trades 13% over the independent price (9 of them), so 8% keeps a cushion on both. 0 = decline every same-game parlay (the old rule).
      */
     val sameGamePremium: Double = 0.08,
+    /**
+     * Player-prop legs at a premium (Tj, 2026-11-19: "allow prop parlays but price them at a premium as well"). With [allowProps] off, a parlay of up to two prop legs is quoted when its fair probability is raised
+     * by this much (relative) for EACH prop leg. The market paid a median +38% over our prop fair (91% of such trades 15% or more over it, research/novig_rfq_maker_2026-11-18.md section 10), so 20% a leg wins the
+     * trades the market overpays and leaves room for our prop fair running high. 0 = decline prop parlays.
+     */
+    val propPremium: Double = 0.20,
     /** Legs must start at least this far ahead (ms) and no further than [maxDaysAhead]. */
     val minLeadMs: Long = 20 * 60_000L,
     val maxDaysAhead: Int = 5,
@@ -118,9 +124,12 @@ object RfqPricer {
         val legs = ArrayList<LegFair>(ids.size)
         for (id in ids) legs += fairs.leg(id) ?: return RfqDecision.Decline("a leg has no fair line here")
         // Without a fair in the decline: these trades must not count in the evidence of what the market pays over OUR fair (the fair is the thing in doubt).
-        if (!cfg.allowProps && legs.any { it.marketType !in GAME_LINES }) return RfqDecision.Decline("a leg is not a game line (our prop fair runs high)")
+        val propLegs = legs.count { it.marketType !in GAME_LINES }
+        val premiumProps = !cfg.allowProps && propLegs > 0
+        if (premiumProps && (cfg.propPremium <= 0.0 || propLegs > 2)) return RfqDecision.Decline("a leg is not a game line (our prop fair runs high)")
         var p = 1.0
         for (l in legs) p *= l.probability
+        if (premiumProps) p = minOf(0.999, p * Math.pow(1.0 + cfg.propPremium, propLegs.toDouble()))
         fun no(why: String) = RfqDecision.Decline(why, p, legs)
         if (legs.map { it.eventId }.toSet().size != legs.size) {
             val sideAndTotal = legs.size == 2 && cfg.sameGamePremium > 0.0 && legs[0].eventId == legs[1].eventId &&
