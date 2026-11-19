@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "ace6bacda6bbe92c6066fccbf85248aee3ef080b",
+ "head": "94cbb445b7e387b565c3fb4c6b420f534103086e",
  "since": 1795047736,
- "beat": 1795070474,
- "beatIso": "2026-11-19T06:41:14Z",
- "done": "MK10d: parlay fair index keeps lines across scan passes (hot passes held a third of the lines)",
- "next": "reset engine; watch no-fair share"
+ "beat": 1795070510,
+ "beatIso": "2026-11-19T06:41:50Z",
+ "done": "MK10d logged",
+ "next": "report priced share after scan"
 }
