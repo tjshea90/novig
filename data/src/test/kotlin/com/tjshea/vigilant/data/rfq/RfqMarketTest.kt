@@ -18,15 +18,31 @@ import java.util.Collections
 class RfqMarketTest {
     private val cfg = RfqConfig(mode = RfqConfig.Mode.SHADOW, minReturn = 0.004, minPoints = 0.007, probeMinSamples = 40)
 
-    private fun leg(event: String, type: String = "MONEY") = LegFair("o$event$type", event, "l", 0.5, 5, 0L, 0L, false, type)
+    private fun leg(event: String, type: String = "MONEY", league: String = "NBA") = LegFair("o$event$type", event, "l", 0.5, 5, 0L, 0L, false, type, league = league)
 
-    @Test fun aClassIsLegsKindOfLegAndTheSizeOfTheFair() {
-        assertEquals("2|gl|p10-25", RfqMarketModel.classOf(listOf(leg("e1"), leg("e2")), 0.2))
-        assertEquals("3|sg|p25-50", RfqMarketModel.classOf(listOf(leg("e1", "SPREAD"), leg("e1", "TOTAL"), leg("e2")), 0.3))
-        assertEquals("2|prop|p<10", RfqMarketModel.classOf(listOf(leg("e1"), leg("e2", "POINTS")), 0.05))
-        assertEquals("2|psg|p50+", RfqMarketModel.classOf(listOf(leg("e1", "POINTS"), leg("e1", "ASSISTS")), 0.6))
-        assertEquals("5+|gl|p<10", RfqMarketModel.classOf(List(6) { leg("e$it") }, 0.01))
-        assertEquals("first-half lines are game lines", "2|gl|p25-50", RfqMarketModel.classOf(listOf(leg("e1", "SPREAD_1H"), leg("e2", "TOTAL_1H")), 0.3))
+    @Test fun aClassIsLegsKindOfLegLeagueAndTheSizeOfTheFair() {
+        assertEquals("2|gl|NBA|mid", RfqMarketModel.classOf(listOf(leg("e1"), leg("e2")), 0.2))
+        assertEquals("3|sg|NFL|mid", RfqMarketModel.classOf(listOf(leg("e1", "SPREAD", "NFL"), leg("e1", "TOTAL", "NFL"), leg("e2", "MONEY", "NFL")), 0.3))
+        assertEquals("2|prop|NBA|lo", RfqMarketModel.classOf(listOf(leg("e1"), leg("e2", "POINTS")), 0.05))
+        assertEquals("2|psg|NBA|hi", RfqMarketModel.classOf(listOf(leg("e1", "POINTS"), leg("e1", "ASSISTS")), 0.6))
+        assertEquals("5+|gl|NBA|lo", RfqMarketModel.classOf(List(6) { leg("e$it") }, 0.01))
+        assertEquals("first-half lines are game lines", "2|gl|NHL|mid", RfqMarketModel.classOf(listOf(leg("e1", "SPREAD_1H", "NHL"), leg("e2", "TOTAL_1H", "NHL")), 0.3))
+        assertEquals("legs from two leagues", "2|gl|multi|mid", RfqMarketModel.classOf(listOf(leg("e1", "MONEY", "NBA"), leg("e2", "MONEY", "ATP")), 0.3))
+        assertEquals("2|gl|*|mid", RfqMarketModel.coarse("2|gl|NBA|mid"))
+    }
+
+    @Test fun aThinLeagueFallsBackOnTheWholeKindOfParlay() {
+        val m = RfqMarketModel()
+        // ATP: 10 answers, the market pays 2 points over our fair; other leagues of the same kind: 100 answers at 0.2 points
+        repeat(10) { m.observe("2|gl|ATP|mid", 0.30, 0.32, 1L) }; repeat(100) { m.observe("2|gl|NHL|mid", 0.30, 0.302, 1L) }
+        assertEquals(10, m.samples("2|gl|ATP|mid")); assertEquals(110, m.samples("2|gl|*|mid"))
+        val cfg = RfqConfig(minReturn = 0.0, minPoints = 0.0, probeMinSamples = 40)
+        // ATP has too few answers of its own, so it prices from the kind of parlay across leagues: just under the 0.2 points the pack pays
+        val c = m.best("2|gl|ATP|mid", 0.30, 2, 0.0, 0.0005, cfg)!!
+        assertTrue("falls back on the pooled answers (was $c)", c < 0.0025)
+        // with 40 of its own the league speaks for itself
+        repeat(40) { m.observe("2|gl|ATP|mid", 0.30, 0.32, 1L) }
+        assertTrue(m.best("2|gl|ATP|mid", 0.30, 2, 0.0, 0.0005, cfg)!! > 0.015)
     }
 
     @Test fun theWinShareIsTheShareOfAnswersOurQuoteWouldHaveBeaten() {
@@ -68,7 +84,7 @@ class RfqMarketTest {
     @Test fun thePricerQuotesTheModelsPriceOnlyWhenTheConfigSaysSoAndNeverBelowTheFloors() {
         val m = RfqMarketModel()
         val legs = listOf(leg("e1"), leg("e2"))
-        // the class of a 2-leg game-line parlay with fair 0.25: p25-50 (0.25 is the boundary)
+        // the class of a 2-leg game-line parlay with fair 0.25
         val cls = RfqMarketModel.classOf(legs, 0.25)
         repeat(100) { m.observe(cls, 0.25, 0.25 + 0.02, 1L) }                           // the market pays two points over our fair every time
         val now = 1_790_500_000_000L

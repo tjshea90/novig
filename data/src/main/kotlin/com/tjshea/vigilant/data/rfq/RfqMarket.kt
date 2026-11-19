@@ -24,11 +24,14 @@ class RfqMarketModel(private val keep: Int = 600, private val maxAgeMs: Long = 4
 
     private val byClass = HashMap<String, ArrayDeque<Obs>>()
 
+    /** Records the answer under the class and under its coarser parent (the league left out), so a thin league falls back on what the whole kind of parlay shows. */
     @Synchronized fun observe(cls: String, fair: Double, market: Double?, atMs: Long) {
-        val q = byClass.getOrPut(cls) { ArrayDeque() }
-        q.addLast(Obs(atMs, market?.let { it - fair }))
-        while (q.size > keep) q.removeFirst()
-        while (q.isNotEmpty() && atMs - q.first().atMs > maxAgeMs) q.removeFirst()
+        for (k in listOf(cls, coarse(cls)).distinct()) {
+            val q = byClass.getOrPut(k) { ArrayDeque() }
+            q.addLast(Obs(atMs, market?.let { it - fair }))
+            while (q.size > keep) q.removeFirst()
+            while (q.isNotEmpty() && atMs - q.first().atMs > maxAgeMs) q.removeFirst()
+        }
     }
 
     @Synchronized fun samples(cls: String): Int = byClass[cls]?.size ?: 0
@@ -54,7 +57,8 @@ class RfqMarketModel(private val keep: Int = 600, private val maxAgeMs: Long = 4
      * (collateral per dollar of pot is 1 - price, held [leadDays] + a quarter day, at [RfqConfig.minReturn] a day): net = c - allowance - cost. The score is win share x net, searched upward from [floorC].
      */
     fun best(cls: String, fair: Double, nLegs: Int, leadDays: Double, floorC: Double, cfg: RfqConfig): Double? {
-        val obs = synchronized(this) { byClass[cls]?.toList() } ?: return null
+        // the league's own answers when there are enough, else the kind of parlay across leagues
+        val obs = synchronized(this) { byClass[cls]?.takeIf { it.size >= cfg.probeMinSamples } ?: byClass[coarse(cls)] }?.toList() ?: return null
         if (obs.size < cfg.probeMinSamples) return null
         val allowance = 0.5 * cfg.minPoints * max(1, nLegs - 1)
         val hold = max(1.0, leadDays + 0.25)
@@ -74,15 +78,23 @@ class RfqMarketModel(private val keep: Int = 600, private val maxAgeMs: Long = 4
     }
 
     companion object {
-        /** The class a parlay belongs to for the market's answers: legs, kind of legs and the size of our fair. */
+        /**
+         * The class a parlay belongs to for the market's answers: legs, kind of legs, the league and the size of our fair, as `legs|mix|league|band`. The league matters most: on 7,626 priced game-line parlays the
+         * market paid a median 0.31 points over our fair in the NBA, 0.35 in the NHL, 0.45 in NCAAB, 1.27 in ATP tennis (a quote 1 point over won 13%, 4%, 26% and 61% of them).
+         */
         fun classOf(legs: List<LegFair>, fair: Double): String {
             val n = legs.size.let { if (it >= 5) "5+" else it.toString() }
             val prop = legs.any { it.marketType.isBlank() || (it.marketType !in RfqPricer.GAME_LINES && !it.marketType.endsWith("_1H")) }
             val sameGame = legs.map { it.eventId }.toSet().size != legs.size
             val mix = when { prop && sameGame -> "psg"; prop -> "prop"; sameGame -> "sg"; else -> "gl" }
-            val band = when { fair < 0.10 -> "p<10"; fair < 0.25 -> "p10-25"; fair < 0.50 -> "p25-50"; else -> "p50+" }
-            return "$n|$mix|$band"
+            val leagues = legs.map { it.league }.filter { it.isNotBlank() }.toSet()
+            val league = when { leagues.size == 1 -> leagues.first(); leagues.isEmpty() -> "?"; else -> "multi" }
+            val band = when { fair < 0.15 -> "lo"; fair < 0.40 -> "mid"; else -> "hi" }
+            return "$n|$mix|$league|$band"
         }
+
+        /** The same class across leagues: `legs|mix|*|band`. */
+        fun coarse(cls: String): String = cls.split('|').let { if (it.size == 4) "${it[0]}|${it[1]}|*|${it[3]}" else cls }
     }
 }
 
