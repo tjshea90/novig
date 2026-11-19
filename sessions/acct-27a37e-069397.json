@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "f3bcc56affba75a75c882ffc84a3b4367733c24e",
+ "head": "9398be95b0af937c15e9b5faf9fabe7cfb91c802",
  "since": 1795103757,
- "beat": 1795120066,
- "beatIso": "2026-11-19T20:27:46Z",
- "done": "MK15: parlay hub built (engine parlays.json + fills memory + seed, phone hub screen, tests); FULL suite green (4464)",
- "next": "land (push.sh), post board note, ONE engine reset so parlays.json publishes (confirm startedAtMs + parlays.json on cloud-feed), then ship.sh + release.yml for the app, send Tj the link"
+ "beat": 1795120118,
+ "beatIso": "2026-11-19T20:28:38Z",
+ "done": "pre-ship: MK15: Parlay hub (Engine > Parlays > My parlays): open and closed parlays with every leg's status, profit/loss, collateral, expected final time, what you keep if the buyers lose",
+ "next": "ship.sh gates and releases this"
 }
