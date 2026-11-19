@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "f932bfc60704013b666070075fab3c433575f3fc",
+ "head": "f90564206f01884b5d5241c94d4efc46e6a5d344",
  "since": 1795123003,
- "beat": 1795128421,
- "beatIso": "2026-11-19T22:47:01Z",
+ "beat": 1795128881,
+ "beatIso": "2026-11-19T22:54:41Z",
  "done": "pre-release: MK18: parlay controls show your change at once and confirm when the engine has it; faster engine config read; coverage study (versionCode 484, v1.0.144)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.144), then run: bash tools/record-release.sh v1.0.144 484 \"MK18: parlay controls show your change at once and confirm when the engine has it; faster engine config read; coverage study\""
 }
