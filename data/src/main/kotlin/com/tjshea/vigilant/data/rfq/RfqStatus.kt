@@ -41,6 +41,12 @@ data class RfqStatus(
     val declines: List<String> = emptyList(),
     /** The socket's last word when it is not connected. */
     val note: String = "",
+    /** MK12: the market probe ([RfqProbe]) in one line, and per class what the other makers charge over our fair (the demand curve the model prices from): `class n=.. nobody=..% median +..pts`. */
+    val probe: String = "",
+    val market: List<String> = emptyList(),
+    /** MK12: of [pricedTrades], how many the market model's price would have won (it prices only classes with enough probe answers) and what each would have earned (points of pot) if our fair is true. */
+    val modelWouldWin: Long = 0L,
+    val modelWouldEarnPoints: Double? = null,
 ) {
     companion object {
         /** The evidence rule's count: LIVE is only recommended from this many priced trades (research/novig_rfq_maker_2026-11-18.md). */

@@ -32,6 +32,9 @@ class RfqMaker(
     private val legInfo: (String) -> String? = { null },
     /** One RFQ in this many that the maker cannot price is journaled whole (the rest only in the tally): ~60 RFQs a second would otherwise be gigabytes a day. */
     private val sampleEvery: Int = 25,
+    /** What the other makers charge, per class of parlay, learned by [probe] (MK12); null = no market model. */
+    private val market: RfqMarketModel? = null,
+    private val probe: RfqProbe? = null,
 ) {
     private class Pending(val created: RfqProtocol.Created, val decision: RfqDecision, val seenMs: Long, val journaled: Boolean, val classes: List<String>) {
         var quotePrice: Double? = null
@@ -61,6 +64,8 @@ class RfqMaker(
     private val margins = ArrayDeque<Double>()
     private var wouldWin = 0L
     private var wouldEdge = 0.0
+    private var modelWouldWin = 0L
+    private var modelWouldEdge = 0.0
     @Volatile var lastError: String? = null; private set
 
     fun inFlight(): Double = synchronized(pending) { val now = clock(); pending.values.filter { it.reservedUntilMs > now }.sumOf { it.reserved } }
@@ -141,7 +146,8 @@ class RfqMaker(
         if (cfg.mode == RfqConfig.Mode.OFF) return
         seen++
         val now = clock()
-        val d = RfqPricer.decide(e, now, cfg, fairs, openCollateral() + inFlight())
+        val d = RfqPricer.decide(e, now, cfg, fairs, openCollateral() + inFlight(), market)
+        offerProbe(e, d, cfg)
         when (d) {
             is RfqDecision.Quote -> priceable++
             is RfqDecision.Decline -> synchronized(declines) { declines.merge(d.reason.replace(Regex("[0-9]+(\\.[0-9]+)?"), "#"), 1L, Long::plus) }
@@ -169,6 +175,7 @@ class RfqMaker(
             when (d) {
                 is RfqDecision.Quote -> {
                     put("decision", "quote"); put("price", d.price); put("maxWager", d.maxWager); put("fair", d.fair); put("edge", d.edge)
+                    put("rulePrice", d.rulePrice); d.modelPrice?.let { put("modelPrice", it) }
                     put("legs", buildJsonArray { d.legs.forEach { l -> add(buildJsonObject { put("label", l.label); put("p", l.probability); put("books", l.books); put("startsMs", l.startsMs) }) } })
                 }
                 is RfqDecision.Decline -> {
@@ -186,6 +193,18 @@ class RfqMaker(
                 row("QUOTE_SENT", e.rfqId) { put("price", d.price); put("maxWager", d.maxWager); put("fair", d.fair); put("collateral", p.reserved) }
             }
         }
+    }
+
+    /** A priced RFQ is a candidate for a market probe: SHADOW probes every priced RFQ; LIVE only those it declines (a probe of one it would quote meets its own quote). */
+    private fun offerProbe(e: RfqProtocol.Created, d: RfqDecision, cfg: RfqConfig) {
+        val pr = probe ?: return
+        if (!cfg.probe || cfg.mode == RfqConfig.Mode.OFF) return
+        val fair: Double; val legs: List<LegFair>; val ours: Double?
+        when (d) {
+            is RfqDecision.Quote -> { if (cfg.mode == RfqConfig.Mode.LIVE) return; fair = d.fair; legs = d.legs; ours = d.price }
+            is RfqDecision.Decline -> { fair = d.fair ?: return; legs = d.legs.takeIf { it.isNotEmpty() } ?: return; ours = null }
+        }
+        pr.offer(RfqProbe.Item(e.rfqId, e.outcomeIds, RfqMarketModel.classOf(legs, fair), fair, ours, e.outcomeIds.size, clock()))
     }
 
     private fun accepted(e: RfqProtocol.QuoteAccepted, cfg: RfqConfig) {
@@ -229,13 +248,18 @@ class RfqMaker(
                 // A trade we could not price is the one to study later: its legs are named (Novig's public catalog resolves them), the rest is in the tally.
                 if (fair == null) put("outcomeIds", buildJsonArray { p.created.outcomeIds.forEach { add(JsonPrimitive(it)) } })
             }
-            (p?.decision as? RfqDecision.Quote)?.let { q -> put("ourPrice", q.price); put("wouldWin", q.price <= e.price + 1e-9) }
+            (p?.decision as? RfqDecision.Quote)?.let { q ->
+                put("ourPrice", q.price); put("wouldWin", q.price <= e.price + 1e-9)
+                put("rulePrice", q.rulePrice); put("ruleWouldWin", q.rulePrice <= e.price + 1e-9)
+                q.modelPrice?.let { m -> put("modelPrice", m); put("modelWouldWin", m <= e.price + 1e-9) }
+            }
         }
         // The evidence counts only trades of RFQs the rules would QUOTE: a trade the rules decline (a same-game combination whose fair is an independent product, a leg in play...) says nothing about what a
         // quote of ours would meet. The journal row above keeps every fair for study.
         (p?.decision as? RfqDecision.Quote)?.let { q ->
             synchronized(margins) { margins.addLast((e.price - q.fair) * 100.0); while (margins.size > KEEP) margins.removeFirst() }
             if (q.price <= e.price + 1e-9) { wouldWin++; wouldEdge += (q.price - q.fair) * 100.0 }
+            q.modelPrice?.let { m -> if (m <= e.price + 1e-9) { modelWouldWin++; modelWouldEdge += (m - q.fair) * 100.0 } }
         }
     }
 
@@ -275,6 +299,9 @@ class RfqMaker(
             medianGapPoints = med, wouldWin = wouldWin, wouldEarnPoints = if (wouldWin > 0) wouldEdge / wouldWin else null, quotesSent = quotesSent, won = accepted, confirmed = confirmed,
             filled = filled, openCollateral = collateral, declines = top, note = if (connected) "" else note.take(120),
             settled = ledger?.settled ?: 0, makerWon = ledger?.makerWon ?: 0, makerLost = ledger?.makerLost ?: 0, openParlays = ledger?.open ?: 0, realizedPnl = ledger?.pnlTotal, realizedPnl24h = ledger?.pnl24h,
+            probe = probe?.line().orEmpty(),
+            market = market?.summary()?.take(12)?.map { c -> "${c.cls} n=${c.n} nobody=${(c.noQuote * 100).toInt()}%" + (c.median?.let { " median ${"%+.2f".format(it)}pts (p25 ${"%+.2f".format(c.p25)}, p75 ${"%+.2f".format(c.p75)})" } ?: "") }.orEmpty(),
+            modelWouldWin = modelWouldWin, modelWouldEarnPoints = if (modelWouldWin > 0) modelWouldEdge / modelWouldWin else null,
         )
     }
 
