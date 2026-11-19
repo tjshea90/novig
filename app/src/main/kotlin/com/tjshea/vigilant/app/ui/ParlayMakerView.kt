@@ -68,8 +68,11 @@ fun ParlayMakerView(rfq: RfqStatus?, onSet: (RfqConfig, (String?) -> Unit) -> Un
             SectionHeader("Limits")
             Text(v.rule, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Stepper("Return asked on the collateral", "%.0f%%".format(Locale.US, cfg.minReturn * 100), "parlayReturn", { apply(cfg.copy(minReturn = (cfg.minReturn - 0.01).coerceAtLeast(0.01))) }, { apply(cfg.copy(minReturn = (cfg.minReturn + 0.01).coerceAtMost(0.2))) })
+            if (cfg.walletCollateral) Text("The fixed collateral limits (\$%.0f a parlay, \$%.0f in all) are not used while the wallet is the limit.".format(Locale.US, cfg.maxCollateral, cfg.maxOpenCollateral), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            else {
             Stepper("Most collateral in one parlay", "\$%.0f".format(Locale.US, cfg.maxCollateral), "parlayCollateral", { apply(cfg.copy(maxCollateral = (cfg.maxCollateral - 10.0).coerceAtLeast(20.0))) }, { apply(cfg.copy(maxCollateral = (cfg.maxCollateral + 10.0).coerceAtMost(250.0))) })
             Stepper("Most collateral in all parlays", "\$%.0f".format(Locale.US, cfg.maxOpenCollateral), "parlayOpen", { apply(cfg.copy(maxOpenCollateral = (cfg.maxOpenCollateral - 10.0).coerceAtLeast(20.0))) }, { apply(cfg.copy(maxOpenCollateral = (cfg.maxOpenCollateral + 10.0).coerceAtMost(500.0))) })
+            }
             Stepper("Skip parlays likelier to win than", "%.0f%%".format(Locale.US, cfg.maxFair * 100), "parlayMaxFair", { apply(cfg.copy(maxFair = (cfg.maxFair - 0.05).coerceAtLeast(0.30))) }, { apply(cfg.copy(maxFair = (cfg.maxFair + 0.05).coerceAtMost(0.85))) })
             Stepper("Skip any leg likelier than", "%.0f%%".format(Locale.US, cfg.maxLegFair * 100), "parlayMaxLegFair", { apply(cfg.copy(maxLegFair = (cfg.maxLegFair - 0.02).coerceAtLeast(0.70))) }, { apply(cfg.copy(maxLegFair = (cfg.maxLegFair + 0.02).coerceAtMost(0.99))) })
             Stepper("Most legs", "${cfg.maxLegs}", "parlayLegs", { apply(cfg.copy(maxLegs = (cfg.maxLegs - 1).coerceAtLeast(2))) }, { apply(cfg.copy(maxLegs = (cfg.maxLegs + 1).coerceAtMost(6))) })
