@@ -40,6 +40,12 @@ data class RfqConfig(
     /** A leg's fair must be younger than this (ms). */
     val maxFairAgeMs: Long = 5 * 60_000L,
     val maxLegs: Int = 5,
+    /**
+     * Same-game parlays of exactly two legs, a SIDE (spread or moneyline) and the game TOTAL (Tj, 2026-11-19: "do the two leg parlays, price them at a premium for correlation"). The legs' joint probability is the
+     * product of their fairs raised by this much (relative), on top of the usual margin. Measured on 18,063 college games' closing lines, a side and the total are within 2.4% of independent either way
+     * (standard error 1.3%), while Novig's market priced such trades 13% over the independent price (9 of them), so 8% keeps a cushion on both. 0 = decline every same-game parlay (the old rule).
+     */
+    val sameGamePremium: Double = 0.08,
     /** Legs must start at least this far ahead (ms) and no further than [maxDaysAhead]. */
     val minLeadMs: Long = 20 * 60_000L,
     val maxDaysAhead: Int = 5,
@@ -116,7 +122,12 @@ object RfqPricer {
         var p = 1.0
         for (l in legs) p *= l.probability
         fun no(why: String) = RfqDecision.Decline(why, p, legs)
-        if (legs.map { it.eventId }.toSet().size != legs.size) return no("two legs in one game (correlation unmodelled)")
+        if (legs.map { it.eventId }.toSet().size != legs.size) {
+            val sideAndTotal = legs.size == 2 && cfg.sameGamePremium > 0.0 && legs[0].eventId == legs[1].eventId &&
+                legs.count { it.marketType == "TOTAL" } == 1 && legs.count { it.marketType == "SPREAD" || it.marketType == "MONEY" } == 1
+            if (!sideAndTotal) return no("two legs in one game (correlation unmodelled)")
+            p = minOf(0.999, p * (1.0 + cfg.sameGamePremium))
+        }
         for (l in legs) {
             if (l.live) return no("a leg is in play")
             if (l.startsMs - now < cfg.minLeadMs) return no("a leg starts within ${cfg.minLeadMs / 60_000L} min")

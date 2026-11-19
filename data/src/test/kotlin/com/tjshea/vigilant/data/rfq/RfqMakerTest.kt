@@ -75,6 +75,16 @@ class RfqMakerTest {
         assertTrue("the user's own minimum above $10 counts", (RfqPricer.decide(created("a", "b", minWager = 13.0), now, cfg, f, 0.0) as RfqDecision.Decline).reason.contains("asked"))
     }
 
+    @Test fun aSideAndTheTotalOfOneGameIsPricedWithACorrelationPremium() {
+        val f = fairs(leg("a", "e1", 0.5, type = "SPREAD"), leg("b", "e1", 0.5, type = "TOTAL"))
+        val q = RfqPricer.decide(created("a", "b"), now, cfg, f, 0.0) as RfqDecision.Quote
+        assertEquals("the fair is the product raised 8%", 0.25 * 1.08, q.fair, 1e-9)
+        val plain = RfqPricer.decide(created("a", "b"), now, cfg.copy(sameGamePremium = 0.0), f, 0.0) as RfqDecision.Decline
+        assertTrue(plain.reason.contains("one game"))
+        val other = fairs(leg("a", "e1", 0.5, type = "MONEY"), leg("b", "e1", 0.5, type = "SPREAD"))
+        assertTrue((RfqPricer.decide(created("a", "b"), now, cfg, other, 0.0) as RfqDecision.Decline).reason.contains("one game"))
+    }
+
     @Test fun everythingItCannotPriceIsDeclinedWithAReason() {
         fun why(c: RfqProtocol.Created, vararg l: LegFair, conf: RfqConfig = cfg) = (RfqPricer.decide(c, now, conf, fairs(*l), 0.0) as RfqDecision.Decline).reason
         assertTrue(why(created("a", "zzz"), leg("a", "e1", 0.5)).contains("no fair line"))
