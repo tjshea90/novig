@@ -75,6 +75,11 @@ data class RfqConfig(
     val marketPricing: Boolean = false,
     /** Fewest probe answers in a class before the market model prices it. */
     val probeMinSamples: Int = 40,
+    /**
+     * Pairs of player props in one game (assists + goals, TD + TD: 32% of the two-leg same-game RFQs) have no correlation model; the probes measure what the market charges over their independent product. ON: such a
+     * parlay is priced on the market's MEDIAN ratio for its class (never below 0.5 or above 4), the floors on top, once the class has [probeMinSamples] answers; OFF: declined as "correlation unmodelled".
+     */
+    val propPairsFromMarket: Boolean = false,
 ) {
     enum class Mode { OFF, SHADOW, LIVE }
 
@@ -116,7 +121,7 @@ fun interface LegFairs { fun leg(outcomeId: String): LegFair? }
 
 sealed interface RfqDecision {
     /** [price] is the probability the parlay wins that we quote, [maxWager] the stake we cover, [fair] the parlay's fair probability. */
-    data class Quote(val price: Double, val maxWager: Double, val fair: Double, val legs: List<LegFair>, val rulePrice: Double = price, val modelPrice: Double? = null) : RfqDecision {
+    data class Quote(val price: Double, val maxWager: Double, val fair: Double, val legs: List<LegFair>, val rulePrice: Double = price, val modelPrice: Double? = null, val via: String = "") : RfqDecision {
         /** Our EV per $1 of the pot if the fair is true: what winning the auction is worth. */
         val edge: Double get() = price - fair
     }
@@ -175,16 +180,28 @@ object RfqPricer {
         for (l in legs) p *= l.probability
         if (premiumProps) p = minOf(0.999, p * Math.pow(1.0 + cfg.propPremium, propLegs.toDouble()))
         fun no(why: String) = RfqDecision.Decline(why, p, legs)
+        var via = ""
         if (legs.map { it.eventId }.toSet().size != legs.size) {
-            // Legs of one game are not independent: price each such group through the copula (game lines only), the groups of different games still multiply. A group the model cannot price declines the RFQ.
+            // Legs of one game are not independent: price each such group through the copula (game lines only), the groups of different games still multiply. A group the model cannot price declines the RFQ,
+            // with the PURE independent product as its fair (the evidence of what the market charges over it), unless the market's own ratio for the class prices it (props of one game, MK12).
             var joint = 1.0
-            for ((_, group) in legs.groupBy { it.eventId }) {
+            var unmodelled = false
+            val groups = legs.groupBy { it.eventId }
+            for ((_, group) in groups) {
                 if (group.size == 1) { joint *= group[0].probability; continue }
-                val g = sameGameJoint(group, cfg) ?: return no("two legs in one game (correlation unmodelled)")
+                val g = sameGameJoint(group, cfg)
+                if (g == null) { unmodelled = true; break }
                 joint *= g
             }
-            if (premiumProps) joint *= Math.pow(1.0 + cfg.propPremium, propLegs.toDouble())
-            p = minOf(0.999, joint)
+            if (unmodelled) {
+                val independent = legs.fold(1.0) { a, l -> a * l.probability }
+                val ratio = if (cfg.propPairsFromMarket && ids.size <= 3 && groups.values.count { it.size > 1 } == 1) market?.medianRatio(RfqMarketModel.classOf(legs, independent), cfg.probeMinSamples) else null
+                if (ratio == null) return RfqDecision.Decline("two legs in one game (correlation unmodelled)", independent, legs)
+                p = minOf(0.999, independent * ratio.coerceIn(0.5, 4.0)); via = "market ratio %.2f".format(ratio)
+            } else {
+                if (premiumProps) joint *= Math.pow(1.0 + cfg.propPremium, propLegs.toDouble())
+                p = minOf(0.999, joint)
+            }
         }
         for (l in legs) {
             if (l.live) return no("a leg is in play")
@@ -212,6 +229,6 @@ object RfqPricer {
         val room = floor(minOf(cfg.maxStake, byParlay, byOpen) * 100.0) / 100.0
         if (room < want) return no("the caps allow a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked")
         val stake = ceil(want * 100.0 - 1e-7) / 100.0
-        return RfqDecision.Quote(price, stake, p, legs, rulePrice, modelPrice)
+        return RfqDecision.Quote(price, stake, p, legs, rulePrice, modelPrice, via)
     }
 }

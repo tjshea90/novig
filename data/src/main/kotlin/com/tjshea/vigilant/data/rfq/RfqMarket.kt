@@ -19,8 +19,8 @@ import kotlin.math.max
  * and [RfqMarketModel.best] turns that demand curve into the quote that maximises the expected profit on what it ties up.
  */
 class RfqMarketModel(private val keep: Int = 600, private val maxAgeMs: Long = 4 * 3_600_000L) {
-    /** One probe's answer: the market's best price minus our fair (probability, 0.01 = one point of pot), null when no maker quoted at all. */
-    private class Obs(val atMs: Long, val gap: Double?)
+    /** One probe's answer: the market's best price minus our fair (probability, 0.01 = one point of pot) and over it (ratio), null when no maker quoted at all. */
+    private class Obs(val atMs: Long, val gap: Double?, val ratio: Double? = null)
 
     private val byClass = HashMap<String, ArrayDeque<Obs>>()
 
@@ -28,7 +28,7 @@ class RfqMarketModel(private val keep: Int = 600, private val maxAgeMs: Long = 4
     @Synchronized fun observe(cls: String, fair: Double, market: Double?, atMs: Long) {
         for (k in listOf(cls, coarse(cls)).distinct()) {
             val q = byClass.getOrPut(k) { ArrayDeque() }
-            q.addLast(Obs(atMs, market?.let { it - fair }))
+            q.addLast(Obs(atMs, market?.let { it - fair }, market?.takeIf { fair > 0.0 }?.let { it / fair }))
             while (q.size > keep) q.removeFirst()
             while (q.isNotEmpty() && atMs - q.first().atMs > maxAgeMs) q.removeFirst()
         }
@@ -40,6 +40,17 @@ class RfqMarketModel(private val keep: Int = 600, private val maxAgeMs: Long = 4
     @Synchronized fun winShare(cls: String, c: Double): Double? {
         val q = byClass[cls]?.takeIf { it.isNotEmpty() } ?: return null
         return q.count { it.gap == null || it.gap > c + 1e-9 }.toDouble() / q.size
+    }
+
+    /**
+     * The market's own view of what a class of parlay is worth over our independent product: the median of (best price / our fair) over the class's answers (the league's own when it has [minSamples], else the
+     * pooled kind of parlay), or null with too few. Used for the pairs of player props in one game ([RfqConfig.propPairsFromMarket]), where no correlation model exists: the market's median is its consensus,
+     * margin included, so a quote built on it still asks the floors on top.
+     */
+    fun medianRatio(cls: String, minSamples: Int): Double? {
+        val obs = synchronized(this) { byClass[cls]?.takeIf { q -> q.count { it.ratio != null } >= minSamples } ?: byClass[coarse(cls)] }?.toList() ?: return null
+        val r = obs.mapNotNull { it.ratio }.sorted()
+        return if (r.size < minSamples) null else r[r.size / 2]
     }
 
     /** Per class: observations, the share nobody quoted, and the quartiles of the gap among the answered ones (points of pot). */

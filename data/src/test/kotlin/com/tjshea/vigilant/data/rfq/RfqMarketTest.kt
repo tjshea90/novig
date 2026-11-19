@@ -100,6 +100,27 @@ class RfqMarketTest {
         assertTrue("it never prices below the floors", on.price >= on.rulePrice)
     }
 
+    @Test fun pairsOfPropsInOneGameAreDeclinedWithTheIndependentFairUnlessTheMarketsRatioPricesThem() {
+        val now = 1_790_500_000_000L
+        fun prop(id: String) = LegFair(id, "e1", "l", 0.4, 5, now - 60_000L, now + 3 * 3_600_000L, false, "POINTS", league = "NHL")
+        val lf = LegFairs { id -> prop(id) }
+        val created = RfqProtocol.Created(now, "r", listOf("a", "b"), now + 3_000L, 10.0)
+        val base = RfqConfig(mode = RfqConfig.Mode.SHADOW, margin = 0.0, minReturn = 0.0, minPoints = 0.005, maxLegs = 3, propPremium = 0.2, maxCollateral = 80.0, maxOpenCollateral = 150.0)
+        val m = RfqMarketModel()
+        val cls = RfqMarketModel.classOf(listOf(prop("a"), prop("b")), 0.16)
+        assertEquals("2|psg|NHL|mid", cls)
+        repeat(50) { m.observe(cls, 0.16, 0.16 * 1.3, 1L) }                                  // the market prices this pair 30% over the independent product
+        val off = RfqPricer.decide(created, now, base, lf, 0.0, m) as RfqDecision.Decline
+        assertEquals("the pure independent product, no prop premium: the evidence of what the market charges over it", 0.16, off.fair!!, 1e-12)
+        assertTrue(off.reason.contains("one game"))
+        val on = RfqPricer.decide(created, now, base.copy(propPairsFromMarket = true), lf, 0.0, m) as RfqDecision.Quote
+        assertEquals("priced on the market's median ratio (1.30), no prop premium on top", 0.16 * 1.3, on.fair, 1e-9)
+        assertTrue(on.via, on.via.startsWith("market ratio 1.30"))
+        assertTrue("the floors still apply on top of it", on.price >= on.fair + 0.005)
+        // too few answers: declined as before
+        assertTrue(RfqPricer.decide(created, now, base.copy(propPairsFromMarket = true), lf, 0.0, RfqMarketModel().also { it.observe(cls, 0.16, 0.2, 1L) }) is RfqDecision.Decline)
+    }
+
     /** Waits (up to 5 s) for [cond]: the probe's workers run on real threads and a loaded test machine is slow. */
     private suspend fun until(cond: () -> Boolean) { val end = System.currentTimeMillis() + 5_000L; while (!cond() && System.currentTimeMillis() < end) delay(10L) }
 

@@ -178,7 +178,7 @@ class RfqMaker(
             when (d) {
                 is RfqDecision.Quote -> {
                     put("decision", "quote"); put("price", d.price); put("maxWager", d.maxWager); put("fair", d.fair); put("edge", d.edge)
-                    put("rulePrice", d.rulePrice); d.modelPrice?.let { put("modelPrice", it) }
+                    put("rulePrice", d.rulePrice); d.modelPrice?.let { put("modelPrice", it) }; if (d.via.isNotEmpty()) put("via", d.via)
                     put("legs", buildJsonArray { d.legs.forEach { l -> add(buildJsonObject { put("label", l.label); put("p", l.probability); put("books", l.books); put("startsMs", l.startsMs) }) } })
                 }
                 is RfqDecision.Decline -> {
