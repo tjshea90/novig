@@ -81,6 +81,8 @@ data class RfqConfig(
     val maxLegFair: Double = 0.90,
     /** MK20: price two player props of one game from the measured ratio of how often such pairs hit together ([PropPairs]); off = they decline as "correlation unmodelled". */
     val propPairs: Boolean = true,
+    /** MK20: quote a pair [PropPairs] prices (OFF = shadow: the model's fair is only journaled as the decline's fair, nothing is quoted until paper results say the price beats the market's trades). */
+    val propPairsLive: Boolean = false,
     /**
      * MK17 (Tj 2026-11-19: "only accepts parlays that will finish today (the latest leg is a game on todays slate)"): quote only a parlay whose LAST leg starts before today's slate ends (the sports day
      * runs 5 am to 5 am Eastern, like the Tracker's). Off = any game within [maxDaysAhead].
@@ -272,10 +274,12 @@ object RfqPricer {
             // with the PURE independent product as its fair (the evidence of what the market charges over it), unless the market's own ratio for the class prices it (props of one game, MK12).
             var joint = 1.0
             var unmodelled = false
+            var byPairModel = false
             val groups = legs.groupBy { it.eventId }
             for ((_, group) in groups) {
                 if (group.size == 1) { joint *= group[0].probability; continue }
-                val g = sameGameJoint(group, cfg) ?: (if (cfg.propPairs) PropPairs.joint(group) else null)
+                var g = sameGameJoint(group, cfg)
+                if (g == null && cfg.propPairs) { g = PropPairs.joint(group); if (g != null) byPairModel = true }
                 if (g == null) { unmodelled = true; break }
                 joint *= g
             }
@@ -287,6 +291,7 @@ object RfqPricer {
             } else {
                 if (premiumProps) joint *= Math.pow(1.0 + cfg.propPremium, propLegs.toDouble())
                 p = minOf(0.999, joint)
+                if (byPairModel && !cfg.propPairsLive) return RfqDecision.Decline("two player props of one game (modelled, shadow: not quoted)", p, legs)
             }
         }
         for (l in legs) {
