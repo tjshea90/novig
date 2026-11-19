@@ -662,7 +662,7 @@ fun main(args: Array<String>) = runBlocking {
                 if (rfqCfg.get().mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF) {
                     runCatching { tc.rfqCollateral() }.getOrNull()?.let { rfqCollateral.set(it) }
                     // The balance the maker's quotes are backed by (`GET /v3/account/subaccounts/{keyId}/balance`, throttle `account`, 1 token a minute): a LIVE quote is sized to the cash that is there.
-                    if (rfqCfg.get().mode == com.tjshea.vigilant.data.rfq.RfqConfig.Mode.LIVE && rfqKeyId.isNotEmpty()) runCatching { tc.balance(rfqKeyId) }.getOrNull()?.let { rfqCash.set(it) }
+                    if ((rfqCfg.get().mode == com.tjshea.vigilant.data.rfq.RfqConfig.Mode.LIVE || rfqCfg.get().walletCollateral) && rfqKeyId.isNotEmpty()) runCatching { tc.balance(rfqKeyId) }.getOrNull()?.let { rfqCash.set(it) }
                     // Novig's own view of the maker: tier, the confirm rate it is judged by, any lock and its end (`GET /rfq/v3/maker`, docs api/rfq/confirm-rate).
                     runCatching { tc.rfqMakerInfo() }.getOrNull()?.let { text -> com.tjshea.vigilant.data.rfq.RfqStanding.parse(text)?.let { rfqMaker.onStanding(it) } }
                     // The maker's own fills (`GET /rfq/v3/executions`, 100 a page): the loss stop in LIVE, and in every mode the result of every parlay it filled (settled, won/lost, profit: the real test of our fair) and the collateral each

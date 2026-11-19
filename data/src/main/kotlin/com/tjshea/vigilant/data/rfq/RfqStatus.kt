@@ -50,6 +50,12 @@ data class RfqStatus(
     /** MK14: the trades our rule would have won at the LIVE capital hurdle (`liveMinReturn`) and their mean edge, points of pot: what LIVE would do while SHADOW quotes at the looser rule. */
     val liveHurdleWouldWin: Long = 0,
     val liveHurdleEarnPoints: Double? = null,
+    /** MK17: the wallet the collateral limits follow (cash the maker can use now, cash + the collateral held, and what one parlay / one outcome / a day's loss may be with the wallet as the limit); null = balance not read. */
+    val walletCash: Double? = null,
+    val walletTotal: Double? = null,
+    val walletParlayCap: Double? = null,
+    val walletLegCap: Double? = null,
+    val lossStopNow: Double? = null,
     /** MK13: Novig's own view of the maker (`GET /rfq/v3/maker`): tier, the confirm rate it is judged by, and any lock with its end. */
     val makerTier: String? = null,
     val confirmCounted: Long? = null,

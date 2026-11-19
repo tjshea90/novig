@@ -405,6 +405,7 @@ class RfqMaker(
             probe = probe?.line().orEmpty(),
             market = market?.summary()?.take(12)?.map { c -> "${c.cls} n=${c.n} nobody=${(c.noQuote * 100).toInt()}%" + (c.median?.let { " median ${"%+.2f".format(it)}pts (p25 ${"%+.2f".format(c.p25)}, p75 ${"%+.2f".format(c.p75)})" } ?: "") }.orEmpty(),
             modelWouldWin = modelWouldWin, modelWouldEarnPoints = if (modelWouldWin > 0) modelWouldEdge / modelWouldWin else null, liveHurdleWouldWin = liveWouldWin, liveHurdleEarnPoints = if (liveWouldWin > 0) liveWouldEdge / liveWouldWin else null,
+            walletCash = cash(), walletTotal = cash()?.let { it + collateral }, walletParlayCap = cash()?.let { cfg.walletShare * (it + collateral) }, walletLegCap = cash()?.let { cfg.walletLegShare * (it + collateral) }, lossStopNow = lossStop(cfg),
             makerTier = standing?.tier, confirmCounted = standing?.counted, confirmConfirmed = standing?.confirmed, confirmThreshold = standing?.threshold, confirmMinSample = standing?.minSample,
             lockSource = standing?.lockSource, lockUntilMs = standing?.lockUntilMs,
             refusals = synchronized(refusals) { refusals.entries.sortedByDescending { it.value }.take(5).map { "${it.key} x${it.value}" } },
