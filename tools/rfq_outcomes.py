@@ -155,8 +155,13 @@ def build(cats, files):
         if not c:
             skipped["no whole CREATED row"] += 1; continue
         legs = []
-        for oid in c["outcomeIds"]:
+        inrow = c.get("legs") or []
+        for i, oid in enumerate(c["outcomeIds"]):
             o = cat["outcomes"].get(oid)
+            lj = inrow[i] if len(inrow) == len(c["outcomeIds"]) else {}
+            if lj.get("name") and lj.get("desc"):                  # journaled with the quote since MK14: needs no catalog snapshot
+                o = [lj.get("league"), lj.get("type"), (o or [None, None, None])[2], None, lj.get("startsMs"), lj.get("event") or oid, lj["name"]]
+                cat["events"].setdefault(o[5], {"desc": lj["desc"], "startsTs": lj.get("startsMs")})
             if not o:
                 legs = None; skipped["leg not in the catalog snapshot"] += 1; break
             legs.append((oid, o))
