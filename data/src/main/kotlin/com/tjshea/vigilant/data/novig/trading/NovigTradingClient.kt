@@ -330,8 +330,12 @@ open class NovigTradingClient(
     open suspend fun rfqCollateral(): Double? =
         ((json.parseToJsonElement(signer.call("GET", "/rfq/v3/collateral")) as? kotlinx.serialization.json.JsonObject)?.get("collateral") as? kotlinx.serialization.json.JsonPrimitive)?.content?.toDoubleOrNull()
 
-    /** The maker's own fills, newest first (`GET /rfq/v3/executions`, one page of up to 500): the raw answer for [com.tjshea.vigilant.data.rfq.RfqLedger.parse]; null when it could not be read. */
-    open suspend fun rfqExecutions(): String? = signer.call("GET", "/rfq/v3/executions", rawQuery = "limit=500").takeIf { it.isNotBlank() }
+    /**
+     * The maker's own fills, newest first (`GET /rfq/v3/executions`, `limit` 1 to 500, default 500; throttle `history`, which charges a base plus tokens in proportion to the `limit` asked, docs api/throttling):
+     * the raw answer for [com.tjshea.vigilant.data.rfq.RfqLedger.parse]; null when it could not be read. 100 a page covers a day of a small maker; [after] is the previous page's `next`.
+     */
+    open suspend fun rfqExecutions(limit: Int = 100, after: String? = null): String? =
+        signer.call("GET", "/rfq/v3/executions", rawQuery = "limit=$limit" + (after?.let { "&after=$it" } ?: "")).takeIf { it.isNotBlank() }
 
     /** The maker's tier, confirm standing and any lock (`GET /rfq/v3/maker`) as Novig sent it, for the status line; null when it could not be read. */
     open suspend fun rfqMakerInfo(): String? = signer.call("GET", "/rfq/v3/maker").takeIf { it.isNotBlank() }
