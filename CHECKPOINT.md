@@ -1,13 +1,13 @@
-# CHECKPOINT 4682 — read me first, then TASKS.md
+# CHECKPOINT 4683 — read me first, then TASKS.md
 
-**Written:** 2026-11-19T11:08:28Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-aoglz9` · **builds on:** `dea07ad9d` (this checkpoint is the commit after it)
+**Written:** 2026-11-19T12:22:27Z · **tests:** all 10 fast checks green
+**Branch:** `claude/wizardly-meitner-r9oc2t` · **builds on:** `47c40085e` (this checkpoint is the commit after it)
 
 ## Just done
-MK10 11:08: fills starting (9 won, 8 filled)
+WATCH 11-19 13:20 slot: engine healthy, parlay check no change
 
 ## Do this next
-next 11:38: watch P&L of the new fills; revert floor if realized < -15
+judge MK10i floor when the 9 filled parlays settle; revert floor if realized < -15
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ next 11:38: watch P&L of the new fills; revert floor if realized < -15
 
 ## Last ten checkpoints
 ```
+  082eeaabf ckpt 4682: MK10 11:08: fills starting (9 won, 8 filled)
   8624ed34e ckpt 4681: MK10i: rfq floor 0.7pt (minPoints .007 margin .015 minReturn .004)
   87e289ffe ckpt 4680: MK10 08:37 check: no change, evidence logged
   2da22662c ckpt 4679: MK10h: rfq minReturn 0.006
@@ -26,8 +27,7 @@ next 11:38: watch P&L of the new fills; revert floor if realized < -15
   a1da25772 ckpt 4675: parlay 30-min check in ROUTINE.md + session cron
   c26f92a5c ckpt 4674: MK10e: rfq caps 75/150 per Tj
   94cbb445b ckpt 4673: MK10d logged
-  ace6bacda ckpt 4672: MK10d: parlay fair index keeps lines across scan passes (hot passes held a 
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
