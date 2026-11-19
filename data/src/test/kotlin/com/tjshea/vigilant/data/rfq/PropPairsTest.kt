@@ -31,11 +31,11 @@ class PropPairsTest {
     }
 
     @Test fun theSamePlayersStatsAreTiedMuchHarder() {
-        fun joint(ao: Boolean, bo: Boolean) = PropPairs.joint(pair(prop("a", "Points", "A One", ao, 0.5), prop("b", "Assists", "A One", bo, 0.4)))!!
-        assertEquals(0.2 * 2.5, joint(true, true), 1e-12)
-        assertEquals(0.2 * 2.0, joint(false, false), 1e-12)
-        assertEquals(0.2 * 1.6, joint(true, false), 1e-12)
-        assertTrue("the same player is dearer than two players on every side", joint(true, true) > 0.2 * 1.55)
+        fun joint(ao: Boolean, bo: Boolean) = PropPairs.joint(pair(prop("a", "Points", "A One", ao, 0.35), prop("b", "Assists", "A One", bo, 0.3)))!!
+        assertEquals(0.105 * 2.5, joint(true, true), 1e-12)
+        assertEquals(0.105 * 2.0, joint(false, false), 1e-12)
+        assertEquals(0.105 * 1.6, joint(true, false), 1e-12)
+        assertTrue("the same player is dearer than two players on every side", joint(true, true) > 0.105 * 1.55)
     }
 
     @Test fun aJointNeverExceedsTheSmallerLegAndNeverTheCapOf999() {
