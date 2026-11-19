@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "a16930efa4ddd0a97bba42db4e3759341cc5d61b",
  "since": 1795129305,
- "beat": 1795130349,
- "beatIso": "2026-11-19T23:19:09Z",
+ "beat": 1795130838,
+ "beatIso": "2026-11-19T23:27:18Z",
  "done": "MK19/MK17d: app tests green; landing the engine fixes",
  "next": "graceful engine reset then verify"
 }
