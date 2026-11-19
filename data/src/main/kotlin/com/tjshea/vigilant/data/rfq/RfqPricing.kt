@@ -67,7 +67,18 @@ data class RfqConfig(
     val minLeadMs: Long = 20 * 60_000L,
     val maxDaysAhead: Int = 5,
     val minFair: Double = 0.03,
-    val maxFair: Double = 0.85,
+    /**
+     * The most likely a parlay may be to win and still be quoted (MK16, Tj 2026-11-19: "do not allow parlays that are too easy to win ... set a reasonable cap"). 0.60: above it the buyer wins more often than
+     * not, our collateral buys little profit (an edge of about a point on a few dollars of collateral), and where the market trades such parlays our price would have won 18 of 19 (95%, against 17% for all of
+     * them): the sign that the market prices favourites above our fair, so what we win is what we mis-price. It was 0.85, which no parlay the market traded ever reached; paper cost of 0.60: 2.5% of the
+     * quoteable trades and 8% of the paper profit (research/parlay_expected_profit_2026-11-19.md section 7).
+     */
+    val maxFair: Double = 0.60,
+    /**
+     * The most likely any ONE leg may be to win (MK16): a leg we give over 90% is padding, a near-certainty the buyer adds for free and the place where our fair is most likely to be low (the favourite-longshot
+     * bias: our 70-85% legs hit 82%, and our price won 42% of the trades with a leg over 90% against 17% of all). 0.90.
+     */
+    val maxLegFair: Double = 0.90,
     /** The loss over the last 24 hours of SETTLED parlays (dollars, from Novig's executions) at which LIVE quoting stops for six hours ([RfqMaker.onLedger]); 0 = no stop. */
     val dayLossStop: Double = 20.0,
     /**
@@ -245,8 +256,10 @@ object RfqPricer {
             if (l.books < cfg.minBooks) return no("a leg's fair rests on ${l.books} companies (need ${cfg.minBooks})")
             val asOf = l.asOfMs ?: return no("a leg's fair has no age")
             if (now - asOf > cfg.maxFairAgeMs) return no("a leg's fair is ${(now - asOf) / 60_000L} min old")
+            if (l.probability > cfg.maxLegFair) return no("a leg is too likely to win (${"%.0f".format(l.probability * 100)}% against the ${"%.0f".format(cfg.maxLegFair * 100)}% cap)")
         }
-        if (p < cfg.minFair || p > cfg.maxFair) return no("the parlay's fair probability ${"%.3f".format(p)} is outside ${cfg.minFair}-${cfg.maxFair}")
+        if (p > cfg.maxFair) return no("the parlay is too likely to win (${"%.0f".format(p * 100)}% against the ${"%.0f".format(cfg.maxFair * 100)}% cap)")
+        if (p < cfg.minFair) return no("the parlay is too unlikely to win (${"%.1f".format(p * 100)}% against the ${"%.0f".format(cfg.minFair * 100)}% floor)")
         val leadMs = legs.maxOf { it.startsMs } - now
         // LIVE quotes demand the capital hurdle; SHADOW quotes at the looser rule (paper evidence) and records what the hurdle would have asked.
         val hurdleCfg = if (cfg.liveMinReturn > cfg.minReturn) cfg.copy(minReturn = cfg.liveMinReturn) else cfg
