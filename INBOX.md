@@ -1831,3 +1831,8 @@ Why were more fair odds being found before now
 ```
 Parlayapi should be on a much higher Paid plan 
 ```
+
+## 2026-11-19T23:08:03Z
+```
+Turn the stop lots off. It can lose everything 
+```
