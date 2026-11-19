@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "b61cb3d8b8db2c939194ee1a704bc4d6d00e3e60",
+ "head": "88d5cf7b716f40320bb43e3088ad3187716d8d9e",
  "since": 1795123003,
- "beat": 1795127922,
- "beatIso": "2026-11-19T22:38:42Z",
- "done": "pre-release: MK17b: Parlays tiles show the whole wallet and the cash free to post when the wallet is the collateral limit (not the old fixed 80 dollars); parlay options; parlay hub (versionCode 483, v1.0.143)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.143), then run: bash tools/record-release.sh v1.0.143 483 \"MK17b: Parlays tiles show the whole wallet and the cash free to post when the wallet is the collateral limit (not the old fixed 80 dollars); parlay options; parlay hub\""
+ "beat": 1795127947,
+ "beatIso": "2026-11-19T22:39:07Z",
+ "done": "MK17c: collateral hold 120 s -> 45 s after the auction closes (fills come 6-29 s after the quote), a fill stays counted 75 s until the balance read shows it; why-so-little diagnosis logged; FULL suite green (4473)",
+ "next": "graceful engine reset (engine_set --reset) so the live maker quotes more; then verify quotesSent rate and cash-short declines drop; MK14 follow-ups 00:40/14:00 UTC, coverage 14:30 UTC"
 }
