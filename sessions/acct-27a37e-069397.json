@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "a78018e3ff5bb0ff3bb4f8dd0206228faa9cf3ad",
  "since": 1795103757,
- "beat": 1795113321,
- "beatIso": "2026-11-19T18:35:21Z",
+ "beat": 1795113550,
+ "beatIso": "2026-11-19T18:39:10Z",
  "done": "MK13c: per-outcome collateral cap (maxLegCollateral $30, LIVE), executions read in SHADOW (results of the 13 live parlays), rfq_set cashReserve/maxLegCollateral, audit rows 9-10; FULL suite green (4448 tests)",
  "next": "engine_set --reset onto main (only one reset: board says MK12/MK13 and MK11 share the engine), confirm startedAtMs, status.rfq.sockets/standing/settled; then analyse the probe journals"
 }
