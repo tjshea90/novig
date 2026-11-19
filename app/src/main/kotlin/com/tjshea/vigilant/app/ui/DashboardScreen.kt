@@ -96,6 +96,8 @@ fun DashboardContent(
     onTestApi: (String) -> Unit = {},
     onRetryApi: (String) -> Unit = {},
     onSetParlay: (com.tjshea.vigilant.data.rfq.RfqConfig, (String?) -> Unit) -> Unit = { _, _ -> },
+    /** The parlay maker's book for the Parlays section's hub (MK15). */
+    parlays: com.tjshea.vigilant.data.rfq.ParlayBook? = null,
 ) {
     val uri = LocalUriHandler.current
     fun show(x: EngineSection) = section == null || section == x
@@ -107,7 +109,7 @@ fun DashboardContent(
             if (board != null) EngineMoneyCard(board, status, now) else if (section != null) Text("The engine's bets and bids appear here once it has placed any.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (kalshi != null && kalshi.kalshiOn) KalshiMoneyCard(kalshi)
         }
-        if (show(EngineSection.PARLAYS)) ParlayMakerView(status?.rfq, onSetParlay)
+        if (show(EngineSection.PARLAYS)) ParlayHubSection(status?.rfq, parlays, now, onSetParlay)
         if (show(EngineSection.APIS)) ApisSection(status, meters, now, testing, checks, checkedAt, onTestApi, onRetryApi)
         if (show(EngineSection.TRENDS)) TrendsSection(history)
         if (show(EngineSection.OVERVIEW)) {
