@@ -6,7 +6,10 @@
 Reads the `QUOTE_EXECUTED` rows of the `rfq-<day>` journals, joins each to the whole `CREATED` row (legs, fair, price), names each leg's event and market from Novig's PUBLIC catalog (one market list per event,
 no key) and writes the engine's `FillRecord` list (the same JSON as `rfq-fills.json`), which ships as `data/src/main/resources/rfq_fills_seed.json` so the hub shows them and can read their results.
 """
-import gzip, json, sys, time, urllib.request
+import gzip, json, os, sys, time, urllib.request
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import rfq_outcomes as ro
 
 BASE = "https://api.novig.com/v3/public/catalog"
 
@@ -61,7 +64,7 @@ def main(out, cats, files):
             for o in m.get("outcomes", []):
                 market_of[o["outcomeId"]] = m["marketId"]
         time.sleep(0.4)
-    recs = []
+    recs, espn = [], {}
     for rid, r in sorted(fills.items(), key=lambda kv: kv[1]["atMs"]):
         if rid not in created:
             continue
@@ -71,8 +74,16 @@ def main(out, cats, files):
             o = cat["outcomes"].get(oid) or [None] * 7
             lj = c["legs"][i] if len(c.get("legs", [])) == len(c["outcomeIds"]) else {}
             ev = cat["events"].get(o[5]) or {}
-            legs.append({"outcomeId": oid, "marketId": market_of.get(oid, ""), "label": lj.get("label", ""), "desc": ev.get("desc", ""), "league": o[0] or "", "type": o[1] or "",
-                         "startsMs": lj.get("startsMs", 0), "p": lj.get("p", 0.0)})
+            leg = {"outcomeId": oid, "marketId": market_of.get(oid, ""), "label": lj.get("label", ""), "desc": ev.get("desc", ""), "league": o[0] or "", "type": o[1] or "",
+                   "startsMs": lj.get("startsMs", 0), "p": lj.get("p", 0.0)}
+            # a game that is over and a game line: the buyer's result from ESPN's final score (the market has left Novig's catalog by now)
+            if leg["startsMs"] and leg["startsMs"] < time.time() * 1000 - 4 * 3600_000 and o[0] in ro.SPORT and o[1] in ("MONEY", "SPREAD", "TOTAL"):
+                g = ro.match_game(ev.get("desc"), leg["startsMs"], ro.games_for(o[0], [leg["startsMs"]], espn))
+                sib = [x[6] for x in cat["outcomes"].values() if x[5] == o[5] and x[1] == o[1] and x[2] == o[2]]
+                res = ro.grade_leg(o[1], o[2], o[6], sib, g) if g else None
+                if res:
+                    leg["result"] = res.upper()
+            legs.append(leg)
         recs.append({"rfqId": rid, "quotedMs": r["atMs"], "price": r["d"]["price"], "fair": c["fair"], "wager": r["d"]["wager"], "legs": legs})
     json.dump(recs, open(out, "w"), indent=1)
     print(len(recs), "fills;", sum(1 for x in recs for l in x["legs"] if l["marketId"]), "of", sum(len(x["legs"]) for x in recs), "legs with a market id", file=sys.stderr)

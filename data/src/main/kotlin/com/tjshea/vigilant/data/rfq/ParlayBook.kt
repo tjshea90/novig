@@ -22,6 +22,8 @@ data class FillLeg(
     val startsMs: Long = 0L,
     /** Our fair probability that the leg wins, at quote time. */
     val p: Double = 0.0,
+    /** A result known from outside Novig's catalog (the seed's legs, graded from final scores): WIN, LOSS or PUSH for the buyer. */
+    val result: String? = null,
 )
 
 @Serializable
@@ -125,7 +127,7 @@ data class ParlayBook(
                 val legs = ids.mapIndexed { i, id ->
                     val f = rec?.legs?.firstOrNull { it.outcomeId == id }
                     val o = old?.legs?.firstOrNull { it.outcomeId == id }
-                    val r = legResult(id) ?: o?.result
+                    val r = legResult(id) ?: o?.result ?: f?.result
                     BookLeg(
                         outcomeId = id, label = f?.label?.ifBlank { null } ?: o?.label?.ifBlank { null } ?: "Leg ${i + 1}", desc = f?.desc ?: o?.desc.orEmpty(), league = f?.league ?: o?.league.orEmpty(),
                         type = f?.type ?: o?.type.orEmpty(), startsMs = f?.startsMs?.takeIf { it > 0L } ?: o?.startsMs ?: 0L, p = f?.p?.takeIf { it > 0.0 } ?: o?.p ?: 0.0, result = r,
