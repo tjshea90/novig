@@ -156,6 +156,7 @@ fun main(args: Array<String>) = runBlocking {
     // Every outcome with a books' fair, whether or not Novig shows an ask for it (MK10, Tj 2026-11-19: "I want more parlay action"): the parlay maker needs a leg's fair, not its take price, and 11,254 of its declines
     // were "a leg has no fair line here" while the scan held the fair of any side nobody was offering.
     val latestFair = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.scanner.Opportunity>>(emptyList())
+    val fairKept = java.util.concurrent.ConcurrentHashMap<String, com.tjshea.vigilant.data.scanner.Opportunity>()
     // Novig markets Vigilant had no fair odds for (a ladder, no quote): PropLine's +EV rows on them get a Bet button priced from PropLine's own fair (TCL88).
     val engineHolder = java.util.concurrent.atomic.AtomicReference<CloudEngine?>(null)
     val latestUnpriced = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.scanner.Opportunity>>(emptyList())
@@ -861,7 +862,14 @@ fun main(args: Array<String>) = runBlocking {
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
         onApiQuality = { cards, now -> for (c in cards) apiqJournal.append(com.tjshea.vigilant.data.cloud.ApiScorecard.QualityRow(now, c)) },
         // Every priced line within 2 points of break-even is logged, shown or not, with why it was not shown (Tj, 2026-10-16, TCL33).
-        onResult = { result, s -> runCatching { com.tjshea.vigilant.data.cloud.CrossExchange.find(result.opportunities + result.games.flatMap { it.outcomes }, System.currentTimeMillis()).forEach { crossJournal.append(it) } }; latestPriced.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.quote != null }.distinctBy { it.key }); latestFair.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.fairProbability != null && !it.event.isLive }.distinctBy { it.outcome.outcomeId }); outcomeIndex.set(HashMap<String, CloudTrader.OutcomeInfo>(result.opportunities.size * 2).also { m -> for (o in result.opportunities) m[o.outcome.outcomeId] = CloudTrader.OutcomeInfo(o.market.eventId, o.eventName, o.event.startsTs, o.marketLabel, o.selection) }); latestUnpriced.set(result.opportunities.filter { it.quote == null && it.ladder.isNotEmpty() && !it.event.isLive }.distinctBy { it.key }); study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush(); runCatching { kalshiLane.onNovigScan(result, s) } },
+        onResult = { result, s -> runCatching { com.tjshea.vigilant.data.cloud.CrossExchange.find(result.opportunities + result.games.flatMap { it.outcomes }, System.currentTimeMillis()).forEach { crossJournal.append(it) } }; latestPriced.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.quote != null }.distinctBy { it.key }); run {
+                        // The scan alternates a full pass (about 16,000 priced lines) with short hot passes (about 3,800: games about to start), so the latest pass alone held a third of the lines and the parlay maker saw
+                        // Sunday's NFL game lines vanish between passes (MK10, 2026-11-19: "no fair line" on 58% of requests). Each line is kept until its own fair is 30 minutes old; the maker still judges its age (10 min).
+                        val nowMs = System.currentTimeMillis()
+                        for (o in result.opportunities + result.games.flatMap { it.outcomes }) if (o.fairProbability != null && !o.event.isLive) fairKept[o.outcome.outcomeId] = o
+                        fairKept.values.removeIf { (it.fairAsOfMs ?: it.fairUpdatedMs ?: 0L) < nowMs - 30 * 60_000L }
+                        latestFair.set(fairKept.values.toList())
+                    }; outcomeIndex.set(HashMap<String, CloudTrader.OutcomeInfo>(result.opportunities.size * 2).also { m -> for (o in result.opportunities) m[o.outcome.outcomeId] = CloudTrader.OutcomeInfo(o.market.eventId, o.eventName, o.event.startsTs, o.marketLabel, o.selection) }); latestUnpriced.set(result.opportunities.filter { it.quote == null && it.ladder.isNotEmpty() && !it.event.isLive }.distinctBy { it.key }); study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush(); runCatching { kalshiLane.onNovigScan(result, s) } },
         trade = { rows, s, now ->
             val mode = s.gates.cloudTrading
             if (mode == CloudTradeMode.OFF) null else {
