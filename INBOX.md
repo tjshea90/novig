@@ -1696,3 +1696,15 @@ PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 mi
 ```
 PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 minutes, price more legs, change safeguards and criteria, get parlay action). In /home/user/novig: git fetch -q origin +cloud-feed:refs/remotes/origin/cloud-feed; read status.json rfq (seen, priceable, quotesSent, won, filled, settled, realizedPnl, declines with shares) and compare with the last check (research/review/CHANGES.md MK10 lines). Pick the biggest decline class and fix it with evidence (journal in the cloud-archive-YYYY-MM-DD Release: python3 -I tools/rfq_legs.py legs; tools/rfq_summary.py), via rfq_set.py (caps/margins/ages) or code (tests, tools/test.sh, ckpt, push, engine_set.py --reset and CONFIRM the new job's startedAtMs in status.json). Keep every bet's value rule: no losing-odds quotes; dayLossStop stays. Log in CHANGES.md and tell Tj in the app chat with chat.py say, once, only what changed.
 ```
+
+## 2026-11-19T15:56:07Z
+```
+Without disrupting the other claude session:
+
+1) deep research online everything needed to make the parlay system profitable, including but not limited to pricing, how to use the novig api correctly for the   parlay system, etc.
+2) figure out how to price and find fair odds for as many legs of parlays as possible. The apis i have should provide this 
+3) figure out the best prices to offer the parlays at that still have a profitable edge but also get filled. If the requested edge is too large, our parlays won't fill.
+4) figure out 2 leg correlated parlays and what a fair price should be on those parlays, then figure out the best prices to offer them at while still having a profitable edge but getting fills 
+5) do any other research needed to improve the parlay system as much as possible with the goal of profit and fills 
+6) implement all findings without delay and update the engine accordingly 
+```
