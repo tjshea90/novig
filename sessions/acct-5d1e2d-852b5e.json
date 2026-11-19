@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "94cbb445b7e387b565c3fb4c6b420f534103086e",
+ "head": "c26f92a5c4617d43ef9d57f027acaa0759fe4c96",
  "since": 1795047736,
- "beat": 1795070510,
- "beatIso": "2026-11-19T06:41:50Z",
- "done": "MK10d logged",
- "next": "report priced share after scan"
+ "beat": 1795070811,
+ "beatIso": "2026-11-19T06:46:51Z",
+ "done": "MK10e: rfq caps 75/150 per Tj",
+ "next": "re-measure decline classes after restart"
 }
