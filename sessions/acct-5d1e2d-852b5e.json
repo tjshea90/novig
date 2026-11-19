@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "e598f40b9fcbfabcf9e4718f6e52ae7692caf8a7",
+ "head": "6ff8b553061e46193766c6e9c35a8cf189b5f165",
  "since": 1795047736,
- "beat": 1795125076,
- "beatIso": "2026-11-19T21:51:16Z",
- "done": "MK11 17:38: ladder lifts priced trades 0.5% -> 19% on paper",
- "next": "next: premium vs win rate by prop legs; LIVE only after Tj adds money"
+ "beat": 1795125119,
+ "beatIso": "2026-11-19T21:51:59Z",
+ "done": "MK10 21:51: 4 of 4 settled parlays were buyer hits (adverse selection watch)",
+ "next": "judge when the 15 open parlays settle"
 }
