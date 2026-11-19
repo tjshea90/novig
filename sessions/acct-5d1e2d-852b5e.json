@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "e4eac9800584edce52f7e713765010d94cca8083",
  "since": 1795047736,
- "beat": 1795103089,
- "beatIso": "2026-11-19T15:44:49Z",
+ "beat": 1795103270,
+ "beatIso": "2026-11-19T15:47:50Z",
  "done": "TR7 logged: ledger drop = parlay collateral",
  "next": "fix ledger open cost with rfq collateral"
 }
