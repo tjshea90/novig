@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "12977b6ebd8bc40be5c643bcb72072fe1b8c1323",
  "since": 1795103757,
- "beat": 1795106747,
- "beatIso": "2026-11-19T16:45:47Z",
+ "beat": 1795106943,
+ "beatIso": "2026-11-19T16:49:03Z",
  "done": "MK12e: SHADOW capital fix, propPairsFromMarket (OFF), Parlays-view probe/model tiles, rfq_set fields, LIVE runbook + outside context in the research doc; FULL suite green (4421 tests)",
  "next": "relative-error floor for the model path (fairErrorRel), xs band (<3%), exclude via-quotes from evidence counters, then land and redeploy once the first hour of probe data is read"
 }
