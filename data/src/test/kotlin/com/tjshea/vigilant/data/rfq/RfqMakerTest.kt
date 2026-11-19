@@ -271,7 +271,7 @@ class RfqMakerTest {
     // ---- game lines only (the first shadow day: 0.94 points over our fair on game lines, +6.0 points / +38% on parlays with a player prop: our prop fair is the thing in doubt) ----
     @Test fun aParlayWithAPlayerPropIsDeclinedWithNoFairSoItNeverCountsAsEvidenceOfWhatTheMarketPays() {
         val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4, type = "POINTS"))
-        val d = RfqPricer.decide(created("a", "b"), now, roc, f, 0.0) as RfqDecision.Decline
+        val d = RfqPricer.decide(created("a", "b"), now, roc.copy(propPremium = 0.0), f, 0.0) as RfqDecision.Decline
         assertTrue(d.reason, d.reason.contains("not a game line")); assertNull("no fair: the trade is not compared with a fair we do not trust", d.fair)
         val on = RfqPricer.decide(created("a", "b"), now, roc.copy(allowProps = true), f, 0.0)
         assertTrue("allowProps lets the study see them", on is RfqDecision.Quote)

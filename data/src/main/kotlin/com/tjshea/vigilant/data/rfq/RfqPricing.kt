@@ -126,7 +126,7 @@ object RfqPricer {
         // Without a fair in the decline: these trades must not count in the evidence of what the market pays over OUR fair (the fair is the thing in doubt).
         val propLegs = legs.count { it.marketType !in GAME_LINES }
         val premiumProps = !cfg.allowProps && propLegs > 0
-        if (premiumProps && (cfg.propPremium <= 0.0 || propLegs > 2)) return RfqDecision.Decline("a leg is not a game line (our prop fair runs high)")
+        if (premiumProps && (cfg.propPremium <= 0.0 || propLegs > 2 || legs.any { it.marketType.isBlank() })) return RfqDecision.Decline("a leg is not a game line (our prop fair runs high)")
         var p = 1.0
         for (l in legs) p *= l.probability
         if (premiumProps) p = minOf(0.999, p * Math.pow(1.0 + cfg.propPremium, propLegs.toDouble()))
