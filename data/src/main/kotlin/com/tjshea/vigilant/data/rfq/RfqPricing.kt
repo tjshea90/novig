@@ -46,7 +46,7 @@ data class RfqConfig(
      * Legs of one game priced together (MK12, Tj 2026-11-19: "figure out 2 leg correlated parlays and what a fair price should be"): two or three game-line legs of one game (a side, the total, a team total, first-half
      * versions) are joined by [SameGame]'s Gaussian copula, calibrated on closing lines and results (a side and the total are nearly independent: NBA -0.01, NFL +0.03, NHL +0.04, NCAAB -0.01, NCAAF +0.17;
      * a team's total follows its game's total and margin at 0.6-0.7). This is the premium (relative) put on that joint probability for the model's own error. The market priced a side and the total 3% over independent
-     * on 404 trades, so 2% keeps a margin on both. Before MK12 this was a flat 8% on a side and the total (research/novig_parlay_maker_2026-11-19.md section 4); 0 = no premium.
+     * on 404 trades, so 2% keeps a margin on both. Before MK12 this was a flat 8% on a side and the total and 0 meant "decline every same-game parlay"; now 0 = no premium and a NEGATIVE value = decline them all.
      */
     val sameGamePremium: Double = 0.02,
     /**
@@ -134,14 +134,14 @@ object RfqPricer {
 
     /**
      * The fair probability that every leg of [group] (two or three legs of ONE game) wins, with the model's error premium on the dependence, or null when a leg is not a modelled game line (a player prop,
-     * an unknown market) or [RfqConfig.sameGamePremium] is negative (the switch off). A joint below the independent product is never raised to it: the premium only adds.
+     * an unknown market) or [RfqConfig.sameGamePremium] is negative (the switch off).
      */
     fun sameGameJoint(group: List<LegFair>, cfg: RfqConfig): Double? {
         if (cfg.sameGamePremium < 0.0 || group.size !in 2..SameGame.MAX_LEGS) return null
         val legs = group.map { l ->
             val kind = l.kind ?: return null
             val side = l.side ?: return null
-            if (!SameGame.modelled(kind, l.period) || l.marketType !in GAME_LINES && !l.marketType.endsWith("_1H")) return null
+            if (!SameGame.modelled(kind, l.period) || l.marketType == "MONEYLINE_3_WAY_WIN" || (l.marketType !in GAME_LINES && !l.marketType.endsWith("_1H"))) return null
             GameLeg(kind, side, l.awayTeam, l.period, l.probability, l.homeLine)
         }
         val sport = SameGame.SPORTS[group[0].league] ?: SameGame.DEFAULT
