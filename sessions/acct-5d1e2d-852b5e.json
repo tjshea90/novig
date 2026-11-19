@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "b6e2e20cff6caa22c69ac76e41ecbb3a43274a98",
  "since": 1795047736,
- "beat": 1795065576,
- "beatIso": "2026-11-19T05:19:36Z",
+ "beat": 1795065581,
+ "beatIso": "2026-11-19T05:19:41Z",
  "done": "pre-ship: GD2 grade fills with bare wording; TR5 profit headline back to bets' own sum",
  "next": "ship.sh gates and releases this"
 }
