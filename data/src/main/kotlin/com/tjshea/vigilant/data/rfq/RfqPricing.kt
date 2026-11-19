@@ -146,15 +146,18 @@ object RfqPricer {
     val GAME_LINES = setOf("MONEY", "SPREAD", "TOTAL", "TEAM_TOTAL", "MONEY_1H", "SPREAD_1H", "TOTAL_1H", "MONEYLINE_3_WAY_WIN")
     /**
      * The price (the probability the parlay wins) we quote for a parlay of [n] legs whose fair probability is [fair] and whose last leg starts [leadMs] from now: the highest of the relative floor, the
-     * return the collateral must earn (longer lock-up, higher return) and the points floor for [n] legs. Rounded UP to a ten-thousandth: rounding down would give away part of the margin.
+     * return the collateral must earn (longer lock-up, higher return) and the points floor for [n] legs. Rounded UP to a THOUSANDTH, Novig's price grid ([up]): rounding down would give away part of the margin.
      */
+    /** [x] rounded UP to the thousandth (Novig fills at a three-decimal price); the 1e-7 keeps 0.2 x 1.08 = 0.21600000000000003 at 0.216. */
+    fun up(x: Double): Double = ceil(x * 1_000.0 - 1e-7) / 1_000.0
+
     fun quotePrice(fair: Double, n: Int, leadMs: Long, cfg: RfqConfig): Double {
         val days = leadMs.coerceAtLeast(0L) / 86_400_000.0 + 0.25
         val r = cfg.minReturn * maxOf(1.0, days)
         val byReturn = (fair + r) / (1.0 + r)
         val byPoints = fair + cfg.minPoints * (n - 1).coerceAtLeast(1)
         val byMargin = fair * (1.0 + cfg.margin)
-        return ceil(maxOf(byReturn, byPoints, byMargin) * 10_000.0 - 1e-7) / 10_000.0      // the 1e-7 keeps 0.2 x 1.08 = 0.21600000000000003 at 0.2160
+        return up(maxOf(byReturn, byPoints, byMargin))
     }
 
     /**
@@ -225,7 +228,7 @@ object RfqPricer {
         // used only when the config says so and never below the rule's floors.
         val errFloor = maxOf(p * cfg.margin, p * cfg.fairErrorRel * Math.sqrt(ids.size.toDouble()))
         val modelPrice = market?.best(RfqMarketModel.classOf(legs, p), p, ids.size, leadMs.coerceAtLeast(0L) / 86_400_000.0, errFloor, 0.5 * errFloor, cfg)
-            ?.let { ceil((p + it) * 10_000.0 - 1e-7) / 10_000.0 }
+            ?.let { up(p + it) }
         // With `marketPricing` the model's price is the quote (it never goes under its own floor: relative error x sqrt(legs)); without, the rule's.
         val price = if (cfg.marketPricing && modelPrice != null) modelPrice else rulePrice
         if (price > 0.999 || price < 0.001) return no("price ${"%.4f".format(price)} is outside Novig's 0.001-0.999")

@@ -81,12 +81,16 @@ object RfqProtocol {
     fun subscribe(nonce: Long, channels: List<String> = listOf("rfq", "quotes", "executions")): String =
         buildJsonObject { put("nonce", nonce); put("subscribe", buildJsonArray { channels.forEach { add(JsonPrimitive(it)) } }) }.toString()
 
-    /** A quote: [price] is the probability the parlay wins (0.001 to 0.999), [maxWager] the largest stake it covers; one quote per RFQ, the first stands. */
+    /**
+     * A quote: [price] is the probability the parlay wins (0.001 to 0.999), [maxWager] the largest stake it covers; one quote per RFQ, the first stands. The price is sent to THREE decimals, Novig's grid: it
+     * echoed a quote of 0.4495 as 0.450 and filled at the echo (2026-11-19, 11 fills: 0.5903 -> 0.590, 0.3932 -> 0.393, 0.7466 -> 0.747), so a finer price only moves the fill by up to half a thousandth, in
+     * either direction. [RfqPricer] rounds UP to the thousandth so the fill is never below the intended price.
+     */
     fun quote(nonce: Long, rfqId: String, price: Double, maxWager: Double, clientId: String? = null): String =
         buildJsonObject {
             put("nonce", nonce)
             put("quote", buildJsonObject {
-                put("rfqId", rfqId); put("price", dec(price, 4)); put("maxWager", dec(maxWager, 2))
+                put("rfqId", rfqId); put("price", dec(price, 3)); put("maxWager", dec(maxWager, 2))
                 if (clientId != null) put("clientId", clientId)
             })
         }.toString()
