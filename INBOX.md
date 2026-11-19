@@ -1818,3 +1818,8 @@ Why is the engine pricing almost nothing
 ```
 I think it isn't finding enough fair odds. Also, the controls take a long time to change because if i alter any setting it has to wait for github. Isn't there a better way?
 ```
+
+## 2026-11-19T22:45:47Z
+```
+Why were more fair odds being found before now 
+```
