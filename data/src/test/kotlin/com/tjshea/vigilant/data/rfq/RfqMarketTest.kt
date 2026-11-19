@@ -101,7 +101,7 @@ class RfqMarketTest {
         val now = 1_790_500_000_000L
         val lf = LegFairs { id -> LegFair(id, if (id == "a") "e1" else "e2", "l", 0.5, 5, now - 60_000L, now + 3 * 3_600_000L, false, "MONEY") }
         val created = RfqProtocol.Created(now, "r", listOf("a", "b"), now + 3_000L, 10.0)
-        val live = RfqConfig(mode = RfqConfig.Mode.LIVE, margin = 0.0, minReturn = 0.0, minPoints = 0.005, maxLegs = 3, maxCollateral = 80.0, maxOpenCollateral = 150.0)
+        val live = RfqConfig(mode = RfqConfig.Mode.LIVE, margin = 0.0, minReturn = 0.0, liveMinReturn = 0.0, minPoints = 0.005, maxLegs = 3, maxCollateral = 80.0, maxOpenCollateral = 150.0)
         val off = RfqPricer.decide(created, now, live, lf, 0.0, m) as RfqDecision.Quote
         assertEquals("OFF: the rule's price", off.rulePrice, off.price, 0.0)
         assertNotNull(off.modelPrice)
@@ -117,7 +117,7 @@ class RfqMarketTest {
         val lf = LegFairs { id -> LegFair(id, "e$id", "l", 0.55, 5, now - 60_000L, now + 3 * 3_600_000L, false, "MONEY", league = "ATP") }
         val ids = listOf("a", "b", "c", "d", "e")                                         // five legs at 0.55: fair 0.0503
         val created = RfqProtocol.Created(now, "r", ids, now + 3_000L, 10.0)
-        val live = RfqConfig(mode = RfqConfig.Mode.LIVE, margin = 0.0, minReturn = 0.0, minPoints = 0.007, maxLegs = 7, maxCollateral = 250.0, maxOpenCollateral = 500.0, maxStake = 12.0, minFair = 0.01)
+        val live = RfqConfig(mode = RfqConfig.Mode.LIVE, margin = 0.0, minReturn = 0.0, liveMinReturn = 0.0, minPoints = 0.007, maxLegs = 7, maxCollateral = 250.0, maxOpenCollateral = 500.0, maxStake = 12.0, minFair = 0.01)
         val m = RfqMarketModel()
         val legs = ids.map { lf.leg(it)!! }
         val cls = RfqMarketModel.classOf(legs, Math.pow(0.55, 5.0))
