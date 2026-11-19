@@ -174,6 +174,36 @@ class CreditPaceTest {
     }
 
     @Test
+    fun `a Business key with calls in flight is not restarted by late answers and may spend its pace (Tj 2026-11-19, 656,000 credits held back)`() = runBlocking<Unit> {
+        var now = Instant.parse("2026-11-19T20:00:00Z").toEpochMilli()
+        val m = meterAt { now }
+        val business = CreditPace(QuotaPolicy.PARLAY, reserve = 300, freeLimit = 1_000, zone = { ZoneId.of("America/New_York") })
+        // The account read set the month: Nov 1 to Dec 1, 1,000,000 credits, 344,000 used.
+        m.recordBalance(QuotaPolicy.PARLAY, "biz", remaining = 656_000, limit = 1_000_000, used = 344_000, resetAtMs = Instant.parse("2026-12-01T00:00:00Z").toEpochMilli(), periodStartMs = Instant.parse("2026-11-01T00:00:00Z").toEpochMilli())
+        suspend fun answer(used: Int, cost: Int) = m.recordCall(QuotaPolicy.PARLAY, "biz", cost, serverRemaining = 1_000_000 - used, serverUsed = used)
+        // A big props reply (hundreds of credits) lands after calls that already recorded a higher count, several seconds in a busy scan, and a quiet gap of three minutes before the next one.
+        answer(344_100, 3); now += 800; answer(344_900, 3); now += 800; answer(344_300, 3)
+        now += 3 * 60_000L; answer(343_700, 3)                  // late again, after the stale window, by 1,200 credits: lag, not a new billing cycle
+        val u = m.flow.value.providers.getValue("parlay").keys.getValue("biz")
+        assertEquals("the month is still Nov 1 to Dec 1", Instant.parse("2026-11-01T00:00:00Z").toEpochMilli(), u.periodStart)
+        // (met part-way through its period with 344,000 already used: what is left is spread over the days left, about 59,000 a day, not 0)
+        val today = business.spendableToday(u, now)
+        assertTrue("spendable tonight: $today", today in 40_000..80_000)
+        // The engine's real key: seen since Oct 28 (before the credits month), 552,000 credits charged by the app: its whole million is the month's, 19 of 30 days' share is allowed through today, so about 296,000 may go
+        val real = KeyUsage(periodStart = Instant.parse("2026-11-01T00:00:00Z").toEpochMilli(), used = 344_053, remaining = 655_947, limit = 1_000_000, firstSeenMs = Instant.parse("2026-10-28T03:00:00Z").toEpochMilli(), charged = 551_695,
+            resetAtMs = Instant.parse("2026-12-01T00:00:00Z").toEpochMilli())
+        val realToday = business.spendableToday(real, now)
+        assertTrue("spendable tonight on the real figures: $realToday", realToday in 250_000..330_000)
+        // and what the meter did before this fix: its period start moved to NOW, which leaves nothing
+        assertEquals(0, business.spendableToday(real.copy(periodStart = now), now))
+        // a real reset (the count falls to almost nothing) is still followed
+        now += 6 * 3_600_000L; answer(40, 3)
+        assertEquals(now, m.flow.value.providers.getValue("parlay").keys.getValue("biz").periodStart)
+        assertEquals(5_000, UsageMeter.staleSlack(1_000_000))
+        assertEquals(100, UsageMeter.staleSlack(1_000))
+    }
+
+    @Test
     fun `a real new billing cycle is still followed`() = runBlocking<Unit> {
         var now = Instant.parse("2026-10-15T12:00:00Z").toEpochMilli()
         val m = meterAt { now }
