@@ -69,6 +69,8 @@ class RfqMaker(
     private var wouldWin = 0L
     private var wouldEdge = 0.0
     private var modelWouldWin = 0L
+    private var liveWouldWin = 0L
+    private var liveWouldEdge = 0.0
     private var modelWouldEdge = 0.0
     @Volatile var lastError: String? = null; private set
     /** MK13: stop quoting so the quotes already out can finish their last look before the job ends (a closed socket rejects the trade and counts against the 99% confirm rate). */
@@ -327,6 +329,7 @@ class RfqMaker(
             synchronized(margins) { margins.addLast((e.price - q.fair) * 100.0); while (margins.size > KEEP) margins.removeFirst() }
             if (q.price <= e.price + 1e-9) { wouldWin++; wouldEdge += (q.price - q.fair) * 100.0 }
             q.modelPrice?.let { m -> if (m <= e.price + 1e-9) { modelWouldWin++; modelWouldEdge += (m - q.fair) * 100.0 } }
+            q.livePrice?.let { lp -> if (lp <= e.price + 1e-9) { liveWouldWin++; liveWouldEdge += (lp - q.fair) * 100.0 } }
         }
     }
 
@@ -371,7 +374,7 @@ class RfqMaker(
             settled = ledger?.settled ?: 0, makerWon = ledger?.makerWon ?: 0, makerLost = ledger?.makerLost ?: 0, openParlays = ledger?.open ?: 0, realizedPnl = ledger?.pnlTotal, realizedPnl24h = ledger?.pnl24h,
             probe = probe?.line().orEmpty(),
             market = market?.summary()?.take(12)?.map { c -> "${c.cls} n=${c.n} nobody=${(c.noQuote * 100).toInt()}%" + (c.median?.let { " median ${"%+.2f".format(it)}pts (p25 ${"%+.2f".format(c.p25)}, p75 ${"%+.2f".format(c.p75)})" } ?: "") }.orEmpty(),
-            modelWouldWin = modelWouldWin, modelWouldEarnPoints = if (modelWouldWin > 0) modelWouldEdge / modelWouldWin else null,
+            modelWouldWin = modelWouldWin, modelWouldEarnPoints = if (modelWouldWin > 0) modelWouldEdge / modelWouldWin else null, liveHurdleWouldWin = liveWouldWin, liveHurdleEarnPoints = if (liveWouldWin > 0) liveWouldEdge / liveWouldWin else null,
             makerTier = standing?.tier, confirmCounted = standing?.counted, confirmConfirmed = standing?.confirmed, confirmThreshold = standing?.threshold, confirmMinSample = standing?.minSample,
             lockSource = standing?.lockSource, lockUntilMs = standing?.lockUntilMs,
             refusals = synchronized(refusals) { refusals.entries.sortedByDescending { it.value }.take(5).map { "${it.key} x${it.value}" } },
