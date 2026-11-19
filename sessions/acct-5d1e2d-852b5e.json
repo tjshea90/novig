@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "8089c1808e8e44ccd107715cd6a3aff0ca067add",
+ "head": "dd43d9baee8d52485652058a0f2feea5f3c0b4a6",
  "since": 1795047736,
- "beat": 1795129862,
- "beatIso": "2026-11-19T23:11:02Z",
+ "beat": 1795130476,
+ "beatIso": "2026-11-19T23:21:16Z",
  "done": "MK10 22:51: LIVE realized -26.2, favourite-parlay bias note",
  "next": "after stop or 10 more settle: leg-band calibration"
 }
