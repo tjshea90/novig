@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "8c750c",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-r9oc2t",
+ "head": "5eff872a6a3a2904f417b2b24710f8167ce0cd4f",
+ "since": 1795090948,
+ "beat": 1795090948,
+ "beatIso": "2026-11-19T12:22:28Z",
+ "done": "WATCH 11-19 13:20 slot: engine healthy, parlay check no change",
+ "next": "judge MK10i floor when the 9 filled parlays settle; revert floor if realized < -15"
+}
