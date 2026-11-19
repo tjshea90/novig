@@ -312,4 +312,12 @@ class BetGraderTest {
         val FALCONS_START = java.time.Instant.parse("2026-09-25T00:15:00Z").toEpochMilli()
         val TENNIS_START = java.time.Instant.parse("2026-09-22T05:00:00Z").toEpochMilli()
     }
+
+    @Test
+    fun `a fill's own wording as the market name still reads (GD1)`() {
+        val p = BetGrader.pickOf("UTA +11.5", "UTA +11.5")
+        assertTrue(p.toString(), p is BetGrader.Pick.Spread)
+        val t = BetGrader.pickOf("SC @ OU t44.5", "Over 44.5")
+        assertTrue(t.toString(), t is BetGrader.Pick.Total)
+    }
 }

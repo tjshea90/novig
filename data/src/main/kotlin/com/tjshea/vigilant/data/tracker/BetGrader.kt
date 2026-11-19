@@ -60,8 +60,8 @@ object BetGrader {
     /** A kept [pickOf] answer (null included: a wording that can't be read is kept as unreadable). */
     private class Read(val pick: Pick?)
 
-    private val BARE_SPREAD = Regex("""^[\p{L}.&' -]+? [+\-−]\\d+(\\.\\d+)?$""")
-    private val BARE_TOTAL_EVENT = Regex("""^.+ @ .+ t\\d+(\\.\\d+)?$""")
+    private val BARE_SPREAD = Regex("""^[\p{L}.&' -]+? [+\-−]\d+(\.\d+)?$""")
+    private val BARE_TOTAL_EVENT = Regex("""^.+ @ .+ t\d+(\.\d+)?$""")
 
     private val reads = java.util.concurrent.ConcurrentHashMap<String, Read>()
     private const val READ_LIMIT = 20_000
