@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "4cdf66eb30cde7b0c85c18dd8c3d965564083be1",
+ "head": "7088a787019f982b27b03cd0dd7e1fe6c500dec9",
  "since": 1795103757,
- "beat": 1795107124,
- "beatIso": "2026-11-19T16:52:04Z",
- "done": "MK12e: SHADOW capital fix, propPairsFromMarket (OFF), Parlays-view probe/model tiles, rfq_set fields, LIVE runbook + outside context in the research doc; FULL suite green (4421 tests)",
- "next": "relative-error floor for the model path (fairErrorRel), xs band (<3%), exclude via-quotes from evidence counters, then land and redeploy once the first hour of probe data is read"
+ "beat": 1795107279,
+ "beatIso": "2026-11-19T16:54:39Z",
+ "done": "MK12f: model floor fairErrorRel (fair x 2% x sqrt(legs)), xs band, via-quotes out of the evidence counters, rfq-market.yml (free workflow: rfq_market.py table every 6 h into the rfq-market Release), size-of-the-prize and fix-ups in the research doc; FULL suite green (4428 tests)",
+ "next": "land, add min-wins guard to RfqMarketModel.best, walk-forward table in the doc, then redeploy (engine_set --reset) and read the first probe table"
 }
