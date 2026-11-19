@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "c31b3bb713950076d6b9e68dc00772b22e9b6f2e",
+ "head": "c1e50755e2a22be0aa6ce7f391e83c744fedab22",
  "since": 1795047736,
- "beat": 1795093667,
- "beatIso": "2026-11-19T13:07:47Z",
- "done": "MK10 11:08: fills starting (9 won, 8 filled)",
- "next": "next 11:38: watch P&L of the new fills; revert floor if realized < -15"
+ "beat": 1795093717,
+ "beatIso": "2026-11-19T13:08:37Z",
+ "done": "MK10j: open collateral cap 80 (wallet cash 12.5)",
+ "next": "wallet: ask Tj to add money to keep quoting; watch first settlements"
 }
