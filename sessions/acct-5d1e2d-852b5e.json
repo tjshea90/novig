@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "6909db5bc3951afed61b3cf9747b41c47bbf55e0",
  "since": 1795047736,
- "beat": 1795104891,
- "beatIso": "2026-11-19T16:14:51Z",
+ "beat": 1795106198,
+ "beatIso": "2026-11-19T16:36:38Z",
  "done": "MK10k: rfq maker SHADOW (paper) per Tj",
  "next": "30-min checks on shadow numbers; LIVE when Tj adds money"
 }
