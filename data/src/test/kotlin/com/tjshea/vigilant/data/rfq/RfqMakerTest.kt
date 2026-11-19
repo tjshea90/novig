@@ -176,6 +176,75 @@ class RfqMakerTest {
         assertEquals("the defaults", 0.60 to 0.90, RfqConfig().maxFair to RfqConfig().maxLegFair)
     }
 
+    // ---- MK17 (Tj 2026-11-19: tonight's options): only today's slate, longshots only, the wallet as the collateral limit, and a quote that is positive EV with a margin for our own error ----
+    @Test fun onlyTodayQuotesOnlyParlaysWhoseLastLegStartsBeforeTheSlateEnds() {
+        // `now` is 04:26 ET: today's slate ends at 05:00 ET, 33 minutes away
+        val today = cfg.copy(onlyToday = true)
+        val ok = RfqPricer.decide(created("a", "b"), now, today, fairs(leg("a", "e1", 0.5, startsInMs = 25 * 60_000L), leg("b", "e2", 0.4, startsInMs = 25 * 60_000L)), 0.0)
+        assertTrue("both legs start inside the slate: $ok", ok is RfqDecision.Quote)
+        val late = (RfqPricer.decide(created("a", "b"), now, today, fairs(leg("a", "e1", 0.5, startsInMs = 25 * 60_000L), leg("b", "e2", 0.4, startsInMs = 3 * 3_600_000L)), 0.0) as RfqDecision.Decline)
+        assertTrue(late.reason, late.reason.startsWith("its last leg starts after today's slate ends"))
+        assertEquals("the decline still carries our fair", 0.2, late.fair!!, 1e-9)
+        assertTrue("off: the same parlay is quoted", RfqPricer.decide(created("a", "b"), now, cfg, fairs(leg("a", "e1", 0.5, startsInMs = 25 * 60_000L), leg("b", "e2", 0.4, startsInMs = 3 * 3_600_000L)), 0.0) is RfqDecision.Quote)
+        // the slate: 5 am to 5 am Eastern (EDT, UTC-4 in September)
+        assertEquals("04:26 ET: this morning's 5 am", now + 33 * 60_000L + 20_000L, RfqSlate.endMs(now))
+        val afternoon = 1_790_535_000_000L                                     // 2026-09-28 18:10 UTC = 14:10 ET
+        assertEquals("14:10 ET: tomorrow's 5 am = 09:00 UTC", 1_790_586_000_000L - 0L, RfqSlate.endMs(afternoon) + 0L)
+    }
+
+    @Test fun longshotsOnlyQuotesOnlyParlaysWeGiveAtMostTheLimitToWin() {
+        val ls = cfg.copy(longshotsOnly = true, longshotMaxChance = 0.25)
+        assertTrue(RfqPricer.decide(created("a", "b"), now, ls, fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4)), 0.0) is RfqDecision.Quote)       // 20%
+        val tooLikely = RfqPricer.decide(created("a", "b"), now, ls, fairs(leg("a", "e1", 0.6), leg("b", "e2", 0.5)), 0.0) as RfqDecision.Decline   // 30%
+        assertEquals("longshots only: the parlay wins 30% of the time, over the 25% limit", tooLikely.reason)
+        assertEquals(0.3, tooLikely.fair!!, 1e-9)
+        assertTrue("off: the 30% parlay is quoted", RfqPricer.decide(created("a", "b"), now, cfg, fairs(leg("a", "e1", 0.6), leg("b", "e2", 0.5)), 0.0) is RfqDecision.Quote)
+        assertTrue("the limit is a setting", RfqPricer.decide(created("a", "b"), now, ls.copy(longshotMaxChance = 0.35), fairs(leg("a", "e1", 0.6), leg("b", "e2", 0.5)), 0.0) is RfqDecision.Quote)
+    }
+
+    @Test fun aSameDayParlayIsChargedItsRealHoldNotAFullDayForTheCapitalHurdle() {
+        val live = cfg.copy(minReturn = 0.0, liveMinReturn = 0.03, margin = 0.0, minPoints = 0.0, fairErrorRel = 0.0, mode = RfqConfig.Mode.LIVE)
+        val f = fairs(leg("a", "e1", 0.5, startsInMs = 25 * 60_000L), leg("b", "e2", 0.4, startsInMs = 25 * 60_000L))      // fair 0.2, 25 min away
+        val day = RfqPricer.decide(created("a", "b"), now, live, f, 0.0, cashRoom = 1_000.0) as RfqDecision.Quote
+        assertEquals("a full day of the 3% hurdle: (0.2 + 0.03)/1.03", 0.224, day.price, 1e-9)
+        val same = RfqPricer.decide(created("a", "b"), now, live.copy(onlyToday = true), f, 0.0, cashRoom = 1_000.0) as RfqDecision.Quote
+        // days = 25 min + a quarter day = 0.267 -> r = 0.8%: (0.2 + 0.008)/1.008 = 0.2063
+        assertTrue("same-day price ${same.price}", same.price in 0.206..0.208)
+        assertTrue(same.price < day.price)
+    }
+
+    @Test fun aLiveQuoteAsksAMarginForOurOwnErrorAndSoDoesTheRecordOfWhatLiveWouldAsk() {
+        val bare = cfg.copy(minReturn = 0.0, liveMinReturn = 0.0, margin = 0.0, minPoints = 0.0, fairErrorRel = 0.02)
+        val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                      // fair 0.2; one standard error of the fair: 0.2 x 2% x sqrt(2) = 0.00566
+        val live = RfqPricer.decide(created("a", "b"), now, bare, f, 0.0, cashRoom = 1_000.0) as RfqDecision.Quote
+        assertEquals("no rule asked for any margin, the error margin does: 0.2057 up to the thousandth", 0.206, live.price, 1e-9)
+        val shadow = RfqPricer.decide(created("a", "b"), now, bare.copy(mode = RfqConfig.Mode.SHADOW), f, 0.0) as RfqDecision.Quote
+        assertEquals("paper keeps the looser rule (the volume of evidence) and records what live asks", 0.2, shadow.price, 1e-9)
+        assertEquals(0.206, shadow.livePrice!!, 1e-9)
+    }
+
+    @Test fun theWalletIsTheCollateralLimitWithShareCapsAndALossStopThatFollowsIt() {
+        val rows = ArrayList<RfqRow>(); val sent = ArrayList<String>()
+        var cashNow = 100.0
+        val legs = listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4))
+        val w = cfg.copy(mode = RfqConfig.Mode.LIVE, walletCollateral = true, walletShare = 0.30, walletLegShare = 0.5, maxCollateral = 1.0, maxOpenCollateral = 1.0, maxLegCollateral = 1.0, dayLossStop = 20.0, dayLossStopPct = 0.2, cashReserve = 3.0)
+        val maker = RfqMaker({ w }, { id -> legs.firstOrNull { it.outcomeId == id } }, { 0.0 }, { sent += it; true }, { rows += it }, { _, _ -> }, { now }, cash = { cashNow })
+        // $100 wallet: one parlay may lock $30; this one (a $10 stake at 0.216) needs $36.30: declined, whatever the fixed $1 caps say
+        maker.onEvent(created("a", "b"))
+        assertTrue("a quote of 36.30 collateral over the 30% share is declined", sent.isEmpty())
+        assertTrue(rows.single { it.kind == "CREATED" }.data, rows.single { it.kind == "CREATED" }.data.contains("the caps allow"))
+        // $200: one parlay may lock $60 and the fixed caps do not apply: quoted
+        cashNow = 200.0
+        maker.onEvent(created("a", "b").copy(rfqId = "rfq-2"))
+        assertEquals(1, sent.size)
+        // the loss stop is 20% of the wallet when that is more than the $20: $200 -> $40
+        assertEquals(40.0, maker.lossStop(w), 1e-9)
+        assertEquals("off: the fixed dollars", 20.0, maker.lossStop(w.copy(walletCollateral = false)), 1e-9)
+        // the status says what the wallet allows
+        val s = maker.snapshot(true, w, "m", 0.0, "")
+        assertEquals(200.0, s.walletCash!!, 1e-9); assertEquals(60.0, s.walletParlayCap!!, 1e-9); assertEquals(100.0, s.walletLegCap!!, 1e-9); assertEquals(40.0, s.lossStopNow!!, 1e-9)
+    }
+
     // ---- MK15: the parlay hub keeps each fill's legs ----
     @Test fun aFilledQuoteIsHandedToTheParlayHubOnceWithItsLegsEvenWhenTheFillArrivesOnTwoSockets() {
         val fills = ArrayList<FillRecord>(); val rows = ArrayList<RfqRow>()
