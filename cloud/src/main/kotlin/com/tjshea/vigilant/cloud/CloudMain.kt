@@ -518,6 +518,16 @@ fun main(args: Array<String>) = runBlocking {
     val rfqCfg = java.util.concurrent.atomic.AtomicReference(com.tjshea.vigilant.data.rfq.RfqConfig())
     val rfqJournal = DayJournal(File(out, "cloud"), "rfq", com.tjshea.vigilant.data.rfq.RfqRow.serializer()) { it.atMs }
     val rfqCollateral = java.util.concurrent.atomic.AtomicReference(0.0)
+    // The maker's own wallet (MK13, docs api/concepts/account-model: a subaccount is a separate wallet with its own throttles and 10 sockets): with the optional NOVIG_MAKER_KEY_* secrets the maker registers, quotes and reads
+    // its collateral, executions, standing and balance on a DEDICATED subaccount; without them it uses the Vigilant subaccount's trading key as before.
+    val makerKeyId = CloudKeys.rawEnv(CloudKeys.MAKER_KEY_ID)
+    val makerKeyPem = CloudKeys.rawEnv(CloudKeys.MAKER_KEY_PEM)
+    val dedicatedMakerClient: NovigTradingClient? = if (makerKeyId.isNotEmpty() && makerKeyPem.isNotEmpty())
+        runCatching { NovigTradingClient(NovigSignedClient(http, json, PemSigningKey(makerKeyId, makerKeyPem), "https://api.novig.com"), json) }.getOrNull() else null
+    val rfqClient: NovigTradingClient? = dedicatedMakerClient ?: tradingClient
+    val rfqKeyId = if (dedicatedMakerClient != null) makerKeyId else tradeKeyId
+    if (dedicatedMakerClient != null) log("RFQ maker: quoting from its own subaccount (NOVIG_MAKER_KEY_ID ${makerKeyId.take(8)}...), not the Vigilant wallet")
+    val rfqCash = java.util.concurrent.atomic.AtomicReference<Double?>(null)
     val rfqSocketRef = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.rfq.RfqSocket?>(null)
     val rfqDirectFairs = object : com.tjshea.vigilant.data.rfq.LegFairs {
         private var indexedFor: List<com.tjshea.vigilant.data.scanner.Opportunity>? = null
@@ -607,9 +617,15 @@ fun main(args: Array<String>) = runBlocking {
         tell = { title, body -> scope.launch { runCatching { postMessage(CloudMessages.Message("rfq-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title.take(90), body.take(400), 1, "CLOUD")) } } },
         log = { log("RFQ maker: $it") },
         legInfo = { id -> outcomeIndex.get()[id]?.marketLabel },
-        market = rfqMarket, probe = rfqProbe,
+        market = rfqMarket, probe = rfqProbe, cash = { rfqCash.get() },
     )
-    val rfqSocket = com.tjshea.vigilant.data.rfq.RfqSocket(http, { tradingClient }, rfqMaker, { rfqCfg.get() }, scope, log = { log(it) }).also { rfqSocketRef.set(it) }
+    val rfqSocket = com.tjshea.vigilant.data.rfq.RfqSocket(http, { rfqClient }, rfqMaker, { rfqCfg.get() }, scope, log = { log(it) }).also { rfqSocketRef.set(it) }
+    // The docs allow 10 sockets per key and Novig drops event frames when a connection's 256-frame queue is full (`quote_accepted` is one, with a 1-second answer window): in LIVE a second socket on the same key
+    // subscribes to `quotes` ONLY, a quiet line for the last look beside the RFQ firehose (MK13, docs api/rfq/socket). It waits for the pricing socket's registration.
+    val rfqLastLook = com.tjshea.vigilant.data.rfq.RfqSocket(
+        http, { rfqClient }, rfqMaker, { rfqCfg.get() }, scope, log = { log(it) },
+        channels = com.tjshea.vigilant.data.rfq.RfqSocket.LAST_LOOK, name = "RFQ last-look socket", ready = { rfqSocket.makerId != null },
+    )
     scope.launch {
         // The mode file, read with the settings (every few seconds); the socket follows it by itself.
         while (isActive) {
@@ -618,14 +634,18 @@ fun main(args: Array<String>) = runBlocking {
             delay(5_000L)
         }
     }
-    rfqSocket.start()
-    tradingClient?.let { tc ->
+    rfqSocket.start(); rfqLastLook.start()
+    rfqClient?.let { tc ->
         scope.launch {
             delay(90_000L)
             var logged = 0L
             while (isActive) {
                 if (rfqCfg.get().mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF) {
                     runCatching { tc.rfqCollateral() }.getOrNull()?.let { rfqCollateral.set(it) }
+                    // The balance the maker's quotes are backed by (`GET /v3/account/subaccounts/{keyId}/balance`, throttle `account`, 1 token a minute): a LIVE quote is sized to the cash that is there.
+                    if (rfqCfg.get().mode == com.tjshea.vigilant.data.rfq.RfqConfig.Mode.LIVE && rfqKeyId.isNotEmpty()) runCatching { tc.balance(rfqKeyId) }.getOrNull()?.let { rfqCash.set(it) }
+                    // Novig's own view of the maker: tier, the confirm rate it is judged by, any lock and its end (`GET /rfq/v3/maker`, docs api/rfq/confirm-rate).
+                    runCatching { tc.rfqMakerInfo() }.getOrNull()?.let { text -> com.tjshea.vigilant.data.rfq.RfqStanding.parse(text)?.let { rfqMaker.onStanding(it) } }
                     // The result of the maker's real fills decides the loss stop (LIVE only: SHADOW has none).
                     if (rfqCfg.get().mode == com.tjshea.vigilant.data.rfq.RfqConfig.Mode.LIVE) runCatching { tc.rfqExecutions() }.getOrNull()?.let { text -> rfqMaker.onLedger(com.tjshea.vigilant.data.rfq.RfqLedger.summarize(com.tjshea.vigilant.data.rfq.RfqLedger.parse(text), System.currentTimeMillis())) }
                     val now = System.currentTimeMillis()
@@ -915,7 +935,8 @@ fun main(args: Array<String>) = runBlocking {
                 geoExpiresAtMs = geoReading.get()?.second ?: 0L, geoNote = geoReading.get()?.let { r -> com.tjshea.vigilant.data.cloud.GeoWatch.note(r.second, r.third, System.currentTimeMillis()) }.orEmpty().take(300),
                 locksNote = sources.novigLocks.describe(),
                 rfqNote = (rfqMaker.status(rfqSocket.connected) + (if (rfqCfg.get().mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF && !rfqSocket.connected) " · ${rfqSocket.lastNote}" else "")).take(800),
-                rfq = rfqMaker.snapshot(rfqSocket.connected, rfqCfg.get(), rfqSocket.makerId, rfqCollateral.get(), rfqSocket.lastNote, System.currentTimeMillis()),
+                rfq = rfqMaker.snapshot(rfqSocket.connected, rfqCfg.get(), rfqSocket.makerId, rfqCollateral.get(), rfqSocket.lastNote, System.currentTimeMillis())
+                    .copy(sockets = "pricing ${if (rfqSocket.connected) "up" else "down"} (${rfqSocket.connects} connects)" + (if (rfqCfg.get().mode == com.tjshea.vigilant.data.rfq.RfqConfig.Mode.LIVE) " · last look ${if (rfqLastLook.connected) "up" else "down"} (${rfqLastLook.connects} connects)" else "")),
                 ledgerProfit = ledgerProfit.get()?.profit, ledgerOpenCost = ledgerProfit.get()?.openCost, ledgerRows = ledgerProfit.get()?.rows ?: 0,
                 ledgerAtMs = ledgerProfit.get()?.atMs ?: 0L, ledgerDetail = ledgerProfit.get()?.detail.orEmpty().take(300),
             )
@@ -988,6 +1009,14 @@ fun main(args: Array<String>) = runBlocking {
     // A cancelled job gets SIGTERM first: close the provider sockets cleanly so none stays half-open on the provider's connection count (BC3).
     Runtime.getRuntime().addShutdownHook(Thread { runCatching { sources.closeSockets() } })
     val end = engine.run(until, started)
+    // The RFQ maker stops quoting and keeps its sockets open until the quotes already out have had their last look (users accept up to ~30 s after a quote; a closed socket rejects the trade and counts against
+    // the 99% confirm rate): nothing to wait for in SHADOW. At most 60 s, inside the end watchdog below.
+    runCatching {
+        rfqMaker.beginDrain()
+        val limit = System.currentTimeMillis() + 60_000L
+        while (rfqMaker.drainRemainingMs() > 0L && System.currentTimeMillis() < limit) Thread.sleep(500L)
+        rfqSocket.stop(); rfqLastLook.stop()
+    }
     runCatching { sources.closeSockets() }
     // The window is over (or the job is): whatever rests on Novig under the engine's key is cancelled, and the ledger goes out one last time.
     runCatching { trader.windowEnded() }

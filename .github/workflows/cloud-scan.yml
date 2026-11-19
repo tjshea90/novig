@@ -136,6 +136,9 @@ jobs:
           # the Vigilant subaccount's trading key (Tj, 2026-10-15): used only when the phone's cloud trading switch is paper or live (TCL20d); never the management key
           NOVIG_TRADE_KEY_ID: ${{ secrets.NOVIG_TRADE_KEY_ID }}
           NOVIG_TRADE_KEY_PEM: ${{ secrets.NOVIG_TRADE_KEY_PEM }}
+          # OPTIONAL (MK13): a dedicated parlay-maker subaccount's trading key; empty = the maker uses the Vigilant subaccount's key above
+          NOVIG_MAKER_KEY_ID: ${{ secrets.NOVIG_MAKER_KEY_ID }}
+          NOVIG_MAKER_KEY_PEM: ${{ secrets.NOVIG_MAKER_KEY_PEM }}
           GITHUB_TOKEN: ${{ github.token }}
           MINUTES: ${{ github.event.inputs.minutes || '340' }}
         run: |

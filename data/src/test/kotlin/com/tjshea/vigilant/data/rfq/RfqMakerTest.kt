@@ -40,10 +40,10 @@ class RfqMakerTest {
     }
 
     @Test fun theMessagesWeSendCarryStringDecimalsAndANonce() {
-        val q = json.parseToJsonElement(RfqProtocol.quote(3, "r1", 0.4512, 250.0, "c1")).jsonObject
+        val q = json.parseToJsonElement(RfqProtocol.quote(3, "r1", 0.451, 250.0, "c1")).jsonObject
         assertEquals("3", q["nonce"]!!.jsonPrimitive.content)
         val body = q["quote"]!!.jsonObject
-        assertEquals("0.4512", body["price"]!!.jsonPrimitive.content); assertTrue(body["price"]!!.jsonPrimitive.isString)
+        assertEquals("a price travels on Novig's thousandth grid", "0.451", body["price"]!!.jsonPrimitive.content); assertTrue(body["price"]!!.jsonPrimitive.isString)
         assertEquals("250.00", body["maxWager"]!!.jsonPrimitive.content); assertEquals("c1", body["clientId"]!!.jsonPrimitive.content)
         assertEquals(listOf("rfq", "quotes"), json.parseToJsonElement(RfqProtocol.subscribe(1, listOf("rfq", "quotes"))).jsonObject["subscribe"]!!.jsonArray.map { it.jsonPrimitive.content })
         val c = json.parseToJsonElement(RfqProtocol.confirm(5, "r1", "q1", true)).jsonObject["confirm"]!!.jsonObject
@@ -134,7 +134,7 @@ class RfqMakerTest {
     // ---- the maker: shadow and live ----
     private class Rig(var cfg: RfqConfig, var legs: List<LegFair>, var collateral: Double = 0.0, var clock: Long = 1_790_500_000_000L) {
         val sent = ArrayList<String>(); val rows = ArrayList<RfqRow>(); val told = ArrayList<String>()
-        val maker = RfqMaker({ cfg }, { id -> legs.firstOrNull { it.outcomeId == id } }, { collateral }, { sent += it; true }, { rows += it }, { t, _ -> told += t }, { clock })
+        val maker = RfqMaker({ cfg }, { id -> legs.firstOrNull { it.outcomeId == id } }, { collateral }, { sent += it; true }, { rows += it }, { t, _ -> told += t }, { clock }, cash = { 1_000.0 })
     }
 
     private fun rig(mode: RfqConfig.Mode) = Rig(cfg.copy(mode = mode), listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4)))
@@ -178,7 +178,7 @@ class RfqMakerTest {
         r.legs = r.legs + listOf(leg("c", "e3", 0.5), leg("d", "e4", 0.4))
         r.maker.onEvent(created("a", "b"))
         val q = json.parseToJsonElement(r.sent.single()).jsonObject["quote"]!!.jsonObject
-        assertEquals("0.2160", q["price"]!!.jsonPrimitive.content); assertEquals("10.00", q["maxWager"]!!.jsonPrimitive.content)
+        assertEquals("0.216", q["price"]!!.jsonPrimitive.content); assertEquals("10.00", q["maxWager"]!!.jsonPrimitive.content)
         assertEquals(1L, r.maker.quotesSent)
         // $10 x 3.63 = $36.30 reserved each: the second still fits under the $90 total, the third has $17 of room, under the $10 stake's $36 of collateral
         r.maker.onEvent(created("c", "d").copy(rfqId = "rfq-2"))
@@ -223,6 +223,98 @@ class RfqMakerTest {
         r.sent.clear()
         r.maker.onEvent(RfqProtocol.QuoteAccepted(now, "rfq-5", "q5", 99.0, 0.216, "rfq-5"))
         assertEquals("false", json.parseToJsonElement(r.sent.single()).jsonObject["confirm"]!!.jsonObject["confirmed"]!!.jsonPrimitive.content)
+    }
+
+    /** An RFQ created at the rig's clock with legs fresh at that time (the rig's clock moves in the tests that wait). */
+    private fun freshCreated(r: Rig, id: String): RfqProtocol.Created {
+        r.legs = listOf(LegFair("a", "e1", "label a", 0.5, 5, r.clock - 60_000L, r.clock + 3 * 3_600_000L, false, "MONEY"), LegFair("b", "e2", "label b", 0.4, 5, r.clock - 60_000L, r.clock + 3 * 3_600_000L, false, "SPREAD"))
+        return RfqProtocol.Created(r.clock, id, listOf("a", "b"), r.clock + 3_000L, 10.0)
+    }
+
+    @Test fun aQuoteIsSizedToTheCashThatIsThereAndAnUnreadBalanceQuotesNothing() {
+        val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                                   // fair 0.20, price 0.216: $10 of stake needs $36.30 of collateral
+        val roomy = RfqPricer.decide(created("a", "b"), now, cfg, f, 0.0, null, 100.0)
+        assertTrue(roomy is RfqDecision.Quote)
+        val short = RfqPricer.decide(created("a", "b"), now, cfg, f, 0.0, null, 20.0) as RfqDecision.Decline
+        assertTrue(short.reason, short.reason.contains("cash is short") && short.reason.contains("balance covers a $5.51 stake"))
+        assertTrue("null = not known (SHADOW): no cash limit", RfqPricer.decide(created("a", "b"), now, cfg, f, 0.0, null, null) is RfqDecision.Quote)
+        // the maker in LIVE: the balance less the collateral of quotes out and the reserve
+        var balance: Double? = null
+        val rows = ArrayList<RfqRow>(); val sent = ArrayList<String>(); var clock = now
+        val maker = RfqMaker({ cfg.copy(mode = RfqConfig.Mode.LIVE, cashReserve = 3.0) }, { id -> listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4), leg("c", "e3", 0.5), leg("d", "e4", 0.4)).firstOrNull { it.outcomeId == id } }, { 0.0 }, { sent += it; true }, { rows += it }, { _, _ -> }, { clock }, cash = { balance })
+        maker.onEvent(created("a", "b")); assertTrue("no balance read yet: nothing quoted", sent.isEmpty() && rows.single { it.kind == "CREATED" }.data.contains("cash is short"))
+        balance = 60.0
+        maker.onEvent(created("a", "b").copy(rfqId = "rfq-2")); assertEquals("$60 - $3 reserve covers the $36.30", 1, sent.size)
+        maker.onEvent(created("c", "d").copy(rfqId = "rfq-3")); assertEquals("the first quote's $36.30 is promised: $20.70 left cannot back a second", 1, sent.size)
+    }
+
+    @Test fun anRfqDeliveredTwiceIsPricedAndQuotedOnce() {
+        val r = rig(RfqConfig.Mode.LIVE)
+        r.maker.onEvent(created("a", "b")); r.maker.onEvent(created("a", "b"))                  // the same rfqId on two sockets
+        assertEquals(1L, r.maker.quotesSent); assertEquals(1, r.sent.size); assertEquals(1L, r.maker.seen)
+        assertEquals("one CREATED row", 1, r.rows.count { it.kind == "CREATED" })
+    }
+
+    @Test fun aLastLookAnsweredOnTheSocketItArrivedOnIsAnsweredOnce() {
+        val r = rig(RfqConfig.Mode.LIVE)
+        r.maker.onEvent(created("a", "b")); r.sent.clear()
+        val viaQuiet = ArrayList<String>(); val viaPricing = ArrayList<String>()
+        val look = RfqProtocol.QuoteAccepted(now, "rfq-1", "q1", 10.0, 0.216, "rfq-1")
+        r.maker.onEvent(look) { viaQuiet += it; true }                                              // the quiet last-look socket got it first
+        r.maker.onEvent(look) { viaPricing += it; true }                                            // the busy pricing socket delivers it late
+        assertEquals(1, viaQuiet.size); assertTrue(json.parseToJsonElement(viaQuiet.single()).jsonObject["confirm"]!!.jsonObject["confirmed"]!!.jsonPrimitive.content == "true")
+        assertTrue("one answer only: a second would get CONFIRM_ALREADY_DECIDED", viaPricing.isEmpty() && r.sent.isEmpty())
+        assertEquals(1L, r.maker.confirmed); assertTrue(r.rows.any { it.kind == "CONFIRM" && it.data.contains("\"dup\":true") })
+        // an answer that could not be sent does not count as answered: the other socket may still make the 1-second window
+        val r2 = rig(RfqConfig.Mode.LIVE)
+        r2.maker.onEvent(created("a", "b"))
+        val look2 = RfqProtocol.QuoteAccepted(now, "rfq-1", "q2", 10.0, 0.216, "rfq-1"); val second = ArrayList<String>()
+        r2.maker.onEvent(look2) { false }
+        r2.maker.onEvent(look2) { second += it; true }
+        assertEquals(1, second.size)
+    }
+
+    @Test fun drainingStopsNewQuotesAndSaysHowLongTheLastOnesNeed() {
+        val r = rig(RfqConfig.Mode.LIVE)
+        r.maker.onEvent(created("a", "b"))
+        assertEquals("a maker that never quoted has nothing to wait for", 0L, rig(RfqConfig.Mode.SHADOW).maker.drainRemainingMs())
+        r.maker.beginDrain()
+        assertEquals(RfqMaker.DRAIN_AFTER_QUOTE_MS, r.maker.drainRemainingMs())
+        r.clock += 20_000L
+        assertEquals(RfqMaker.DRAIN_AFTER_QUOTE_MS - 20_000L, r.maker.drainRemainingMs())
+        r.sent.clear(); r.maker.onEvent(freshCreated(r, "rfq-2"))
+        assertTrue("a draining maker quotes nothing new", r.sent.isEmpty() && r.rows.any { it.kind == "CREATED" && it.data.contains("\"rfq-2\"").not() })
+        r.clock += 30_000L
+        assertEquals(0L, r.maker.drainRemainingMs())
+    }
+
+    @Test fun makerBarredAndAReadOnlyKeyStopTheQuotingForGood() {
+        val r = rig(RfqConfig.Mode.LIVE)
+        r.maker.onEvent(RfqProtocol.Refused(now, 3, "MAKER_BARRED", "Your maker can't quote right now."))
+        assertNotNull(r.maker.halted); assertTrue(r.told.single().contains("stopped quoting"))
+        r.clock += 24 * 3_600_000L
+        r.maker.onEvent(freshCreated(r, "rfq-9"))
+        assertNotNull("no end: Novig says contact them", r.maker.halted); assertTrue(r.sent.isEmpty())
+        assertTrue(r.maker.status(true).contains("MAKER_BARRED") || r.maker.snapshot(true, r.cfg, "m", 0.0, "").refusals.any { it.startsWith("MAKER_BARRED") })
+        val ro = rig(RfqConfig.Mode.LIVE)
+        ro.maker.onEvent(RfqProtocol.Refused(now, 4, "READ_ONLY_KEY", null)); assertNotNull(ro.maker.halted)
+    }
+
+    @Test fun aLockNovigReportsStopsQuotingUntilItsStatedEndAndTheStandingIsPublished() {
+        val r = rig(RfqConfig.Mode.LIVE)
+        val standing = RfqStanding.parse("""{"makerId":"m","tier":"basic","confirmStanding":{"lookbackMinutes":1440,"counted":0,"confirmed":0,"threshold":"0.99","minSample":10},"lock":{"source":"confirm_rate","untilTs":${r.clock + 240_000L}}}""")!!
+        assertTrue(standing.locked)
+        r.maker.onStanding(standing)
+        assertNotNull(r.maker.halted)
+        r.maker.onEvent(created("a", "b")); assertTrue("locked: no quote", r.sent.isEmpty())
+        r.clock += 241_000L
+        r.maker.onEvent(freshCreated(r, "rfq-2")); assertNull("the stated end has passed", r.maker.halted); assertEquals(1, r.sent.size)
+        val s = r.maker.snapshot(true, r.cfg, "m", 0.0, "")
+        assertEquals("basic", s.makerTier); assertEquals(10, s.confirmMinSample); assertEquals("confirm_rate", s.lockSource)
+        // a lock by hand with no end stays until Novig lifts it
+        val admin = RfqStanding.parse("""{"makerId":"m","tier":"basic","confirmStanding":{"lookbackMinutes":1440,"counted":3,"confirmed":3,"threshold":"0.99","minSample":10},"lock":{"source":"admin"}}""")!!
+        val r2 = rig(RfqConfig.Mode.LIVE); r2.maker.onStanding(admin); assertNotNull(r2.maker.halted); r2.clock += 7 * 24 * 3_600_000L
+        r2.maker.onEvent(freshCreated(r2, "rfq-3")); assertNotNull(r2.maker.halted); assertTrue(r2.sent.isEmpty())
     }
 
     @Test fun faultsStopTheQuotingAndTellTj() {
@@ -286,10 +378,10 @@ class RfqMakerTest {
 
     @Test fun theQuoteAsksAReturnOnTheCollateralAndMoreForLongerLockUpsAndMoreLegs() {
         val h = 3_600_000L
-        // fair 0.40, a game in 3 h: (0.40 + 0.04)/1.04 = 0.4231 (2.3 points); the 2% relative floor (0.408) and the 1-point floor (0.41) are lower
-        assertEquals(0.4231, RfqPricer.quotePrice(0.40, 2, 3 * h, roc), 1e-9)
-        // the same parlay two days out ties the collateral up 2.25 days: r = 9%, (0.40 + 0.09)/1.09 = 0.44954, rounded up to 0.4496
-        assertEquals(0.4496, RfqPricer.quotePrice(0.40, 2, 48 * h, roc), 1e-9)
+        // fair 0.40, a game in 3 h: (0.40 + 0.04)/1.04 = 0.4231, rounded UP to Novig's thousandth grid 0.424 (2.4 points); the 2% relative floor (0.408) and the 1-point floor (0.41) are lower
+        assertEquals(0.424, RfqPricer.quotePrice(0.40, 2, 3 * h, roc), 1e-9)
+        // the same parlay two days out ties the collateral up 2.25 days: r = 9%, (0.40 + 0.09)/1.09 = 0.44954, rounded up to the thousandth 0.450
+        assertEquals(0.450, RfqPricer.quotePrice(0.40, 2, 48 * h, roc), 1e-9)
         // a favourite pair at 0.9: the 2% relative floor binds (0.918, 1.8 points); the return term gives 0.9039 and the 1-point floor 0.91
         assertEquals(0.918, RfqPricer.quotePrice(0.90, 2, 3 * h, roc), 1e-9)
         // five legs of a 0.5 parlay: the points floor (4 x 1 point = 0.54) beats the return term (0.5192, 1.9 points)
@@ -298,9 +390,9 @@ class RfqMakerTest {
     }
 
     @Test fun theQuoteCoversTheStakeTheRfqAskedForAndLongshotsThatTieUpTooMuchAreDeclined() {
-        val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                                  // fair 0.20, price (0.20 + 0.04)/1.04 = 0.2308
+        val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                                  // fair 0.20, price (0.20 + 0.04)/1.04 = 0.2308, up to 0.231
         val d = RfqPricer.decide(created("a", "b", minWager = 10.0), now, roc, f, 0.0) as RfqDecision.Quote
-        assertEquals(0.2308, d.price, 1e-9); assertEquals(10.0, d.maxWager, 1e-9)
+        assertEquals(0.231, d.price, 1e-9); assertEquals(10.0, d.maxWager, 1e-9)
         // $10 x (1 - 0.2308)/0.2308 = $33.3 of collateral: a $25 per-parlay cap cannot cover the stake asked for
         val tight = (RfqPricer.decide(created("a", "b"), now, roc.copy(maxCollateral = 25.0), f, 0.0) as RfqDecision.Decline).reason
         assertTrue(tight, tight.contains("asked"))

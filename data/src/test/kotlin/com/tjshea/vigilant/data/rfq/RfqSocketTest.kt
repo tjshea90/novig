@@ -72,7 +72,7 @@ class RfqSocketTest {
         val rows = CopyOnWriteArrayList<RfqRow>()
         val cfg = RfqConfig(mode = mode)
         lateinit var socket: RfqSocket
-        val maker = RfqMaker({ cfg }, { id -> legs().firstOrNull { it.outcomeId == id } }, { 0.0 }, { socket.send(it) }, { rows += it })
+        val maker = RfqMaker({ cfg }, { id -> legs().firstOrNull { it.outcomeId == id } }, { 0.0 }, { socket.send(it) }, { rows += it }, cash = { 1_000.0 })
         socket = RfqSocket(OkHttpClient(), { client() }, maker, { cfg }, scope)
         server.enqueue(MockResponse().setBody("""{"makerId":"mk-1"}"""))                     // POST /rfq/v3/maker
         server.enqueue(MockResponse().withWebSocketUpgrade(novigSide(true)))                  // GET /rfq/v3/ws
@@ -102,7 +102,7 @@ class RfqSocketTest {
         assertTrue("without the quotes channel a won quote is never seen", "quotes" in sub)
         withTimeout(5_000) { while (received.none { it.contains("\"quote\"") }) delay(25) }
         val q = json.parseToJsonElement(received.first { it.contains("\"quote\"") }).jsonObject["quote"]!!.jsonObject
-        assertEquals("r-1", q["rfqId"]!!.jsonPrimitive.content); assertEquals("fair 0.20: (0.20 + 0.06)/1.06 rounded up", "0.2453", q["price"]!!.jsonPrimitive.content)
+        assertEquals("r-1", q["rfqId"]!!.jsonPrimitive.content); assertEquals("fair 0.20: (0.20 + 0.06)/1.06 = 0.24528 rounded up to the thousandth", "0.246", q["price"]!!.jsonPrimitive.content)
         assertTrue(rows.any { it.kind == "QUOTE_SENT" })
         socket.stop()
     }

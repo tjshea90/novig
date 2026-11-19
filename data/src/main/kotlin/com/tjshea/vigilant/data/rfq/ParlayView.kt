@@ -44,6 +44,18 @@ object ParlayView {
         if (r.modelWouldWin > 0 || (r.market.isNotEmpty() && r.pricedTrades > 0)) {
             tiles += DashboardModel.Tile("Market model would have won", if (r.pricedTrades > 0) "${r.modelWouldWin} of ${r.pricedTrades}" else "—", r.modelWouldEarnPoints?.let { "earning ${pts(it)} pts of pot each if our fair is true" + (if (c.marketPricing) " · pricing from it" else " · not used yet") } ?: "needs probe answers per class first")
         }
+        // MK13: Novig's own count of the maker's last looks (`GET /rfq/v3/maker`): the 99% confirm-rate bar, the tier, any lock.
+        val counted = r.confirmCounted
+        if (counted != null) {
+            val thr = r.confirmThreshold
+            val short = counted >= (r.confirmMinSample ?: 0) && thr != null && counted > 0 && (r.confirmConfirmed ?: 0L).toDouble() / counted < thr
+            tiles += DashboardModel.Tile(
+                "Novig's confirm rate", if (counted > 0) "${r.confirmConfirmed ?: 0} of $counted" else "no last looks yet",
+                (thr?.let { "bar ${"%.0f".format(Locale.US, it * 100)}%" + (r.confirmMinSample?.let { m -> " once $m are counted" } ?: "") } ?: "") + (r.makerTier?.let { " · tier $it" } ?: "") +
+                    (r.lockSource?.let { src -> " · LOCKED ($src)" + (r.lockUntilMs?.let { u -> " until ${java.time.Instant.ofEpochMilli(u)}" } ?: "") } ?: ""),
+                if (r.lockSource != null || short) Tone.BAD else if (counted > 0) Tone.GOOD else Tone.NEUTRAL,
+            )
+        }
         if (c.mode == RfqConfig.Mode.LIVE) {
             tiles += DashboardModel.Tile("Quotes", "${r.quotesSent}", "${r.won} won · ${r.confirmed} confirmed · ${r.filled} filled")
             val d24 = r.realizedPnl24h

@@ -75,8 +75,8 @@ object RfqProtocol {
         }
     }
 
-    /** A decimal as the string Novig wants: [places] places, never an exponent, a dot whatever the phone's language. */
-    fun dec(v: Double, places: Int): String = String.format(Locale.US, "%.${places}f", v)
+    /** A decimal as the string Novig wants ("Parse money as a decimal and send it as a string", docs api/concepts/money): exactly [places] places, never an exponent, a dot whatever the phone's language, rounded half up from the shortest decimal of the double. */
+    fun dec(v: Double, places: Int): String = java.math.BigDecimal(java.lang.Double.toString(v)).setScale(places, java.math.RoundingMode.HALF_UP).toPlainString()
 
     fun subscribe(nonce: Long, channels: List<String> = listOf("rfq", "quotes", "executions")): String =
         buildJsonObject { put("nonce", nonce); put("subscribe", buildJsonArray { channels.forEach { add(JsonPrimitive(it)) } }) }.toString()

@@ -24,7 +24,7 @@ class CloudKeysTest {
         // every secret the phone sends is one the engine reads, and the workflow passes it
         assertEquals(CloudKeys.ALL.toSet() - CloudKeys.SET_BY_HAND, CloudKeys.BY_PROVIDER.values.toSet())
         val wf = java.io.File("../.github/workflows/cloud-scan.yml").takeIf { it.exists() } ?: java.io.File(".github/workflows/cloud-scan.yml")
-        if (wf.exists()) (CloudKeys.ALL - CloudKeys.RETIRED + CloudKeys.NOVIG + CloudKeys.TRADE).forEach { n -> assertTrue("cloud-scan.yml passes $n", wf.readText().contains("$n: \${{ secrets.$n }}")) }
+        if (wf.exists()) (CloudKeys.ALL - CloudKeys.RETIRED + CloudKeys.NOVIG + CloudKeys.TRADE + CloudKeys.MAKER).forEach { n -> assertTrue("cloud-scan.yml passes $n", wf.readText().contains("$n: \${{ secrets.$n }}")) }
         // a retired secret (PX10c: PinnWire) is not passed, so a copy left in the repository's secrets is never read
         if (wf.exists()) CloudKeys.RETIRED.forEach { n -> assertTrue("cloud-scan.yml does not pass $n", !wf.readText().contains("secrets.$n")) }
     }
@@ -40,7 +40,9 @@ class CloudKeysTest {
     fun `the trading key's secrets are the subaccount's trading key id and PEM, no management key anywhere`() {
         assertEquals(listOf("NOVIG_TRADE_KEY_ID", "NOVIG_TRADE_KEY_PEM"), CloudKeys.TRADE)
         assertTrue(CloudKeys.TRADE.none { it in CloudKeys.ALL || it in CloudKeys.NOVIG })
-        val all = CloudKeys.ALL + CloudKeys.NOVIG + CloudKeys.TRADE
+        assertEquals("the optional parlay-maker subaccount's trading key", listOf("NOVIG_MAKER_KEY_ID", "NOVIG_MAKER_KEY_PEM"), CloudKeys.MAKER)
+        assertTrue(CloudKeys.MAKER.none { it in CloudKeys.ALL || it in CloudKeys.NOVIG || it in CloudKeys.TRADE })
+        val all = CloudKeys.ALL + CloudKeys.NOVIG + CloudKeys.TRADE + CloudKeys.MAKER
         assertTrue("no secret is named for the management key", all.none { it.contains("MGMT", true) || it.contains("MANAGEMENT", true) })
     }
 
