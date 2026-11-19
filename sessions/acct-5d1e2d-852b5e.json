@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "a498946ce05afe74ab090a7cb81685e3977ab174",
+ "head": "36e09e625a9bead9c706ac75e685e125763d8cf7",
  "since": 1795047736,
- "beat": 1795108114,
- "beatIso": "2026-11-19T17:08:34Z",
- "done": "MK11: RfqLadder prop rung interpolation wired into the rfq leg fairs",
- "next": "reset engine, confirm startedAtMs, read 'RFQ ladder' log and no-fair share"
+ "beat": 1795108302,
+ "beatIso": "2026-11-19T17:11:42Z",
+ "done": "MK11: ladder live in shadow; engine outage 16:59-17:10 repaired (dispatch), coord note posted",
+ "next": "next check 17:38: warm ladder numbers"
 }
