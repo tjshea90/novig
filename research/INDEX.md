@@ -8,7 +8,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
-| 2026-11-19 | `prop_pairs_2026-11-19.md` | Two player props of one game: how much more often do they hit together? (MK20, 2026-11-19) - **Why.** Tj 2026-11-19: "The problem is the engine prices almost nothing. It doesn't have enough fair odds." The journals (59,028 RFQs... | CODE |
+| 2026-11-19 | `prop_pairs_2026-11-19.md` | Two player props of one game: how much more often do they hit together? (MK20, 2026-11-19) - **Why.** Tj 2026-11-19: "The problem is the engine prices almost nothing. It doesn't have enough fair odds." The journals (59,028 RFQs... | LEVER CODE |
 | 2026-11-19 | `parlay_expected_profit_2026-11-19.md` | Parlay maker: what it should earn when money goes in (MK14, Tj 2026-11-19) - Tj (verbatim): "Make sure it can price as much as possible. Make sure it is within the api limits and docs. Tune it for volume and profitability. Log ... | APPLIED LEVER WATCH CODE |
 | 2026-11-19 | `parlay_coverage_2026-11-19.md` | Why the maker cannot price more: fair-odds coverage (MK18, Tj 2026-11-19 ~22:45 UTC: "I think it isn't finding enough fair odds") - Measured on the engine's journals of 11-19 (8,588 parlay trades, $231,060 staked; the 20:56-22:... | APPLIED LEVER |
 | 2026-11-19 | `novig_rfq_docs_audit_2026-11-19.md` | Novig docs audit for the parlay maker: every rule against the code (MK13, Tj 2026-11-19) - Tj (2026-11-19, tj Gmail session): "very carefully review the novig docs. Make sure the parlay system is correctly and accurately using ... | APPLIED LEVER |
