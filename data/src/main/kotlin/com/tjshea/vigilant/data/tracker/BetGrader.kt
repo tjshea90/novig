@@ -60,6 +60,9 @@ object BetGrader {
     /** A kept [pickOf] answer (null included: a wording that can't be read is kept as unreadable). */
     private class Read(val pick: Pick?)
 
+    private val BARE_SPREAD = Regex("""^[\p{L}.&' -]+? [+\-−]\\d+(\\.\\d+)?$""")
+    private val BARE_TOTAL_EVENT = Regex("""^.+ @ .+ t\\d+(\\.\\d+)?$""")
+
     private val reads = java.util.concurrent.ConcurrentHashMap<String, Read>()
     private const val READ_LIMIT = 20_000
 
@@ -68,7 +71,15 @@ object BetGrader {
 
     private fun read(marketLabel: String, selection: String): Pick? {
         readCount.incrementAndGet()
-        val market = marketLabel.trim()
+        // Tj, 2026-11-19 (open bets 18-21 days old: "Couldn't read \"UTA +11.5\" for \"UTA +11.5\""): a bet found in Novig's fills carries its own wording as the market (or "UTA @ ... t44.5"), not a market name.
+        val market = marketLabel.trim().let { m ->
+            val sel = selection.trim()
+            when {
+                m.equals(sel, ignoreCase = true) && BARE_SPREAD.matches(sel) -> "Spread"
+                BARE_TOTAL_EVENT.matches(m) && NovigText.parseTotalOutcome(sel) != null -> "Total"
+                else -> m
+            }
+        }
         val lower = market.lowercase()
         val (who, line) = Picks.split(selection.trim())
         if (lower.contains("3-way") || lower.contains("3 way")) return null
