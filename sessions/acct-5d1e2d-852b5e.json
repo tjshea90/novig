@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "042248283771f06df2981cdcdaf31d7890504fe4",
+ "head": "8c27468c7556ba82fcec998850cb123fe82acd2c",
  "since": 1795047736,
- "beat": 1795072183,
- "beatIso": "2026-11-19T07:09:43Z",
- "done": "MK11 logged; ladder-rung finding",
- "next": "read 06:51 run journal; build prop ladder interpolation for rfq leg fairs"
+ "beat": 1795072246,
+ "beatIso": "2026-11-19T07:10:46Z",
+ "done": "MK10f: rfq maxLegs 7 minFair 0.01 (long all-priced parlays)",
+ "next": "next check: quotes won, collateral use; ladder model only if props matter"
 }
