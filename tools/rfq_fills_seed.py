@@ -56,12 +56,10 @@ def main(out, cats, files):
                 if o:
                     events.add(o[5])
     for eid in sorted(events):
-        for st in ("OPEN_PREGAME", "OPEN_INGAME", "CLOSED_PREGAME"):
-            d = get("/markets", event=eid, limit=500)
-            for m in d.get("items", []):
-                for o in m.get("outcomes", []):
-                    market_of[o["outcomeId"]] = m["marketId"]
-            break
+        d = get("/markets", event=eid, marketType="MONEY,SPREAD,TOTAL,TEAM_TOTAL", limit=500)     # the parlay legs are game lines; an NFL game has thousands of prop markets
+        for m in d.get("items", []):
+            for o in m.get("outcomes", []):
+                market_of[o["outcomeId"]] = m["marketId"]
         time.sleep(0.4)
     recs = []
     for rid, r in sorted(fills.items(), key=lambda kv: kv[1]["atMs"]):
