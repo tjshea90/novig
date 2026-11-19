@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "654cfca1b2618e78d1f15f31e4f572dd896fc255",
+ "head": "f62091b23c5e5807d7617d73c18ef1b00806a945",
  "since": 1795103757,
- "beat": 1795104704,
- "beatIso": "2026-11-19T16:11:44Z",
+ "beat": 1795104926,
+ "beatIso": "2026-11-19T16:15:26Z",
  "done": "MK12a: fixed last-look price tolerance (Novig echoes 0.4495 as 0.450; the old 5e-4 bound rejected our own win and caused MAKER_LOCKED); RfqMakerTest covers both rounding extremes. Research so far: Novig keyless /rfq/v2/quote/unauthenticated = real 3 s auction (usable as a market-price probe), journals 11-18/11-19 downloaded to scratchpad",
  "next": "MK12b: analyse journals by class (volume, gap, same-game implied correlation), design RfqProbe + fitted competitor-price model + Novig-mid fallback fair + ladder + copula; then land and reset engine"
 }
