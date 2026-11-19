@@ -1,21 +1,23 @@
-# CHECKPOINT 4697 — read me first, then TASKS.md
+# CHECKPOINT 4698 — read me first, then TASKS.md
 
-**Written:** 2026-11-19T17:19:41Z · **tests:** all 11 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `36e09e625` (this checkpoint is the commit after it)
+**Written:** 2026-11-19T17:38:31Z · **tests:** all 11 fast checks green
+**Branch:** `claude/optimistic-curie-aoglz9` · **builds on:** `66cdf5274` (this checkpoint is the commit after it)
 
 ## Just done
-MK12 round 2 complete and deployed in SHADOW: last-look fix, SameGame copula, RfqProbe+RfqMarketModel (probe on, marketPricing OFF), prop pairs from market ratio (SHADOW on), fairErrorRel floor, min-support, rfq-market.yml, rfq_market.py; job 17:10 UTC runs all of it (priceable 100 -> 1290 per 5 min, probe 0.6/s, 0 failures); Tj told via Messages
+MK11 17:38: ladder lifts priced trades 0.5% -> 19% on paper
 
 ## Do this next
-about 2026-11-20 17:00 UTC: read Release rfq-market SUMMARY.md (rfq-market.yml) / python3 -I tools/rfq_market.py run <journals>: per-class demand, rule vs model on executed trades; if the evidence rule (research/novig_parlay_maker_2026-11-19.md s8) holds set marketPricing=true (never LIVE without Tj's money); read via=market ratio rows before propPairsFromMarket goes near LIVE; first settled live parlays (13 filled) still pending
+next: premium vs win rate by prop legs; LIVE only after Tj adds money
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  5517a1085 ckpt 4697: MK12 round 2 complete and deployed in SHADOW: last-look fix, SameGame copul
   36e09e625 ckpt 4696: MK11: ladder live in shadow; engine outage 16:59-17:10 repaired (dispatch),
   076fb99a1 ckpt 4695: MK12h: rfq-market.yml retries refused calls (the workflow token's 1,000 an 
   44115cb5c ckpt 4694: MK12g: RfqMarketModel.MIN_SUPPORT (5 answers above a candidate margin), wal
@@ -25,5 +27,7 @@ about 2026-11-20 17:00 UTC: read Release rfq-market SUMMARY.md (rfq-market.yml) 
   c4ae5ea25 ckpt 4691: MK12d: SHADOW judges RFQs as if the wallet were free (capital cap only in L
   fdddd1d2c ckpt 4690: MK12: research index rebuilt and LEVERS.md cites the new study; all 10 fast
   7172be49e ckpt 4689: MK12c: league-aware market classes with pooled fallback, probe tests harden
-  c552b4e9b ckpt 4688: MK12b: same-game copula (RfqCorrelation: Gauss+SameGame, measured rho by le
 ```
+
+(6 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
