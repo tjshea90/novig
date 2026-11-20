@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "b62013148751bb4afc2d566aaaae651e1694f14e",
+ "head": "cdd39e1bd315c4b3946c0b335484f41f18e760a1",
  "since": 1795129305,
- "beat": 1795157080,
- "beatIso": "2026-11-20T06:44:40Z",
- "done": "MK40/MK41: coverage fixes (protected prop targets, Yes-only anytime-TD lists, alternate game-line ladders by interpolation, main live lines pre-watched, coverage census log); full suite 4495 green; attribution of the 35% no-fair",
- "next": "07:00+: board note, ONE graceful reset to deploy MK40/MK41, then read 'RFQ prop coverage' + status declines; no reset before 07:00"
+ "beat": 1795157113,
+ "beatIso": "2026-11-20T06:45:13Z",
+ "done": "MK42: floors halved (margin .003, fairErrorRel .003, minPoints .001, minReturn .002); engine restarted 06:44 (job 44689559689) with MK40/MK41 coverage fixes",
+ "next": "read 'RFQ ladder' + 'RFQ prop coverage' log lines, then quotes/won/filled; judge the thinner margin after 20 fills; no reset before 07:45"
 }
