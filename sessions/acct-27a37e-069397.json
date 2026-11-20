@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "683bd866e6b7091b5e30a64ba7e59811947a4eb1",
  "since": 1795129305,
- "beat": 1795144290,
- "beatIso": "2026-11-20T03:11:30Z",
+ "beat": 1795144671,
+ "beatIso": "2026-11-20T03:17:51Z",
  "done": "MK31b: live fair watches only moneylines + the markets RFQs asked about (330 max): the first deploy pinned 2,004 markets",
  "next": "land, ONE graceful reset, then rfq_set liveParlays=SHADOW, read in-play shadow rows vs market executed prices in 20-30 min, then LIVE with the evidence-based premium"
 }
