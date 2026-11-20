@@ -1888,3 +1888,10 @@ Out of over 9000 trades, the engine could price 2. It is broken
 ```
 This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
 ```
+
+## 2026-11-20T00:59:38Z
+```
+This makes no sense. Propline and parlayapi both carry all kinds of props and alternate markets. The engine should carry fair odds on almost everything 
+This is completely ridiculous that i have paid apis with sockets and the engine can only price 56 out of 200000 rfqs. It has to be fixed 
+You said it was paper only earlier. Wrong. I had over 15 parlay orders filled with a lot more the engine was able to price. Now out is doing almost nothing 
+```
