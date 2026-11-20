@@ -37,7 +37,7 @@ object TrackerBreakdown {
         )
 
     fun keyOf(b: TrackedBet, by: By): String = when (by) {
-        By.SCANNER -> when (b.source) {
+        By.SCANNER -> if (com.tjshea.vigilant.data.ncaab.NcaabBetStats.isNcaabTab(b)) "NCAAB tab" else when (b.source) {
             BetTracker.SOURCE_CNO -> "CNO"
             BetTracker.SOURCE_PARLAY -> "ParlayAPI"
             BetTracker.SOURCE_PINNODDS -> "Pinnodds live"

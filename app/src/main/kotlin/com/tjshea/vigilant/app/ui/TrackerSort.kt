@@ -27,6 +27,8 @@ enum class ScannerFilter(val label: String, val short: String) {
     PINNODDS("Pinnodds live", "Pinnodds"),
     LIVEBID("Live bids", "Live bids"),
     TAIL("Live tail", "Tail"),
+    /** Bets placed or logged from the college basketball tab (NT1): the bets and every stat of the screen are those alone. */
+    NCAAB("NCAAB tab", "NCAAB"),
 
 }
 
@@ -44,7 +46,7 @@ object TrackerSort {
 
     fun inMade(bets: List<TrackedBet>, f: MadeFilter): List<TrackedBet> = BetOrBid.only(bets, f.which)
 
-    fun scannerOf(b: TrackedBet): ScannerFilter = when (b.source) {
+    fun scannerOf(b: TrackedBet): ScannerFilter = if (com.tjshea.vigilant.data.ncaab.NcaabBetStats.isNcaabTab(b)) ScannerFilter.NCAAB else when (b.source) {
         BetTracker.SOURCE_CNO -> ScannerFilter.CNO
         BetTracker.SOURCE_PARLAY -> ScannerFilter.PARLAY
         BetTracker.SOURCE_PINNODDS -> ScannerFilter.PINNODDS

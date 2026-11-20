@@ -194,6 +194,11 @@ data class TrackedBet(
      */
     val startsLoggedTs: Long? = null,
     val startsNote: String? = null,
+    /**
+     * Where in the app the bet was placed when that matters apart from [source] (NT1, Tj 2026-11-20: "tracks bets i hand bet on the ncaab tab"): [BetTracker.ORIGIN_NCAAB] for a bet placed or logged from
+     * the college basketball tab, null for every other bet. [com.tjshea.vigilant.data.ncaab.NcaabBetStats.isNcaabTab] also knows the bets placed from that tab before this was kept (their fair basis says so).
+     */
+    val origin: String? = null,
 ) {
     /** Bought to lock in another bet's profit ([lockFor]). */
     val isLock: Boolean get() = lockFor != null
@@ -541,8 +546,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         return added
     }
 
-    suspend fun track(o: Opportunity, stake: Double, placedKey: String? = null, atBet: AtBet? = null): TrackedBet? {
-        val bet = opportunityBet(o, stake, placedKey, atBet, UUID.randomUUID().toString(), clock(), ownBook) ?: return null
+    suspend fun track(o: Opportunity, stake: Double, placedKey: String? = null, atBet: AtBet? = null, origin: String? = null): TrackedBet? {
+        val bet = opportunityBet(o, stake, placedKey, atBet, UUID.randomUUID().toString(), clock(), ownBook)?.let { if (origin == null) it else it.copy(origin = origin) } ?: return null
         store.update { list -> (if (placedKey == null) list else list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING && it.orderId == null }) + bet }
         return bet
     }
@@ -582,7 +587,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             fairAtBet = target.fair.takeUnless { imported },
             evPercentAtBet = (target.fair / cost - 1.0).takeUnless { imported },
             stake = stake,
-            source = target.source,
+            source = target.source, origin = target.origin,
             placedKey = target.placedKey,
             imported = imported,
             american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(price.coerceIn(0.001, 0.999)),
@@ -643,7 +648,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(price.coerceIn(0.001, 0.999)),
             fairAtBet = target.fair, evPercentAtBet = target.fair / cost - 1.0, fairBasis = target.basis ?: fairBasis,
             atBet = (target.atBet ?: atBet)?.copy(stake = stake), maker = true, imported = false, auto = target.auto,
-            source = target.source, gradeNote = if (status == BetStatus.PENDING) note else gradeNote,
+            source = target.source, origin = target.origin, gradeNote = if (status == BetStatus.PENDING) note else gradeNote,
         )
         var logged: TrackedBet? = null
         store.update { list ->
@@ -665,7 +670,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                     league = target.league, eventName = target.eventName, startsTs = target.startsTs, marketLabel = target.marketLabel,
                     selection = target.selection, marketId = target.market.marketId, outcomeId = target.outcomeId,
                     price = price, cost = cost, fairAtBet = target.fair, evPercentAtBet = target.fair / cost - 1.0, stake = stake,
-                    source = target.source, book = target.book, gameUrl = target.gameUrl, orderId = orderId, eventId = target.market.eventId,
+                    source = target.source, origin = target.origin, book = target.book, gameUrl = target.gameUrl, orderId = orderId, eventId = target.market.eventId,
                 ).withFills()
                 logged = bet
                 list + bet
@@ -951,6 +956,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
 
     companion object {
         const val SOURCE_VIGILANT = "vigilant"
+        /** A bet placed or logged from the college basketball tab ([TrackedBet.origin]). */
+        const val ORIGIN_NCAAB = "ncaab"
         const val SOURCE_CNO = "cno"
 
         /**

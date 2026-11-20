@@ -197,6 +197,7 @@ object ApiBetTargets {
             marketLabel = o.marketLabel, selection = o.selection, fair = fair, fairAsOfMs = nowMs, source = BetTracker.SOURCE_VIGILANT, placedKey = o.key,
             basis = com.tjshea.vigilant.data.tracker.FairBasis(com.tjshea.vigilant.data.tracker.FairBasis.SOURCE_NCAAB, books = 0),
             live = o.isLive, listedPrice = o.ladder.first().price,
+            origin = com.tjshea.vigilant.data.tracker.BetTracker.ORIGIN_NCAAB,
         )
     }
 

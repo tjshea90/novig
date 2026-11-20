@@ -53,6 +53,8 @@ data class BetTarget(
     val listedPrice: Double? = null,
     /** A sharp book prices both sides of this bet and says it is NOT +EV at Novig's price (Tj, 2026-10-11): nothing is bet on it, by hand or by the auto-bet. */
     val sharpAgainst: Boolean = false,
+    /** Where in the app the bet was placed ([com.tjshea.vigilant.data.tracker.TrackedBet.origin]): kept on the bet once it fills. */
+    val origin: String? = null,
 )
 
 /**
