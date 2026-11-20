@@ -333,7 +333,9 @@ object RfqPricer {
      */
     fun decide(created: RfqProtocol.Created, now: Long, cfg: RfqConfig, fairs: LegFairs, openCollateral: Double, market: RfqMarketModel? = null, cashRoom: Double? = null, walletTotal: Double? = null): RfqDecision {
         val ids = created.outcomeIds
-        if (ids.size < 2 || ids.size > cfg.maxLegs) return RfqDecision.Decline("${ids.size} legs (this maker prices 2 to ${cfg.maxLegs})")
+        // PF1: a parlay over the leg limit is still PRICED (the plain product of its legs, in the decline) up to SHADOW_LEGS legs, so the journal keeps our fair beside the market's executed price for the classes the
+        // profit profile does not quote, and the graded study (`tools/rfq_pnl_study.py` needs a CREATED row with a fair) can show later whether one of them has become worth quoting.
+        if (ids.size < 2 || ids.size > maxOf(cfg.maxLegs, SHADOW_LEGS)) return RfqDecision.Decline("${ids.size} legs (this maker prices 2 to ${cfg.maxLegs})")
         val legs = ArrayList<LegFair>(ids.size)
         for (id in ids) legs += fairs.leg(id) ?: return RfqDecision.Decline("a leg has no fair line here")
         if (cfg.legCalibration) for (i in legs.indices) legs[i] = legs[i].copy(probability = RfqLegCalibration.adjust(legs[i].probability))
@@ -351,6 +353,7 @@ object RfqPricer {
         val extrapolatedGameLegs = legs.count { it.extrapolated && it.marketType in GAME_LINES }
         if (extrapolatedGameLegs > 0 && cfg.extrapolatedLegPremium > 0.0) p = minOf(0.999, p * Math.pow(1.0 + cfg.extrapolatedLegPremium, extrapolatedGameLegs.toDouble()))
         fun no(why: String) = RfqDecision.Decline(why, p, legs)
+        if (ids.size > cfg.maxLegs) return no("${ids.size} legs (this maker prices 2 to ${cfg.maxLegs}; priced at the plain product for the journal)")
         if (cfg.allHighMaxLegs > 0 && legs.size > cfg.allHighMaxLegs && legs.all { it.probability >= cfg.allHighLegFloor }) return no("${legs.size} legs that are all favourites (at least ${"%.0f".format(cfg.allHighLegFloor * 100)}%): makers lose on these (graded study)")
         var via = ""
         var pairModelUsed = false
