@@ -75,7 +75,7 @@ class ParlayHubTest {
         val inPlay = ParlayHub.legViews(parlay("X", listOf(leg("x", "t", -1.0, 0.5))), now, utc).single()
         assertEquals(ParlayHub.LegState.IN_PLAY, inPlay.state); assertTrue(inPlay.stateText, inPlay.stateText.startsWith("In play since "))
         val over = ParlayHub.legViews(parlay("X", listOf(leg("x", "t", -4.0, 0.5))), now, utc).single()
-        assertEquals("a game that must be over waits for Novig", "Game over, waiting for Novig's result", over.stateText)
+        assertEquals("a game that must be over waits for Novig", "Game over, waiting for the result", over.stateText)
         assertEquals("the hub sorts the soonest finish first, and the summary names the last", hub.open.map { it.rfqId }, listOf("B", "A"))
         assertEquals(a.expectedFinalMs, hub.summary.lastFinalMs)
     }
