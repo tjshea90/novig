@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "092b7c49b809014d63090a4971a826db0d841fda",
+ "head": "fd84d3160eb87aad332c0b6da0543c44d528d6c8",
  "since": 1795134161,
- "beat": 1795139761,
- "beatIso": "2026-11-20T01:56:01Z",
- "done": "MK28: live floor .03 -> .008, stake cap 6 (Tj wants fills)",
- "next": "confirm in status; watch quotes won in the next 30 min; tell other session"
+ "beat": 1795139806,
+ "beatIso": "2026-11-20T01:56:46Z",
+ "done": "MK28: liveMinReturn .008 (rfq_set, stake cap unchanged)",
+ "next": "confirm in status, watch quotes won"
 }
