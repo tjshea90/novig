@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "48446df581eff66048de87b122e73cc205338f6e",
  "since": 1795129305,
- "beat": 1795183284,
- "beatIso": "2026-11-20T14:01:24Z",
+ "beat": 1795185107,
+ "beatIso": "2026-11-20T14:31:47Z",
  "done": "MK52: MK14 follow-up 2 report: market outcomes release stale (0 graded), expected-profit doc updated: ~$0.04 expected per fill at fair+0.1pt, nothing to conclude until ~20 settle",
  "next": "16:20 wake: confirm the 16:09 job handover runs main; evening summary to Tj (one message incl. expected profit); rfq-pnl-study after 05:00 UTC 11-21"
 }
