@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "55d37c63292fc804dd03e8a431aebabc1d01d13f",
+ "head": "ed905ede7b8abe1df901c611a24a4c0e67e59579",
  "since": 1795129305,
- "beat": 1795150509,
- "beatIso": "2026-11-20T04:55:09Z",
- "done": "MK35: pregame 3+ leg parlays need a longshot leg (manyLegsNeedLongshot); backtest evidence on executed parlays",
- "next": "land, one graceful reset (board note first), then rfq_set maxLegFair=0.8 (mirage's 0.5 stops the +7% 2-leg segment), watch fills"
+ "beat": 1795150546,
+ "beatIso": "2026-11-20T04:55:46Z",
+ "done": "MK31e: live fair current-as-of-now for stream-held books, watch up to 600 markets / 20 min demand; full suite green",
+ "next": "deploy with the next reset (05:05+; board note), watch fills; mandate loop wake 05:01"
 }
