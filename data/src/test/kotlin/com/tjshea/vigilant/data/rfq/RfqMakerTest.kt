@@ -605,13 +605,13 @@ class RfqMakerTest {
     }
 
     @Test fun withNoLimitOnLegsAPropParlayOfAnySizeIsQuotedAtThePremiumWhenTheWalletCanBackIt() {
-        // five prop legs of different games and a game line: 0.9 each, the premium 1.2 per prop leg
+        // five prop legs of different games and a game line: 0.6 each, the premium 1.2 per prop leg
         val ids = listOf("a", "b", "c", "d", "e", "m")
-        val f = fairs(*(ids.dropLast(1).mapIndexed { i, id -> leg(id, "e$i", 0.9, type = "POINTS") } + leg("m", "g", 0.9)).toTypedArray())
+        val f = fairs(*(ids.dropLast(1).mapIndexed { i, id -> leg(id, "e$i", 0.6, type = "POINTS") } + leg("m", "g", 0.6)).toTypedArray())
         val big = cfg.copy(maxLegs = 100, maxFair = 0.999, maxLegFair = 0.99, maxStake = 12.0, maxCollateral = 1000.0, maxOpenCollateral = 1000.0)
         val q = RfqPricer.decide(created(*ids.toTypedArray()), now, big, f, 0.0) as RfqDecision.Quote
-        assertEquals("0.9 ^ 6 x 1.2 ^ 5", Math.pow(0.9, 6.0) * Math.pow(1.2, 5.0), q.fair, 1e-9)
-        assertTrue("a 7th prop leg is quoted too", RfqPricer.decide(created(*(ids + "x").toTypedArray()), now, big, fairs(*(ids.dropLast(1).mapIndexed { i, id -> leg(id, "e$i", 0.9, type = "POINTS") } + leg("m", "g", 0.9) + leg("x", "ex", 0.9, type = "ASSISTS")).toTypedArray()), 0.0) is RfqDecision.Quote)
+        assertEquals("0.6 ^ 6 x 1.2 ^ 5", Math.pow(0.6, 6.0) * Math.pow(1.2, 5.0), q.fair, 1e-9)
+        assertTrue("a 7th prop leg is quoted too", RfqPricer.decide(created(*(ids + "x").toTypedArray()), now, big, fairs(*(ids.dropLast(1).mapIndexed { i, id -> leg(id, "e$i", 0.6, type = "POINTS") } + leg("m", "g", 0.6) + leg("x", "ex", 0.6, type = "ASSISTS")).toTypedArray()), 0.0) is RfqDecision.Quote)
         assertTrue("the default is no limit", RfqConfig().maxPropLegs == Int.MAX_VALUE)
     }
 }
