@@ -102,4 +102,16 @@ class PropPairsTest {
         val gl = mapOf("g1" to legs.getValue("g"), "g2" to LegFair("g2", "e3", "t", 0.6, 5, now - 60_000L, now + 3 * 3_600_000L, false, "SPREAD", league = "NBA"))
         assertTrue(RfqPricer.decide(RfqProtocol.Created(now, "r", listOf("g1", "g2"), now + 3_000L, 10.0), now, withReserve, LegFairs { gl[it] }, 0.0, cashRoom = 100.0) is RfqDecision.Quote)
     }
+
+    @Test fun aGameLineLegOnTwoCompaniesPassesAPropLegOnTwoDoesNotAndOneCompanyNeverDoes() {
+        fun gl(id: String, ev: String, books: Int, type: String = "MONEY") = LegFair(id, ev, "m", 0.6, books, now - 60_000L, now + 3 * 3_600_000L, false, type, league = "NBA")
+        val c = RfqProtocol.Created(now, "r", listOf("a", "b"), now + 3_000L, 10.0)
+        fun decide(a: LegFair, b: LegFair, cfg: RfqConfig = base) = RfqPricer.decide(c, now, cfg, LegFairs { if (it == "a") a else b }, 0.0)
+        assertTrue("two game lines, 2 companies each (MK47)", decide(gl("a", "e1", 2), gl("b", "e2", 2, "SPREAD")) is RfqDecision.Quote)
+        val one = decide(gl("a", "e1", 1), gl("b", "e2", 5)) as RfqDecision.Decline
+        assertTrue(one.reason, one.reason.contains("1 companies (need 2)"))
+        val prop = decide(prop("a", "Points", "A One", true, 0.6, event = "e1").copy(books = 2), gl("b", "e2", 5)) as RfqDecision.Decline
+        assertTrue("a prop keeps the general floor of 3: ${prop.reason}", prop.reason.contains("2 companies (need 3)"))
+        assertTrue("the setting back at 3 restores the old rule", (decide(gl("a", "e1", 2), gl("b", "e2", 5), base.copy(minBooksGameLines = 3)) as RfqDecision.Decline).reason.contains("(need 3)"))
+    }
 }
