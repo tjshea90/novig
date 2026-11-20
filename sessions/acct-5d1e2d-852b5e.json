@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "c991d051d1dcf6695629cd1089a926300ab6ce47",
+ "head": "93e4e8541f08c28f2ecb20da59fcdeba23c7cb38",
  "since": 1795134161,
- "beat": 1795149313,
- "beatIso": "2026-11-20T04:35:13Z",
+ "beat": 1795150334,
+ "beatIso": "2026-11-20T04:52:14Z",
  "done": "MK34: maxLegFair .5 after 1 win 15 losses (-58.60)",
  "next": "monitor; tell Tj; consider paper if the longshot-leg region also loses"
 }
