@@ -45,11 +45,63 @@ object LiveFair {
         val p: Double,
         val spread: Double,
         val asOfMs: Long,
+        /** What [SameGame] needs to price this leg beside others of the same game (MK37): the line's kind, the side taken, a spread's HOME handicap, a team total's team. Null kind = not read: the leg prices alone only. */
+        val kind: LineKind? = null,
+        val side: Side? = null,
+        val homeLine: Double? = null,
+        val awayTeam: Boolean = false,
     ) {
         fun toLegFair(): LegFair = LegFair(
             outcomeId, eventId, "live-novig $marketType $outcomeName ($eventDesc)", p, 1, asOfMs, startsMs, true, marketType,
+            kind = kind, side = side, period = 0, homeLine = homeLine, awayTeam = awayTeam,
             league = league, outcomeName = outcomeName, eventDesc = eventDesc, marketId = marketId, source = SOURCE,
         )
+    }
+
+    /** The kind of a market's line and the side each of its two outcomes takes, read from Novig's own names the way the scan's planner reads them. */
+    class Structure(val kind: LineKind, val sideA: Side, val sideB: Side, val homeLine: Double? = null, val awayTeam: Boolean = false)
+
+    /**
+     * What the same-game copula needs of [m] (MK37, Tj 2026-11-20: 22,000 of 72,000 RFQs of one hour were declined as "correlation unmodelled", 1,500 of them in-play pairs of a moneyline or spread with the total of ONE game):
+     * a moneyline's and spread's outcomes are matched to the event's away and home teams (a spread's must carry Novig's own `strike`, the HOME handicap, or the market is not read), a total's and a team total's are
+     * Over and Under of one number. Null when the names do not say: the leg is then priced alone only, and a parlay holding it with another leg of its game still declines as unmodelled.
+     */
+    fun structure(m: NovigMarket, ev: NovigEvent): Structure? {
+        if (m.outcomes.size != 2) return null
+        val (o1, o2) = m.outcomes
+        val matchup = ev.matchup
+        fun overUnder(kind: LineKind, awayTeam: Boolean): Structure? {
+            val p1 = NovigText.parseTotalOutcome(o1.name) ?: return null
+            val p2 = NovigText.parseTotalOutcome(o2.name) ?: return null
+            if (abs(p1.second - p2.second) > 1e-9 || p1.first == p2.first) return null
+            m.strike?.let { if (abs(it - p1.second) > 1e-9) return null }
+            return Structure(kind, if (p1.first) Side.OVER else Side.UNDER, if (p2.first) Side.OVER else Side.UNDER, awayTeam = awayTeam)
+        }
+        return when (m.marketType) {
+            "TOTAL" -> overUnder(LineKind.TOTAL, false)
+            "TEAM_TOTAL" -> {
+                if (matchup == null) return null
+                val team = NovigText.subjectOf(m.description, m.marketType) ?: return null
+                val away = TeamMatcher.labelIsAway(team, matchup.away, matchup.home) ?: return null
+                overUnder(LineKind.TEAM_TOTAL, away)
+            }
+            "MONEY" -> {
+                if (matchup == null) return null
+                val firstAway = TeamMatcher.firstLabelIsAway(o1.name, o2.name, matchup.away, matchup.home) ?: return null
+                Structure(LineKind.MONEYLINE, if (firstAway) Side.AWAY else Side.HOME, if (firstAway) Side.HOME else Side.AWAY)
+            }
+            "SPREAD" -> {
+                if (matchup == null) return null
+                val (l1, p1) = NovigText.parseSpreadOutcome(o1.name) ?: return null
+                val (l2, p2) = NovigText.parseSpreadOutcome(o2.name) ?: return null
+                if (abs(p1 + p2) > 1e-9) return null
+                val firstAway = TeamMatcher.firstLabelIsAway(l1, l2, matchup.away, matchup.home) ?: return null
+                val homePoint = if (firstAway) p2 else p1
+                m.strike?.let { if (abs(it - homePoint) > 1e-9) return null }
+                Structure(LineKind.SPREAD, if (firstAway) Side.AWAY else Side.HOME, if (firstAway) Side.HOME else Side.AWAY, homeLine = homePoint)
+            }
+            else -> null
+        }
     }
 
     /** Both outcomes' probabilities from the two best bids (prices 0-1), or null when one side has no bid or the book is crossed or too wide. */
