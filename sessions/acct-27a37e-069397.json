@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "48446df581eff66048de87b122e73cc205338f6e",
+ "head": "e88e2d1a56b673023695360af4a39e2a52f2221a",
  "since": 1795129305,
- "beat": 1795185107,
- "beatIso": "2026-11-20T14:31:47Z",
- "done": "MK52: MK14 follow-up 2 report: market outcomes release stale (0 graded), expected-profit doc updated: ~$0.04 expected per fill at fair+0.1pt, nothing to conclude until ~20 settle",
- "next": "16:20 wake: confirm the 16:09 job handover runs main; evening summary to Tj (one message incl. expected profit); rfq-pnl-study after 05:00 UTC 11-21"
+ "beat": 1795185163,
+ "beatIso": "2026-11-20T14:32:43Z",
+ "done": "MK53: MK16 coverage follow-up answered from this session's work (no new build): next fair source candidates ranked by trades per collateral-minute; Novig-mid fair rejected",
+ "next": "16:20 wake: confirm the 16:09 job handover; evening summary to Tj (one message); rfq-pnl-study after 05:00 UTC 11-21"
 }
