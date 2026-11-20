@@ -66,6 +66,12 @@ data class RfqConfig(
     /** Legs must start at least this far ahead (ms) and no further than [maxDaysAhead]. */
     val minLeadMs: Long = 20 * 60_000L,
     val maxDaysAhead: Int = 5,
+    /**
+     * PS1 (the wallet is the limit: the study of 2026-11-20 found about 20-40 parlays we would win for every one the wallet can fund, so what the filters can buy is the return on each dollar of collateral per day it is locked):
+     * no leg may start further ahead than this (ms; 0 = off). Collateral is locked until the LAST game ends: parlays whose last leg starts within 8 h returned 61% of the collateral per day of lock against 28% for the ones
+     * that start 8 to 24 h out (research/parlay_study_2026-11-20.md).
+     */
+    val maxLeadMs: Long = 0L,
     val minFair: Double = 0.03,
     /**
      * The most likely a parlay may be to win and still be quoted (MK16, Tj 2026-11-19: "do not allow parlays that are too easy to win ... set a reasonable cap"). 0.60: above it the buyer wins more often than
@@ -399,6 +405,7 @@ object RfqPricer {
             }
             if (l.startsMs - now < cfg.minLeadMs) return no("a leg starts within ${cfg.minLeadMs / 60_000L} min")
             if (l.startsMs - now > cfg.maxDaysAhead * 86_400_000L) return no("a leg is more than ${cfg.maxDaysAhead} days away")
+            if (cfg.maxLeadMs > 0L && l.startsMs - now > cfg.maxLeadMs) return no("a leg starts more than ${"%.0f".format(cfg.maxLeadMs / 3_600_000.0)} h away (the collateral would be locked too long for what it earns)")
             val needBooks = if (l.marketType in GAME_LINES) minOf(cfg.minBooks, cfg.minBooksGameLines) else cfg.minBooks
             if (l.books < needBooks) return no("a leg's fair rests on ${l.books} companies (need $needBooks)")
             val asOf = l.asOfMs ?: return no("a leg's fair has no age")
