@@ -139,6 +139,59 @@ class LiveFairTest {
         assertTrue("switched off", RfqPricer.decide(created("a", "b", "c"), now, cfg.copy(maxFair = 0.99, manyLegsNeedLongshot = 0.0), allFav, 0.0) is RfqDecision.Quote)
     }
 
+    // ---- MK37: in-play pairs of ONE game go through the same-game copula ----
+    private fun gameMarket(id: String, type: String, o1: String, o2: String, strike: Double?, desc: String = "desc") =
+        NovigMarket(id, "g1", type, "OPEN", desc, now - 3_600_000L, null as MarketFee?, listOf(NovigOutcome("$id-a", o1, "TBD"), NovigOutcome("$id-b", o2, "TBD")), strike)
+    private val gameEvent = NovigEvent("g1", "BASKETBALL", "NCAAB", NovigEvent.STATUS_LIVE, "Kansas Jayhawks @ Houston Cougars", now - 3_600_000L)
+
+    @Test fun aLiveMoneylineSpreadTotalAndTeamTotalAreReadWithTheirSideAndLine() {
+        val money = LiveFair.structure(gameMarket("m", "MONEY", "KAN", "HOU", 0.0), gameEvent)!!
+        assertEquals(LineKind.MONEYLINE, money.kind); assertEquals(Side.AWAY, money.sideA); assertEquals(Side.HOME, money.sideB)
+        val spread = LiveFair.structure(gameMarket("s", "SPREAD", "HOU -3.5", "KAN +3.5", -3.5), gameEvent)!!
+        assertEquals(LineKind.SPREAD, spread.kind); assertEquals(Side.HOME, spread.sideA); assertEquals(Side.AWAY, spread.sideB); assertEquals("the HOME handicap", -3.5, spread.homeLine!!, 0.0)
+        assertNull("Novig's own strike disagrees with the names: not read", LiveFair.structure(gameMarket("s", "SPREAD", "HOU -3.5", "KAN +3.5", 3.5), gameEvent))
+        val total = LiveFair.structure(gameMarket("t", "TOTAL", "Under 150.5", "Over 150.5", 150.5), gameEvent)!!
+        assertEquals(LineKind.TOTAL, total.kind); assertEquals(Side.UNDER, total.sideA); assertEquals(Side.OVER, total.sideB)
+        assertNull("two different numbers", LiveFair.structure(gameMarket("t", "TOTAL", "Under 150.5", "Over 151.5", null), gameEvent))
+        val team = LiveFair.structure(gameMarket("tt", "TEAM_TOTAL", "Over 71.5", "Under 71.5", 71.5, desc = "Houston Cougars 71.5 TEAM_TOTAL"), gameEvent)!!
+        assertEquals(LineKind.TEAM_TOTAL, team.kind); assertEquals(Side.OVER, team.sideA); assertEquals("Houston is the home side", false, team.awayTeam)
+        assertTrue(LiveFair.structure(gameMarket("tt", "TEAM_TOTAL", "Over 71.5", "Under 71.5", 71.5, desc = "Kansas Jayhawks 71.5 TEAM_TOTAL"), gameEvent)!!.awayTeam)
+        assertNull("a team the event does not name", LiveFair.structure(gameMarket("m", "MONEY", "ZZZ", "QQQ", 0.0), gameEvent))
+    }
+
+    @Test fun theBuiltLegsCarryWhatTheCopulaNeeds() {
+        val markets = listOf(gameMarket("m", "MONEY", "KAN", "HOU", 0.0), gameMarket("t", "TOTAL", "Over 150.5", "Under 150.5", 150.5))
+        val books = mapOf("m" to book("m", 400, 580), "t" to book("t", 500, 500))
+        val legs = LiveFair.build(markets, books, mapOf("g1" to gameEvent), now = now)
+        val away = legs.getValue("m-a").toLegFair(); val home = legs.getValue("m-b").toLegFair()
+        assertEquals(Side.AWAY, away.side); assertEquals(Side.HOME, home.side); assertEquals(LineKind.MONEYLINE, home.kind)
+        assertEquals(0.41, away.probability, 1e-9); assertEquals(0.59, home.probability, 1e-9)
+        assertEquals(Side.OVER, legs.getValue("t-a").toLegFair().side); assertEquals(LineKind.TOTAL, legs.getValue("t-b").toLegFair().kind)
+        assertEquals(0, home.period)
+    }
+
+    private fun liveGame(id: String, p: Double, kind: LineKind?, side: Side?, type: String, homeLine: Double? = null) =
+        LegFair(id, "g1", "live", p, 1, now - 1_000L, now - 600_000L, true, type, kind = kind, side = side, homeLine = homeLine, league = "NCAAB", source = LiveFair.SOURCE)
+
+    @Test fun anInPlayMoneylineAndTotalOfOneGameAreQuotedAtTheCopulaJointNotDeclined() {
+        val f = fairs(liveGame("a", 0.6, LineKind.MONEYLINE, Side.HOME, "MONEY"), liveGame("b", 0.5, LineKind.TOTAL, Side.OVER, "TOTAL"))
+        val q = RfqPricer.decide(created("a", "b"), now, cfg, f, 0.0) as RfqDecision.Quote
+        assertEquals("nearly independent (NCAAB rho -0.014): 0.30 give or take the 2% premium", 0.30, q.fair, 0.01)
+        assertTrue("quoted above the fair (price ${q.price} fair ${q.fair})", q.price > q.fair)
+        // a spread with the total, the other commonest pair
+        val s = fairs(liveGame("a", 0.55, LineKind.SPREAD, Side.AWAY, "SPREAD", homeLine = -3.5), liveGame("b", 0.5, LineKind.TOTAL, Side.UNDER, "TOTAL"))
+        assertTrue(RfqPricer.decide(created("a", "b"), now, cfg, s, 0.0) is RfqDecision.Quote)
+    }
+
+    @Test fun anInPlayPairOfTheSameLineKindOrOneNobodyReadStillDeclinesAsUnmodelled() {
+        val dup = fairs(liveGame("a", 0.6, LineKind.MONEYLINE, Side.HOME, "MONEY"), liveGame("b", 0.6, LineKind.SPREAD, Side.HOME, "SPREAD", homeLine = -3.5))
+        assertTrue((RfqPricer.decide(created("a", "b"), now, cfg, dup, 0.0) as RfqDecision.Decline).reason.contains("one game"))
+        val unread = fairs(liveGame("a", 0.6, null, null, "MONEY"), liveGame("b", 0.5, LineKind.TOTAL, Side.OVER, "TOTAL"))
+        assertTrue((RfqPricer.decide(created("a", "b"), now, cfg, unread, 0.0) as RfqDecision.Decline).reason.contains("one game"))
+        val stale = fairs(liveGame("a", 0.6, LineKind.MONEYLINE, Side.HOME, "MONEY").copy(asOfMs = now - 9_000L), liveGame("b", 0.5, LineKind.TOTAL, Side.OVER, "TOTAL"))
+        assertTrue("the live freshness rule still applies to a same-game pair", (RfqPricer.decide(created("a", "b"), now, cfg, stale, 0.0) as RfqDecision.Decline).reason.contains("s old"))
+    }
+
     @Test fun aBookTheStreamHoldsIsCurrentEvenWhenItsLastChangeIsOld() {
         val markets = listOf(market("m1", "e1"))
         val quiet = mapOf("m1" to book("m1", 550, 430, at = now - 120_000L))
