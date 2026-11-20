@@ -87,6 +87,8 @@ data class RfqConfig(
     val ladderExtrapolate: Boolean = true,
     /** MK22: price a player-prop rung from every book's price at that very strike, two-sided rows and "N+" ladders alike ([PropLadderFair]); OFF = only the scan's own fair lines, interpolation and extrapolation. */
     val ladderVotes: Boolean = true,
+    /** MK33: correct each leg's fair for the devig's measured bias before the legs are multiplied ([RfqLegCalibration]: longshot legs win ~10% less often than priced, 60-75% legs 2-3% more often). OFF = the raw fair. */
+    val legCalibration: Boolean = true,
     /** MK24: a parlay of 3 up to this many player-prop legs is priced at the plain product of the legs' fair and declined as shadow (journal evidence), never quoted; 0 = declined unpriced. */
     val propLegsShadowMax: Int = 6,
     /** The most player-prop legs a quoted parlay may carry (Tj 2026-11-20: "Put no limit on the amount of prop legs and the amount of legs total"): no limit by default; each prop leg still carries [propPremium]. Beyond it the parlay is priced in shadow up to [propLegsShadowMax]. */
@@ -288,6 +290,7 @@ object RfqPricer {
         if (ids.size < 2 || ids.size > cfg.maxLegs) return RfqDecision.Decline("${ids.size} legs (this maker prices 2 to ${cfg.maxLegs})")
         val legs = ArrayList<LegFair>(ids.size)
         for (id in ids) legs += fairs.leg(id) ?: return RfqDecision.Decline("a leg has no fair line here")
+        if (cfg.legCalibration) for (i in legs.indices) legs[i] = legs[i].copy(probability = RfqLegCalibration.adjust(legs[i].probability))
         // Without a fair in the decline: these trades must not count in the evidence of what the market pays over OUR fair (the fair is the thing in doubt).
         val propLegs = legs.count { it.marketType !in GAME_LINES }
         // More than two prop legs (MK24, Tj 2026-11-20: 24% of RFQs): never quoted, but PRICED at the plain product (no premium) so the journal carries our fair and the market's executed prices show what such a parlay is worth;
