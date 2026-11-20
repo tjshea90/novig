@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "b331e5550e4777b7c2f2f98984a1f1d09e7a6c1b",
+ "head": "2a06e1f66dbbefd8d4ac63dbcfef08c007b86756",
  "since": 1795129305,
- "beat": 1795158838,
- "beatIso": "2026-11-20T07:13:58Z",
- "done": "MK43: floors cut to ~fair (margin .001, fairErrorRel .001, minPoints .0005, minReturn .001), in-play floor livePremium .008 / .0015 per leg; evidence: 811 quotes, 9 on executed RFQs, our price +0.9 pt over theirs",
- "next": "watch won/filled at the 07:40 wake; no reset before 08:00; fix explain() label for alternate game lines at the next deploy"
+ "beat": 1795158949,
+ "beatIso": "2026-11-20T07:15:49Z",
+ "done": "MK44 standing job recorded; census label fix for alternate game lines (cloud tests green, not deployed)",
+ "next": "keep the PARLAY MANDATE LOOP running (07:40 wake): status, won/filled, census; next deploy >=08:00 only with something worth a reset; US-evening in-play volume is the next test of MK37"
 }
