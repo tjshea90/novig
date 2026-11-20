@@ -1961,3 +1961,16 @@ PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 mi
 ```
 PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 minutes, price more legs, change safeguards and criteria). In /home/user/novig: git fetch -q origin +cloud-feed:refs/remotes/origin/cloud-feed; read status.json rfq (mode, halted, seen, priceable, quotesSent, won, filled, settled, makerWon/makerLost, realizedPnl, openCollateral, openParlays, declines with shares, cash) and compare with the last MK10 lines in research/review/CHANGES.md. Read the coordination board first (python3 -I tools/coord.py board): acct-27a37e (MK12+) works on the same maker, do not reset the engine twice and confirm any restart by the new job's startedAtMs. Check rfq-maker.json on cloud-config for who last changed it (Tj uses the app: his settings are his, e.g. the loss stop). Settled-parlay calibration (hit rate vs product of fairs by leg price band) once 10+ more settle. Log in CHANGES.md; tell Tj in the app chat with chat.py say once, only what changed or what he must know.
 ```
+
+## 2026-11-20T04:22:54Z
+```
+As soon as you are relatively confident that the in game parlay math is good, put it live on real money 
+This is totally pathetic. Hours with not a single fill. I'm going. Continue monitoring the engine. Do not stop monitoring, studying, researching, and tweaking the engine until you have a parlay system that runs, has fills, and is expected to be profitable.
+
+I don't care what you do or what settings you change as long as you are making a profitable system. When i come back i want to see parlays filled. You may use and delete the entire wallet and change any setting. The goal is profit. Make the parlay engine work. Don't stop until it does 
+I don't just want shadow testing. I want real parlays filled 
+The parlay system has full priority over bids and bets. Make it work 
+Remember, do not stop until the parlay system is good.
+Work continuously on getting the parlay system running well. Fills and profit. Use the entire wallet 
+Make sure to work with the other claude session and don't clash interfere or break anything 
+```
