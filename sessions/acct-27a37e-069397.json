@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "1486dec0befdc18b8abf12a9c5b6d4acd2b0a8b7",
  "since": 1795129305,
- "beat": 1795185223,
- "beatIso": "2026-11-20T14:33:43Z",
+ "beat": 1795191714,
+ "beatIso": "2026-11-20T16:21:54Z",
  "done": "MK54: walletLegShare 0.25 (same two legs filled twice in 7 minutes; per-leg cap was the whole wallet); 7 fills today, cash $44, 6 open ($78)",
  "next": "16:20 wake: confirm job handover; evening summary to Tj; rfq-pnl-study after 05:00 UTC 11-21"
 }
