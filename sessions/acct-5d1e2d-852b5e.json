@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "51f0f638c7a63be7c5bae289c8d5ddc16ebe656f",
+ "head": "1cf7741735dfe07c48bbf8ba6c0f520d2292fd5f",
  "since": 1795134161,
- "beat": 1795135935,
- "beatIso": "2026-11-20T00:52:15Z",
- "done": "ANALYST 2026-11-19: no change, watch note logged",
- "next": "next analyst: game totals z check; maker MK21 deploy confirm by 27a37e"
+ "beat": 1795135992,
+ "beatIso": "2026-11-20T00:53:12Z",
+ "done": "MK23 logged: cold-start fair index explains 'engine priced more earlier'",
+ "next": "build fair index carry-over; coordinate resets"
 }
