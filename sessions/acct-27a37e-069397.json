@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "7fa2340790f92a7ba6123f8e9d91e272c69f381f",
+ "head": "1fc4eb7f02e80ae13a427c3a2cb0b483cc52ecbd",
  "since": 1795129305,
- "beat": 1795136344,
- "beatIso": "2026-11-20T00:59:04Z",
- "done": "MK22: PropLadderFair: the maker's prop fair from every book's price at a strike incl. N+ milestone ladders (36% -> 99% of Novig prop strikes), PropLine parser keeps milestones, ladderVotes switch, tests, real-board validation, research note; full suite green",
- "next": "deploy: engine reset, confirm startedAtMs; read engine log 'RFQ prop votes:' and the status no-fair share; then ParlayAPI ladders, game-line alternates, protected markets, prop premium on journal evidence"
+ "beat": 1795136468,
+ "beatIso": "2026-11-20T01:01:08Z",
+ "done": "MK23: live-morning vs today's rules replay: the drop is the win-chance filters (0 of 16 fills pass 20%), not the pricing; logged",
+ "next": "wait for Tj's decision on the win-chance limit; meanwhile read the new job's journal for ladder-votes legs (01:42 UTC check), then price 3+ prop legs / 8+ legs in shadow"
 }
