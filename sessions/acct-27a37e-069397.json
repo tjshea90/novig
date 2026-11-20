@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "1486dec0befdc18b8abf12a9c5b6d4acd2b0a8b7",
+ "head": "bba77e4ab6fb29c05c0902b2e2d01a5f81663d3c",
  "since": 1795129305,
- "beat": 1795191714,
- "beatIso": "2026-11-20T16:21:54Z",
- "done": "MK54: walletLegShare 0.25 (same two legs filled twice in 7 minutes; per-leg cap was the whole wallet); 7 fills today, cash $44, 6 open ($78)",
- "next": "16:20 wake: confirm job handover; evening summary to Tj; rfq-pnl-study after 05:00 UTC 11-21"
+ "beat": 1795191781,
+ "beatIso": "2026-11-20T16:23:01Z",
+ "done": "MK55: 16:20 check: job handover ok (44767621550), 8 fills today (15:37 FSU same-game pair), 1 settled (ATP, -$1.09), 7 open $83, cash $38.6",
+ "next": "wake ~19:30 UTC; evening summary to Tj ~23:00 UTC (quotes/min, in-play pairs, fills, settled P&L); rfq-pnl-study after 05:00 UTC 11-21"
 }
