@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "2dd3aab570ea7f6c83c6242c424faa244a18e429",
  "since": 1795129305,
- "beat": 1795210157,
- "beatIso": "2026-11-20T21:29:17Z",
+ "beat": 1795210635,
+ "beatIso": "2026-11-20T21:37:15Z",
  "done": "pre-release: NT1: your NCAAB tab bets tracked: bets, money bet, profit/loss, record and percent won, all time and by day, in the NCAAB tab and on the Tracker (new NCAAB filter) (versionCode 487, v1.0.147)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.147), then run: bash tools/record-release.sh v1.0.147 487 \"NT1: your NCAAB tab bets tracked: bets, money bet, profit/loss, record and percent won, all time and by day, in the NCAAB tab and on the Tracker (new NCAAB filter)\""
 }
