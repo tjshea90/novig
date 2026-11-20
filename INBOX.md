@@ -1916,3 +1916,8 @@ PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 mi
 ```
 I've literally been trying to get more parlays filled for over an hour and haven't got one fill. Claude is failing badly 
 ```
+
+## 2026-11-20T02:03:00Z
+```
+I'm giving up on claude. You failed. I don't know what else to say to try to get some damn parlays filled. It's no fun anymore because you are too stupid to make it work 
+```
