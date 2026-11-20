@@ -359,6 +359,9 @@ def report(rows, legs, out):
     if sc:
         out("```")
         out("n %d | quantiles of the score: p10 %.1f p25 %.1f p50 %.1f p75 %.1f p85 %.1f p90 %.1f p95 %.1f" % (len(sc), *(sc[int(q * (len(sc) - 1))] for q in (.1, .25, .5, .75, .85, .9, .95))))
+        loose = dict(PROFILE, minFair=0.25, maxLeadMs=86_400_000)
+        sl = sorted(24.0 / ((r["last_h"] + 3.5) * (1 - our_price(r["fair"], r["n"], r["lead_h"] * 3.6e6, loose))) for r in ex if cls(r) and passes(r, loose))
+        out("loose base (fair >= .25, lead up to 24 h): n %d | p10 %.1f p25 %.1f p40 %.1f p50 %.1f p60 %.1f p75 %.1f p90 %.1f" % (len(sl), *(sl[int(q * (len(sl) - 1))] for q in (.1, .25, .4, .5, .6, .75, .9))))
         out("```")
 
     out("\n## D. Replay of the live profile on the executed flow, wallet $145, every setting varied one at a time\n")
@@ -369,6 +372,10 @@ def report(rows, legs, out):
                 ("onlyToday", {"onlyToday": True}), ("maxDaysAhead 1", {"maxDaysAhead": 1}), ("minLead 10 min", {"minLeadMs": 600_000}), ("minLead 30 min", {"minLeadMs": 1_800_000}), ("minLead 1 h", {"minLeadMs": 3_600_000}),
                 ("minBooks 3", {"minBooks": 3}), ("margin +0.5 pt", {"marginAdd": 0.005}), ("margin +1 pt", {"marginAdd": 0.01}), ("margin -0.5 pt", {"marginAdd": -0.005}),
                 ("no guards", {"maxSameParlay": 0, "maxParlaysPerOutcome": 0, "walletLegShare": 9.0}),
+                ("LOOSE fixed (minFair .25, lead up to 24 h), $145", {"minFair": 0.25, "maxLeadMs": 86_400_000}), ("LOOSE + scarcity gate, $145", {"minFair": 0.25, "maxLeadMs": 86_400_000, "adaptive": True}),
+                ("core fixed, wallet $1200", {"_wallet": 1200.0}), ("LOOSE fixed, wallet $1200", {"minFair": 0.25, "maxLeadMs": 86_400_000, "_wallet": 1200.0}), ("LOOSE + gate, wallet $1200", {"minFair": 0.25, "maxLeadMs": 86_400_000, "adaptive": True, "_wallet": 1200.0}),
+                ("LOOSE fixed, wallet $300", {"minFair": 0.25, "maxLeadMs": 86_400_000, "_wallet": 300.0}), ("LOOSE + gate, wallet $300", {"minFair": 0.25, "maxLeadMs": 86_400_000, "adaptive": True, "_wallet": 300.0}),
+                ("LOOSE fixed, wallet $600", {"minFair": 0.25, "maxLeadMs": 86_400_000, "_wallet": 600.0}), ("LOOSE + gate, wallet $600", {"minFair": 0.25, "maxLeadMs": 86_400_000, "adaptive": True, "_wallet": 600.0}),
                 ("PW1 adaptive (live profile + scarcity gate)", {"adaptive": True}), ("PW1 adaptive, wallet $300", {"adaptive": True, "_wallet": 300.0}), ("PW1 adaptive, wallet $600", {"adaptive": True, "_wallet": 600.0}), ("fixed rules, wallet $600", {"_wallet": 600.0}),
                 ("PW1 gate 5 (looser)", {"adaptive": True, "scarcityHigh": 5.0}), ("PW1 gate 11 (stricter)", {"adaptive": True, "scarcityHigh": 11.0}), ("PW1 no margin ramp", {"adaptive": True, "scarcityMargin": 0.0})]
     results = {}
