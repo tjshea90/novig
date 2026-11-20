@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "2a06e1f66dbbefd8d4ac63dbcfef08c007b86756",
  "since": 1795129305,
- "beat": 1795158949,
- "beatIso": "2026-11-20T07:15:49Z",
+ "beat": 1795159354,
+ "beatIso": "2026-11-20T07:22:34Z",
  "done": "MK44 standing job recorded; census label fix for alternate game lines (cloud tests green, not deployed)",
  "next": "keep the PARLAY MANDATE LOOP running (07:40 wake): status, won/filled, census; next deploy >=08:00 only with something worth a reset; US-evening in-play volume is the next test of MK37"
 }
