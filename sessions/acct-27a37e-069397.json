@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "cd41e97d7d868d24bc8c1fc1cfa86e6b376d8416",
+ "head": "d92a8f21dc1cf73d4648eec950d305297e06da85",
  "since": 1795129305,
- "beat": 1795199650,
- "beatIso": "2026-11-20T18:34:10Z",
- "done": "PF1: engine profit profile file + precedence over the phone's rfq-maker.json (RfqConfigSource), configLock banner in the Parlays tab, over-limit parlays priced for the journal, rfq_shape_study + SHAPES.txt in the daily study; full suite green (4511 passed); research note, CHANGES, TASKS, LEVERS",
- "next": "land on main (push.sh), then write the profile with rfq_set.py (mode LIVE maxLegs 2 maxLegFair .8 maxFair .65 longshotsOnly off onlyToday off maxDaysAhead 2 dayLossStopPct .3) and mirror it into rfq-maker.json; verify via a dry read; tell Tj once; ship the app release (banner)"
+ "beat": 1795199746,
+ "beatIso": "2026-11-20T18:35:46Z",
+ "done": "PF1: profile written to cloud-config rfq-maker-engine.json (81ac24d85) and pinned by RfqProfitProfileTest; app version 1.0.146 (code 486) for the configLock banner",
+ "next": "wait for CI green on this commit, bash ship.sh, trigger release.yml, confirm release, tools/record-release.sh vX code note; then tell Tj the engine side is ready and the release link"
 }
