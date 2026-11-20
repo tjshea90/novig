@@ -52,7 +52,7 @@ object LiveFair {
         if (bidA == null || bidB == null || bidA <= 0.0 || bidB <= 0.0) return null
         val ask = 1.0 - bidB
         val spread = ask - bidA
-        if (spread < -1e-9 || spread > maxSpread) return null
+        if (spread < -1e-9 || spread > maxSpread + 1e-9) return null
         return Pair((bidA + ask) / 2.0, spread)
     }
 
