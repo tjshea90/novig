@@ -588,7 +588,9 @@ class RfqMakerTest {
         // five legs at 0.8 each (fair 0.328): quoted now that the leg limit is 5; six legs are not
         val five = fairs(*(1..5).map { leg("l$it", "e$it", 0.8) }.toTypedArray())
         assertTrue(RfqPricer.decide(created("l1", "l2", "l3", "l4", "l5"), now, roc, five, 0.0) is RfqDecision.Quote)
-        assertTrue((RfqPricer.decide(created("l1", "l2", "l3", "l4", "l5", "l6"), now, roc, five, 0.0) as RfqDecision.Decline).reason.contains("6 legs"))
+        val six = fairs(*(1..6).map { leg("l$it", "e$it", 0.8) }.toTypedArray())
+        val over = RfqPricer.decide(created("l1", "l2", "l3", "l4", "l5", "l6"), now, roc, six, 0.0) as RfqDecision.Decline
+        assertTrue(over.reason, over.reason.contains("6 legs")); assertEquals("PF1: priced for the journal", Math.pow(0.8, 6.0), over.fair!!, 1e-12)
     }
 
     // ---- game lines only (the first shadow day: 0.94 points over our fair on game lines, +6.0 points / +38% on parlays with a player prop: our prop fair is the thing in doubt) ----
