@@ -2036,3 +2036,8 @@ Almost 200 quotes and 0 won. This needs to be fixed
 ```
 The parlay system is losing money miserably and taking identical bets. Continue to study and research on how to make it profitable 
 ```
+
+## 2026-11-20T17:47:16Z
+```
+I want the parlay engine to essentially take sucker bets for profit. So far it has been taking and losing against sharp bettors taking heavy favorites
+```
