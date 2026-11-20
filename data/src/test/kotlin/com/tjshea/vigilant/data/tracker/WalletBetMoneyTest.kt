@@ -28,6 +28,14 @@ class WalletBetMoneyTest {
         assertEquals(-0.51, out.profit!!, 1e-9)
     }
 
+    @Test fun aGradedWinNovigHasNotPaidYetIsNotShownAsALoss() {
+        val fills = listOf(fill("f1", "o1", "m1", "x"))
+        val ledger = listOf(LedgerRow("a", "FILL", -0.5, "f1", 10), LedgerRow("b", "FEE", -0.01, "f1", 10))
+        val out = WalletBetMoney.apply(listOf(bet("b1", "m1", "x", BetStatus.WON)), ledger, fills).single()
+        assertEquals(BetStatus.WON, out.status)
+        org.junit.Assert.assertTrue(out.profit!! > 0.0)
+    }
+
     @Test fun anOpenBetWithNoSettlementStaysOpen() {
         val fills = listOf(fill("f1", "o1", "m1", "x"))
         val ledger = listOf(LedgerRow("a", "FILL", -0.5, "f1", 10))
