@@ -29,4 +29,13 @@ class RfqLegLimitTest {
         assertTrue(RfqPricer.decide(created("l1", "l2", "l3"), now, cfg.copy(maxLegs = 3, allHighMaxLegs = 0, manyLegsNeedLongshot = 0.0), LegFairs { legs[it] }, 0.0) is RfqDecision.Quote)
         assertNotNull(RfqPricer.decide(created("l1"), now, cfg, LegFairs { legs[it] }, 0.0))
     }
+
+    @Test fun aLegBeyondTheMaximumLeadIsDeclinedAndZeroSwitchesItOff() {
+        val far = mapOf("n" to leg("n", "e1", 0.6), "f" to LegFair("f", "e2", "Moneyline f", 0.6, 5, now - 60_000L, now + 10 * 3_600_000L, false, "MONEY", league = "NBA"))
+        val capped = cfg.copy(maxLeadMs = 8 * 3_600_000L)
+        val d = RfqPricer.decide(created("n", "f"), now, capped, LegFairs { far[it] }, 0.0) as RfqDecision.Decline
+        assertTrue(d.reason, d.reason.contains("8 h away"))
+        assertTrue(RfqPricer.decide(created("n", "f"), now, cfg, LegFairs { far[it] }, 0.0) is RfqDecision.Quote)       // maxLeadMs = 0: off
+        assertTrue(RfqPricer.decide(created("n", "f"), now, capped.copy(maxLeadMs = 12 * 3_600_000L), LegFairs { far[it] }, 0.0) is RfqDecision.Quote)
+    }
 }
