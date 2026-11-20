@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "576c3d04d3223b8d12793ac8fee78b9d228ff058",
+ "head": "8ddbf3625826d4b2d97a0aba04e7a1ce4f342ec8",
  "since": 1795129305,
- "beat": 1795196641,
- "beatIso": "2026-11-20T17:44:01Z",
- "done": "MK55: 16:20 check: job handover ok (44767621550), 8 fills today (15:37 FSU same-game pair), 1 settled (ATP, -$1.09), 7 open $83, cash $38.6",
- "next": "wake ~19:30 UTC; evening summary to Tj ~23:00 UTC (quotes/min, in-play pairs, fills, settled P&L); rfq-pnl-study after 05:00 UTC 11-21"
+ "beat": 1795196763,
+ "beatIso": "2026-11-20T17:46:03Z",
+ "done": "MK56: identical-parlay guard (maxSameParlay 1, maxParlaysPerOutcome 2) coded + tested (data 3201 + cloud 11 green), losses study written (20 settled -$63.42, 13 in one cluster), CHANGES/TASKS/LEVERS updated; NOT yet landed/deployed",
+ "next": "land main (bash tools/push.sh), board note, ONE graceful reset (>=1h since the 15:54 handover; confirm new startedAtMs), tell Tj once; 19:30 check, evening summary 23:00, rfq-pnl-study after 05:00 UTC 11-21"
 }
