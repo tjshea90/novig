@@ -627,7 +627,7 @@ fun main(args: Array<String>) = runBlocking {
     val lastVotesLogMs = java.util.concurrent.atomic.AtomicLong(0L)
     val propVotes = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.rfq.RfqLadder.Consensus?>(null)
     val novigEventsForVotes = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.novig.NovigEvent>>(emptyList())
-    val rfqLegFairs = com.tjshea.vigilant.data.rfq.RfqLadder.Fairs(rfqDirectFairs, { ladderTargets.get() }, { ladderRungs.get() }, { rfqCfg.get().ladderExtrapolate }, { if (rfqCfg.get().ladderVotes) propVotes.get() else null })
+    val rfqLegFairs = com.tjshea.vigilant.data.rfq.RfqLadder.Fairs(rfqDirectFairs, { ladderTargets.get() }, { ladderRungs.get() }, { rfqCfg.get().ladderExtrapolate }, { if (rfqCfg.get().ladderVotes) propVotes.get() else null }, { ladderRungs.slopes() })
     scope.launch {
         delay(150_000L)
         while (isActive) {

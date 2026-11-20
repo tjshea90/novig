@@ -137,4 +137,41 @@ class RfqLadderTest {
         assertEquals(com.tjshea.vigilant.data.reference.Side.AWAY, a.side); assertEquals("NCAAB", a.league); assertEquals(0, a.period)
         assertNull("a number beyond the posted ones is not guessed", RfqLadder.Fairs({ null }, { mapOf("x" to target(true, com.tjshea.vigilant.data.reference.Side.HOME).copy(strike = 17.5)) }, { mapOf(g to posted) }, { true }).leg("x"))
     }
+
+    // ---- MK46: a game-line number outside the game's posted ones ----
+    @Test fun aGameLineSlopeComesFromTheTwoPostedRungsNearestTheNumberAndOnlyWhenBelievable() {
+        val posted = listOf(rung(3.5, 0.50), rung(7.5, 0.38), rung(11.5, 0.26))
+        val slope = RfqLadder.gameLineSlope(posted, 5.5)!!
+        assertTrue("probit falls about 0.08 a point (a margin with a standard deviation of ~12)", slope < -0.05 && slope > -0.12)
+        assertNull("one rung has no slope", RfqLadder.gameLineSlope(listOf(rung(3.5, 0.5)), 5.5))
+        assertNull("two rungs a point apart are noise", RfqLadder.gameLineSlope(listOf(rung(3.5, 0.50), rung(4.5, 0.49)), 4.0))
+        assertNull("a rising ladder is not a ladder", RfqLadder.gameLineSlope(listOf(rung(3.5, 0.40), rung(7.5, 0.50)), 5.5))
+    }
+
+    @Test fun anAlternateNumberOutsideThePostedOnesIsExtrapolatedAtMostOneSdAndNeverAcrossTheRange() {
+        val posted = listOf(rung(3.5, 0.50), rung(7.5, 0.38))
+        val out = RfqLadder.extrapolateGameLine(posted, 11.5, null)!!
+        assertTrue("further out: less likely", out.overProb < 0.38 && out.overProb > 0.2)
+        assertTrue("the other way: more likely", RfqLadder.extrapolateGameLine(posted, 0.5, null)!!.overProb > 0.50)
+        assertNull("more than one standard deviation out is not guessed", RfqLadder.extrapolateGameLine(posted, 40.5, null))
+        assertNull("a number between posted ones is interpolate's", RfqLadder.extrapolateGameLine(posted, 5.5, null))
+        // one rung: the league's slope, or nothing
+        assertNull(RfqLadder.extrapolateGameLine(listOf(rung(3.5, 0.50)), 7.5, null))
+        val one = RfqLadder.extrapolateGameLine(listOf(rung(3.5, 0.50)), 7.5, -0.08)!!
+        assertEquals(RfqLadder.cdf(-0.08 * 4.0), one.overProb, 1e-9)
+        assertNull("a league slope that is not believable is ignored", RfqLadder.extrapolateGameLine(listOf(rung(3.5, 0.50)), 7.5, 0.3))
+    }
+
+    @Test fun theFairsPriceAnExtrapolatedAlternateLineOnlyWithTheSwitchAndInsideTheSideRange() {
+        val g = RfqLadder.gameLineKey("e1", com.tjshea.vigilant.data.reference.LineKind.TOTAL, 0, 150.5, false)!!.first
+        val posted = listOf(rung(150.5, 0.50))
+        val gl = RfqLadder.GameLine(com.tjshea.vigilant.data.reference.LineKind.TOTAL, com.tjshea.vigilant.data.reference.Side.OVER, null, false, "NCAAB")
+        fun fairs(on: Boolean, slopes: Map<String, Double>) = RfqLadder.Fairs({ null }, { mapOf("o" to RfqLadder.Target(g, 156.5, true, "e1", "TOTAL", now, "", "Over 156.5", "A @ B", "m1", gl)) }, { mapOf(g to posted) }, { on }, { null }, { slopes })
+        val key = "NCAAB|TOTAL"
+        assertNull("switched off", fairs(false, mapOf(key to -0.06)).leg("o"))
+        assertNull("no slope for the league", fairs(true, emptyMap()).leg("o"))
+        val f = fairs(true, mapOf(key to -0.06)).leg("o")!!
+        assertTrue(f.extrapolated); assertEquals(RfqLadder.cdf(-0.06 * 6.0), f.probability, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.reference.LineKind.TOTAL, f.kind)
+    }
 }
