@@ -2060,3 +2060,8 @@ The other claude session said that the margin is not what makes parlays profitab
 ```
 Do another study on how to best profit with the parlay system . Verify your current settings 
 ```
+
+## 2026-11-20T19:45:54Z
+```
+Later the wallet will have over 100 dollars, so the parlay engine should be able to adapt and use the full wallet and price the most profitable parlays using available money in the wallet 
+```

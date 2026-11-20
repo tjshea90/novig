@@ -213,7 +213,9 @@ class RfqMaker(
             else -> null
         }
         val walletTotal = if (cfg.walletCollateral) cashNow?.let { it + openCollateral() } else null
-        val priced = RfqPricer.decide(e, now, cfg, fairs, capital, market, cashRoom, walletTotal)
+        // PW1: the share of the wallet held in OPEN parlays (not the quotes still out, which almost never fill): how scarce the cash is.
+        val utilization = if (cfg.adaptiveCash && walletTotal != null && walletTotal > 0.0) (openCollateral() / walletTotal).coerceIn(0.0, 1.0) else null
+        val priced = RfqPricer.decide(e, now, cfg, fairs, capital, market, cashRoom, walletTotal, utilization)
         val d = if (cfg.mode == RfqConfig.Mode.LIVE && priced is RfqDecision.Quote) concentrated(e, priced, cfg, now, walletTotal) ?: priced else priced
         offerProbe(e, d, cfg)
         when (d) {
@@ -282,7 +284,8 @@ class RfqMaker(
             }
             if (cfg.maxParlaysPerOutcome > 0) {
                 val worstCount = e.outcomeIds.maxOfOrNull { id -> sets.count { id in it } } ?: 0
-                if (worstCount >= cfg.maxParlaysPerOutcome) return RfqDecision.Decline("a leg is already in $worstCount open parlays or quotes (the limit is ${cfg.maxParlaysPerOutcome}: they would win or lose together)", q.fair, q.legs)
+                val limit = cfg.maxParlaysPerOutcome + (if (cfg.outcomeCountWalletStep > 0.0 && walletTotal != null) (walletTotal / cfg.outcomeCountWalletStep).toInt() else 0)      // PW1: one more per step of wallet
+                if (worstCount >= limit) return RfqDecision.Decline("a leg is already in $worstCount open parlays or quotes (the limit is $limit: they would win or lose together)", q.fair, q.legs)
             }
         }
         val cap = if (cfg.walletCollateral && walletTotal != null) cfg.walletLegShare * walletTotal else cfg.maxLegCollateral
