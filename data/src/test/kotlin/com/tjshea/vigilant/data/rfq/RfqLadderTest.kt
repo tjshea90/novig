@@ -84,7 +84,7 @@ class RfqLadderTest {
     @Test fun fairsExtrapolatesOnlyWhenSwitchedOnAndOnlyAMidSide() {
         val g = RfqLadder.group("e1", "POINTS", "Jalen Brunson 25.5 POINTS", 25.5)
         fun target(strike: Double, over: Boolean) = RfqLadder.Target(g, strike, over, "e1", "POINTS", now + 3_600_000L)
-        val targets = mapOf("o19" to target(19.5, true), "u19" to target(19.5, false), "o34" to target(34.5, true), "o31" to target(31.5, true), "o31u" to target(31.5, false))
+        val targets = mapOf("o19" to target(19.5, true), "u19" to target(19.5, false), "o38" to target(38.5, true), "o31" to target(31.5, true), "o31u" to target(31.5, false))
         val rungs = mapOf(g to postedPoints)
         assertNull("off: as before", RfqLadder.Fairs({ null }, { targets }, { rungs }).leg("o19"))
         val f = RfqLadder.Fairs({ null }, { targets }, { rungs }, { true })
@@ -92,10 +92,10 @@ class RfqLadderTest {
         assertTrue(o.extrapolated && u.extrapolated && o.label.startsWith("extrapolated"))
         assertEquals("the two sides add up", 1.0, o.probability + u.probability, 1e-9)
         assertEquals("POINTS", o.marketType)
-        assertNull("Over 34.5 is a long shot (the model puts it under 12%): not priced", f.leg("o34"))
+        assertNull("Over 38.5 is a long shot (the model puts it near 10%): not priced", f.leg("o38"))
         val mid = f.leg("o31")!!
         assertTrue(mid.probability in RfqLadder.EXTRAP_MIN_SIDE..RfqLadder.EXTRAP_MAX_SIDE)
-        assertNull("a side the model puts over 92% is not priced either", RfqLadder.Fairs({ null }, { mapOf("x" to target(8.5, true)) }, { rungs }, { true }).leg("x"))
+        assertNull("a side the model puts over 92% is not priced either", RfqLadder.Fairs({ null }, { mapOf("x" to target(11.5, true)) }, { rungs }, { true }).leg("x"))
         // a posted rung is never replaced by the model: a direct fair, or an interpolated rung, comes first
         val inside = mapOf("in" to target(25.9, true)); val three = mapOf(g to postedPoints + rung(30.5, 0.30))
         assertTrue(!RfqLadder.Fairs({ null }, { inside }, { three }, { true }).leg("in")!!.extrapolated)
