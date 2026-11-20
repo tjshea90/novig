@@ -1909,6 +1909,9 @@ Put no limit on the amount of prop legs and the amount of legs total
 It was definitely able to price way more rfqs earlier 
 ```
 
+## 2026-11-20T01:52:15Z
+```
+PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 minutes, price more legs, change safeguards and criteria). In /home/user/novig: git fetch -q origin +cloud-feed:refs/remotes/origin/cloud-feed; read status.json rfq (mode, halted, seen, priceable, quotesSent, won, filled, settled, makerWon/makerLost, realizedPnl, openCollateral, openParlays, declines with shares, cash) and compare with the last MK10 lines in research/review/CHANGES.md. Read the coordination board first (python3 -I tools/coord.py board): acct-27a37e (MK12+) works on the same maker, do not reset the engine twice and confirm any restart by the new job's startedAtMs. Check rfq-maker.json on cloud-config for who last changed it (Tj uses the app: his settings are his, e.g. the loss stop). Settled-parlay calibration (hit rate vs product of fairs by leg price band) once 10+ more settle. Log in CHANGES.md; tell Tj in the app chat with chat.py say once, only what changed or what he must know.
 ## 2026-11-20T01:52:29Z
 ```
 I've literally been trying to get more parlays filled for over an hour and haven't got one fill. Claude is failing badly 
