@@ -55,8 +55,11 @@ fun ParlayMakerView(rfq: RfqStatus?, onSet: (RfqConfig, (String?) -> Unit) -> Un
         Text(v.headline, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = toneColor(v.tone), modifier = Modifier.testTag("parlayHeadline"))
         Text(v.explain, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         v.warning?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("parlayWarning")) }
+        // PF1 (Tj 2026-11-20: "ignore whatever settings are on my phone app"): while the engine's own profit profile runs the maker, the controls below would write a file the engine does not read; they are not shown.
+        val locked = rfq?.configLock.orEmpty().isNotEmpty()
+        if (locked) Text(rfq?.configLock.orEmpty(), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.testTag("parlayLocked"))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().testTag("parlayModes")) {
+        if (!locked) Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().testTag("parlayModes")) {
             RfqConfig.Mode.entries.forEach { m ->
                 FilterChip(
                     selected = cfg.mode == m, enabled = rfq != null,
@@ -65,7 +68,7 @@ fun ParlayMakerView(rfq: RfqStatus?, onSet: (RfqConfig, (String?) -> Unit) -> Un
                 )
             }
         }
-        if (rfq != null) PickingOptions(cfg, rfq, ::apply)
+        if (rfq != null && !locked) PickingOptions(cfg, rfq, ::apply)
         v.tiles.chunked(2).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) { row.forEach { t -> TileCard(t, Modifier.weight(1f)) } }
         }
