@@ -12,6 +12,7 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -83,7 +84,8 @@ class NcaabBetsCardUiTest {
         compose.onNodeWithTag("ncaabBets-record-all").assertTextEquals("2-2")
         compose.onNodeWithTag("ncaabBets-winPct-all").assertTextEquals("50%")
         compose.onNodeWithTag("ncaabBets-open-all").assertTextContains("1 · $5.00", substring = true)
-        compose.onNodeWithTag("ncaabBets-facts").assertTextContains("Best win +$20.00", substring = true)
+        compose.onNodeWithTag("ncaabBets-facts").assertIsDisplayed()
+        compose.onNodeWithText("Best win +$20.00").assertIsDisplayed()
     }
 
     @Test fun inTheTabItIsOneLineUntilOpenedAndThenShowsEveryNumberAndTheDays() {

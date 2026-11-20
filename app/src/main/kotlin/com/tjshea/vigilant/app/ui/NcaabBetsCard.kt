@@ -82,7 +82,13 @@ fun NcaabBetsCard(summary: NcaabBetStats.Summary, modifier: Modifier = Modifier,
                 summary.worst?.let { "Worst loss ${Format.signedMoney(it.profit ?: 0.0)}" },
                 summary.voided.takeIf { it > 0 }?.let { "$it voided (not counted)" },
             )
-            if (facts.isNotEmpty()) Text(facts.joinToString(" · "), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("ncaabBets-facts"))
+            if (facts.isNotEmpty()) {
+                // One fact per item, wrapped between them (a long "Worst loss −$20.00" never breaks inside its amount).
+                @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.testTag("ncaabBets-facts")) {
+                    facts.forEach { f -> Text(f, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1) }
+                }
+            }
 
             var view by rememberSaveable { mutableStateOf("") }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
