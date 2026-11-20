@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "465ad0a3a89a5bc1f35fefd1b3938c106d57e789",
  "since": 1795129305,
- "beat": 1795177536,
- "beatIso": "2026-11-20T12:25:36Z",
+ "beat": 1795183120,
+ "beatIso": "2026-11-20T13:58:40Z",
  "done": "MK50: 11:25 check: 5 fills today (latest 10:49), 4 of 8 auctions entered won at the MK43 floors; maxWager tie-break not needed; job 44716323543 healthy",
  "next": "11:23 wake done; next wake ~12:20; US evening 22:00 UTC+ is the in-play test; NBA totals fills settle ~04:00 UTC 11-21; no code pending, no reset needed"
 }
