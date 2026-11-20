@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "d8c6c2271b5c2a9d2f9f169ff8b9f3f31c71935b",
  "since": 1795129305,
- "beat": 1795133433,
- "beatIso": "2026-11-20T00:10:33Z",
+ "beat": 1795133731,
+ "beatIso": "2026-11-20T00:15:31Z",
  "done": "MK21: ladder extrapolation of unposted NBA/NHL/NFL prop rungs (RfqLadder.extrapolate, ladderExtrapolate), RfqLadderTest, tools/ladder_extrap.py, research note; explained the quote drop (LIVE switch + options) and the constant 38% fair gap; full suite green",
  "next": "deploy: engine reset (confirm startedAtMs), then read journal rows with an 'extrapolated' leg vs market executed prices; decide the 20% prop premium on that evidence; MK20 shadow comparison; protected prop markets; Kalshi player props"
 }
