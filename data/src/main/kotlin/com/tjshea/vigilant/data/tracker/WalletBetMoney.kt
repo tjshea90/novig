@@ -57,6 +57,9 @@ object WalletBetMoney {
             val settled = m.payout > 0.0 || group.any { it.status != BetStatus.PENDING && it.status != BetStatus.VOID }
             if (!settled) continue
             for (b in group) {
+                // The grader says won (or push) but Novig has not paid the settlement yet: the market's net is only the cost so far, so it would show a WIN as a full loss
+                // (Tj 2026-11-20: "2 won, 0 lost" and -$2.00). Keep the computed profit until the payout row arrives.
+                if (m.payout <= 0.0 && (b.status == BetStatus.WON || b.status == BetStatus.PUSH || b.status == BetStatus.FMV)) continue
                 val share = b.stake / totalStake
                 val pnl = Math.round(m.net * share * 100.0) / 100.0
                 var status = b.status
