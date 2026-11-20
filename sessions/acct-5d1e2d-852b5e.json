@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "ff68af50a0e45159db8d445b0846aa94d734ac99",
+ "head": "474452154f59215ac40b6fe5663fc11e49348a56",
  "since": 1795134161,
- "beat": 1795141463,
- "beatIso": "2026-11-20T02:24:23Z",
- "done": "MK29: grade parlay legs from final scores (ParlayLegScores) so finished legs show WIN/LOSS",
- "next": "land, one engine reset (check board), confirm leg results in parlays.json"
+ "beat": 1795141531,
+ "beatIso": "2026-11-20T02:25:31Z",
+ "done": "pre-ship: MK29: parlay legs graded from final scores; in-play legs blue not green",
+ "next": "ship.sh gates and releases this"
 }
