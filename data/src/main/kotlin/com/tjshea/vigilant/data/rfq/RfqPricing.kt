@@ -114,6 +114,23 @@ data class RfqConfig(
     val maxSameParlay: Int = 1,
     /** MK56: open parlays and quotes still out one outcome may be in: the Houston Texans moneyline was in 6 of the 20 settled parlays, which all lost together. 0 = no limit. */
     val maxParlaysPerOutcome: Int = 2,
+    /** PW1: one more open parlay per outcome for every this many dollars of wallet (0 = [maxParlaysPerOutcome] stays fixed): the count limit was a dollar-sized rule that does not grow with the wallet. */
+    val outcomeCountWalletStep: Double = 0.0,
+    /**
+     * PW1 (Tj 2026-11-20: "Later the wallet will have over 100 dollars, so the parlay engine should be able to adapt and use the full wallet and price the most profitable parlays using available money in the wallet").
+     * The wallet is the limit (the study of 2026-11-20: about 430 parlays a day we would win against 10-13 the cash funds), so while cash is plentiful every parlay the rules allow is quoted, and as the share of the wallet
+     * locked in open parlays [utilization] rises past [scarcityStartShare] only parlays that return more per dollar-day of collateral are: score = 24 / (lock hours x (1 - price)) (the daily return on the collateral
+     * per unit of pot edge; lock = hours to the last start + [lockAfterStartHours]) must reach [scarcityScoreHigh] x the ramp (0 at the start share, 1 when the wallet is fully locked), and the quote asks up to
+     * [scarcityMarginPoints] more (probability) at the full ramp: the wins beyond what the cash can fund are worth nothing, so their price can rise. Shares of the wallet, so it holds for $100 and for $1,000.
+     */
+    val adaptiveCash: Boolean = false,
+    val scarcityStartShare: Double = 0.35,
+    val scarcityScoreHigh: Double = 8.0,
+    val scarcityMarginPoints: Double = 0.004,
+    val lockAfterStartHours: Double = 3.5,
+    /** PW1: with a share above 0 the reserve a prop (pair) quote leaves in free cash is that share of the wallet instead of the dollar amount, so it follows the wallet. */
+    val propCashReserveShare: Double = 0.0,
+    val propPairsCashReserveShare: Double = 0.0,
     /**
      * MK48: relative premium on the parlay's fair per EXTRAPOLATED game-line leg (an alternate number outside the game's posted ones, [RfqLadder.extrapolateGameLine]). The engine's own held-out check
      * (`RFQ alt-line check`, 232 outer rungs of posted ladders predicted from the rest): median error 1.8 points of probability, p90 5.6, worst 7.1; against a parlay margin of +0.16 pt that noise decides who
@@ -340,7 +357,7 @@ object RfqPricer {
      * a quote whose collateral for the FULL `maxWager` the balance cannot cover (`quote_dropped unbacked`, docs api/rfq/overview) and fails a won quote it cannot fund at the fill (`quote_unfilled maker_insolvent`,
      * which stops the maker for 30 minutes): a quote is never sized beyond the cash that is there.
      */
-    fun decide(created: RfqProtocol.Created, now: Long, cfg: RfqConfig, fairs: LegFairs, openCollateral: Double, market: RfqMarketModel? = null, cashRoom: Double? = null, walletTotal: Double? = null): RfqDecision {
+    fun decide(created: RfqProtocol.Created, now: Long, cfg: RfqConfig, fairs: LegFairs, openCollateral: Double, market: RfqMarketModel? = null, cashRoom: Double? = null, walletTotal: Double? = null, utilization: Double? = null): RfqDecision {
         val ids = created.outcomeIds
         // PF1: a parlay over the leg limit is still PRICED (the plain product of its legs, in the decline) up to SHADOW_LEGS legs, so the journal keeps our fair beside the market's executed price for the classes the
         // profit profile does not quote, and the graded study (`tools/rfq_pnl_study.py` needs a CREATED row with a fair) can show later whether one of them has become worth quoting.
@@ -445,7 +462,16 @@ object RfqPricer {
         // With `marketPricing` the model's price is the quote (it never goes under its own floor: relative error x sqrt(legs)); without, the rule's.
         val basePrice = if (cfg.marketPricing && modelPrice != null) modelPrice else rulePrice
         // An in-play parlay asks more than the usual floors: the game moves between the auction and the buyer's accept (6-29 s), and the buyer sees the score.
-        val price = if (anyLive) maxOf(basePrice, up(p * (1.0 + cfg.livePremium)), up(p + cfg.livePointsPerLeg * ids.size)) else basePrice
+        var price = if (anyLive) maxOf(basePrice, up(p * (1.0 + cfg.livePremium)), up(p + cfg.livePointsPerLeg * ids.size)) else basePrice
+        // PW1: cash-aware selection and price (see [RfqConfig.adaptiveCash]); in play parlays are shadow and keep their own premium.
+        if (cfg.adaptiveCash && !anyLive && utilization != null && utilization > cfg.scarcityStartShare && cfg.scarcityStartShare < 1.0) {
+            val ramp = ((utilization - cfg.scarcityStartShare) / (1.0 - cfg.scarcityStartShare)).coerceIn(0.0, 1.0)
+            val lockH = (legs.maxOf { it.startsMs } - now).coerceAtLeast(0L) / 3_600_000.0 + cfg.lockAfterStartHours
+            val score = if (price < 0.999) 24.0 / (lockH * (1.0 - price)) else 0.0
+            val need = cfg.scarcityScoreHigh * ramp
+            if (score < need) return no("cash is ${"%.0f".format(utilization * 100)}% locked: only the parlays that return the most per dollar of collateral per day are quoted now (this one scores ${"%.1f".format(score)}, the bar is ${"%.1f".format(need)})")
+            if (cfg.scarcityMarginPoints > 0.0) price = up(price + cfg.scarcityMarginPoints * ramp)
+        }
         if (price > 0.999 || price < 0.001) return no("price ${"%.4f".format(price)} is outside Novig's 0.001-0.999")
         // The RFQ's minimum is the stake the user asked for (96% are the default $10; executed stakes sit just under it, the taker fee). The quote covers exactly that: more collateral than the trade needs
         // would only be tied up. The maker's collateral for a stake w is w (1 - P) / P.
@@ -455,7 +481,9 @@ object RfqPricer {
         val byParlay = (if (wallet != null) cfg.walletShare * wallet else cfg.maxCollateral) / perStake
         val byOpen = if (wallet != null) Double.MAX_VALUE else (cfg.maxOpenCollateral - openCollateral) / perStake      // the wallet's cash (byCash) is the open limit then
         // A prop-pair quote (a class that almost never trades) leaves [RfqConfig.propPairsCashReserve] of the free cash to the classes that do (MK38).
-        val reserve = maxOf(if (pairModelUsed) cfg.propPairsCashReserve else 0.0, if (propLegs > 0) cfg.propCashReserve else 0.0).coerceAtLeast(0.0)
+        val pairReserve = if (cfg.propPairsCashReserveShare > 0.0 && wallet != null) cfg.propPairsCashReserveShare * wallet else cfg.propPairsCashReserve
+        val propReserve = if (cfg.propCashReserveShare > 0.0 && wallet != null) cfg.propCashReserveShare * wallet else cfg.propCashReserve
+        val reserve = maxOf(if (pairModelUsed) pairReserve else 0.0, if (propLegs > 0) propReserve else 0.0).coerceAtLeast(0.0)
         val byCash = cashRoom?.let { (it - reserve).coerceAtLeast(0.0) / perStake } ?: Double.MAX_VALUE
         val byLive = if (anyLive && cfg.liveMaxCollateral > 0.0) cfg.liveMaxCollateral / perStake else Double.MAX_VALUE
         val room = floor(minOf(cfg.maxStake, byParlay, byOpen, byCash, byLive) * 100.0) / 100.0
