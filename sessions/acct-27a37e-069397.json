@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "c194ad0f206454ff4a1775d5394556b9f3c06f3a",
  "since": 1795129305,
- "beat": 1795159949,
- "beatIso": "2026-11-20T07:32:29Z",
+ "beat": 1795160473,
+ "beatIso": "2026-11-20T07:41:13Z",
  "done": "MK45: propCashReserve ($90 of free cash kept from any prop-involving quote: props are 53% of RFQs and trade 100x less per collateral-minute than in-play game lines) + reserveAfterCloseMs 36 s; census label for alternate lines; full suite 4496 green",
  "next": "08:00+: ONE graceful reset to deploy MK45 + the census label (board note first), then rfq_set propCashReserve is already the default 90; watch quotes/min and cash-short share; no reset before 08:00"
 }
