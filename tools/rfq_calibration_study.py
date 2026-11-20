@@ -72,7 +72,7 @@ def load_created(directory, execs, sample):
                     t = legs.get(k)
                     if t is None:
                         t = legs[k] = {"label": l.get("label") or "", "desc": l.get("desc") or "", "league": l.get("league") or "", "startsMs": l.get("startsMs") or 0, "type": l.get("type") or "",
-                                       "event": l.get("event") or l.get("desc") or "", "psum": 0.0, "pn": 0, "res": None}
+                                       "event": l.get("event") or l.get("desc") or "t%d" % (l["startsMs"] // 10_800_000), "psum": 0.0, "pn": 0, "res": None}
                     t["psum"] += l.get("p") or 0.0; t["pn"] += 1
                 rfqs[rid] = (r["atMs"], float(d["fair"]), float(d.get("minWager") or 10.0), outs, tuple(float(l.get("p") or 0.0) for l in ls), tuple(int(l.get("books") or 0) for l in ls))
         except EOFError:
@@ -307,6 +307,25 @@ def report(rows, legs, out):
         if len(s_) >= 40:
             roi = np.mean([r["price"] - r["buyer"] for r in s_]); roc = np.mean([(r["price"] - r["buyer"]) / (1 - r["price"]) for r in s_]); lock = np.mean([r["lead_h"] + 3.5 for r in s_])
             out("lead [%g,%g) h  n=%4d  ROI %+5.1f%%  ROC %+5.1f%%  lock %.1f h  ROC per day of lock %+6.1f%%" % (lo, hi, len(s_), 100 * roi, 100 * roc, lock, 100 * roc * 24 / lock))
+    out("```")
+
+    out("\n## C3. Tiers: how picky can the maker be and still fill the wallet? (the wallet is the limit, so the quality of the fills is what the filters can buy)\n")
+    cap_c = dict(PROFILE)
+    days_n = sorted(d for d, k in collections.Counter(r["day"] for r in ex).items() if k >= 100)
+    out("`wins/day` = executed parlays of the tier whose price was at or above our quote (what we would win with unlimited cash), average over the %d days with real flow; `wallet fills/day` = the replay's count with $145 of cash locked until the games end.\n" % len(days_n))
+    out("```")
+    tiers = [("T0 live profile", lambda r: True), ("T1  + lead >= 1 h", lambda r: r["lead_h"] >= 1), ("T2  + lead 1-8 h", lambda r: 1 <= r["lead_h"] < 8), ("T3  + fair >= .35", lambda r: 1 <= r["lead_h"] < 8 and r["fair"] >= .35),
+             ("T4  lead 1-8 h, fair >= .30", lambda r: 1 <= r["lead_h"] < 8 and r["fair"] >= .30), ("T5  lead 1-24 h, fair >= .35", lambda r: 1 <= r["lead_h"] < 24 and r["fair"] >= .35), ("T6  lead 1-8 h, fair .25-.35", lambda r: 1 <= r["lead_h"] < 8 and .25 <= r["fair"] < .35)]
+    for name, f in tiers:
+        sel = lambda r, f=f: cls(r) and f(r)
+        m = roi_line(name, ex, sel, win, out=out)
+        t = [r for r in ex if sel(r)]
+        if len(t) >= 40:
+            wins = [r for r in t if r["price"] >= our_price(r["fair"], r["n"], r["lead_h"] * 3.6e6, cap_c) - 1e-9]
+            roc = np.mean([(r["price"] - r["buyer"]) / (1 - r["price"]) for r in t]); lock = np.mean([r["lead_h"] + 3.5 for r in t])
+            c2 = dict(PROFILE)
+            rp = replay([dict(r) for r in rows if (r["price"] is None or sel(r))], c2, 145.0)
+            out("      wins/day %.0f | ROC %+.1f%% over %.1f h of lock = %+.0f%% per day | wallet fills/day %.1f (skipped for cash %d)" % (len(wins) / max(1, len(days_n)), 100 * roc, lock, 100 * roc * 24 / lock, rp["fills"] / max(1, len(days_n)), rp["skipped"].get("cash short", 0)))
     out("```")
 
     out("\n## D. Replay of the live profile on the executed flow, wallet $145, every setting varied one at a time\n")
