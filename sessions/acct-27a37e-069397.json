@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "e93e1ba3a6300e8d996954de297ad98d220fb70a",
  "since": 1795129305,
- "beat": 1795154319,
- "beatIso": "2026-11-20T05:58:39Z",
+ "beat": 1795154734,
+ "beatIso": "2026-11-20T06:05:34Z",
  "done": "MK39: maxStake 12 (a code default, not Tj's) -> 100, walletShare .75, liveMaxCollateral 45, fair age 15 min; engine restarted 05:57 with MK37+MK38; propPairsLive on",
  "next": "monitor job 44684215924: live same-game pairs quoted? prop pairs vs the $60 reserve; won/filled; no reset before 07:00"
 }
