@@ -18,7 +18,9 @@ import kotlin.math.sqrt
  */
 object RfqLadder {
     /** One Novig rung we may be asked to price: which player-and-stat [group] it belongs to, its line and which side the outcome is. */
-    data class Target(val group: String, val strike: Double, val over: Boolean, val eventId: String, val marketType: String, val startsMs: Long, val player: String = "")
+    data class Target(val group: String, val strike: Double, val over: Boolean, val eventId: String, val marketType: String, val startsMs: Long, val player: String = "",
+        /** What the parlay hub needs to grade a leg of a filled parlay (MK15): the outcome's own name, its game's "Away @ Home" and its market id. */
+        val outcomeName: String = "", val eventDesc: String = "", val marketId: String = "")
 
     /** The player of a Novig prop market, in [com.tjshea.vigilant.data.match.PlayerNames] form: its description with the strike and the stat taken out ("Jalen Brunson 25.5 POINTS" -> "jalen brunson"). */
     fun playerOf(description: String, marketType: String, strike: Double): String =
@@ -97,18 +99,18 @@ object RfqLadder {
             // Every price the feeds carry at this very strike (two-sided rows and "N+" ladders of all books), before any modelling.
             consensus()?.at(t)?.let { s ->
                 val p = if (t.over) s.overProb else 1.0 - s.overProb
-                return LegFair(outcomeId, t.eventId, "ladder-votes ${t.group} $side ${strikeText(t.strike)}", p, s.companies, s.asOfMs, t.startsMs, false, t.marketType)
+                return LegFair(outcomeId, t.eventId, "ladder-votes ${t.group} $side ${strikeText(t.strike)}", p, s.companies, s.asOfMs, t.startsMs, false, t.marketType, outcomeName = t.outcomeName, eventDesc = t.eventDesc, marketId = t.marketId)
             }
             val posted = rungs()[t.group] ?: return null
             interpolate(posted, t.strike)?.let { r ->
                 val p = if (t.over) r.overProb else 1.0 - r.overProb
-                return LegFair(outcomeId, t.eventId, "ladder ${t.group} $side ${strikeText(t.strike)}", p, r.books, r.asOfMs, t.startsMs, false, t.marketType)
+                return LegFair(outcomeId, t.eventId, "ladder ${t.group} $side ${strikeText(t.strike)}", p, r.books, r.asOfMs, t.startsMs, false, t.marketType, outcomeName = t.outcomeName, eventDesc = t.eventDesc, marketId = t.marketId)
             }
             if (!extrapolate()) return null
             val r = extrapolate(posted, t.strike, t.marketType) ?: return null
             val p = if (t.over) r.overProb else 1.0 - r.overProb
             if (p < EXTRAP_MIN_SIDE || p > EXTRAP_MAX_SIDE) return null
-            return LegFair(outcomeId, t.eventId, "extrapolated ${t.group} $side ${strikeText(t.strike)}", p, r.books, r.asOfMs, t.startsMs, false, t.marketType, extrapolated = true)
+            return LegFair(outcomeId, t.eventId, "extrapolated ${t.group} $side ${strikeText(t.strike)}", p, r.books, r.asOfMs, t.startsMs, false, t.marketType, extrapolated = true, outcomeName = t.outcomeName, eventDesc = t.eventDesc, marketId = t.marketId)
         }
     }
 

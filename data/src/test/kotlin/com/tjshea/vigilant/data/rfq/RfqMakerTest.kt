@@ -114,7 +114,21 @@ class RfqMakerTest {
         val off = RfqPricer.decide(created("a", "b"), now, cfg.copy(propPremium = 0.0), f, 0.0) as RfqDecision.Decline
         assertTrue(off.reason.contains("not a game line"))
         val three = fairs(leg("a", "e1", 0.6, type = "POINTS"), leg("b", "e2", 0.6, type = "ASSISTS"), leg("c", "e3", 0.6, type = "REBOUNDS"))
-        assertTrue((RfqPricer.decide(created("a", "b", "c"), now, cfg, three, 0.0) as RfqDecision.Decline).reason.contains("not a game line"))
+        assertTrue("with the shadow pricing off, three props decline unpriced as before", (RfqPricer.decide(created("a", "b", "c"), now, cfg.copy(maxPropLegs = 2, propLegsShadowMax = 0), three, 0.0) as RfqDecision.Decline).let { it.reason.contains("not a game line") && it.fair == null })
+    }
+
+    @Test fun threeToSixPropLegsArePricedAtThePlainProductAndNeverQuoted() {
+        val three = fairs(leg("a", "e1", 0.6, type = "POINTS"), leg("b", "e2", 0.6, type = "ASSISTS"), leg("c", "e3", 0.5, type = "REBOUNDS"))
+        val limited = cfg.copy(maxPropLegs = 2)
+        val d = RfqPricer.decide(created("a", "b", "c"), now, limited, three, 0.0) as RfqDecision.Decline
+        assertTrue(d.reason, d.reason.contains("3 prop legs") && d.reason.contains("shadow"))
+        assertEquals("the plain product, no 20% per leg: the evidence of what the market pays over our fair", 0.18, d.fair!!, 1e-12)
+        val seven = fairs(*Array(7) { leg("l$it", "e$it", 0.9, type = "POINTS") })
+        assertNull("beyond the limit: declined unpriced", (RfqPricer.decide(created(*Array(7) { "l$it" }), now, limited.copy(maxLegs = 7), seven, 0.0) as RfqDecision.Decline).fair)
+        val mixed = fairs(leg("a", "e1", 0.6, type = "POINTS"), leg("b", "e2", 0.6, type = "ASSISTS"), leg("c", "e3", 0.5, type = ""))
+        assertNull("a leg whose type is unknown is never priced this way", (RfqPricer.decide(created("a", "b", "c"), now, limited, mixed, 0.0) as RfqDecision.Decline).fair)
+        val two = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.5, type = "RECEIVING_YARDS"))
+        assertEquals("one or two prop legs are quoted at the premium as before", 0.25 * 1.2, (RfqPricer.decide(created("a", "b"), now, cfg, two, 0.0) as RfqDecision.Quote).fair, 1e-9)
     }
 
     @Test fun everythingItCannotPriceIsDeclinedWithAReason() {
@@ -588,5 +602,16 @@ class RfqMakerTest {
         assertTrue("a leg whose market type is not known is not a game line", RfqPricer.decide(created("a", "b"), now, roc, unknown, 0.0) is RfqDecision.Decline)
         val halves = fairs(leg("a", "e1", 0.5, type = "SPREAD_1H"), leg("b", "e2", 0.4, type = "TEAM_TOTAL"))
         assertTrue(RfqPricer.decide(created("a", "b"), now, roc, halves, 0.0) is RfqDecision.Quote)
+    }
+
+    @Test fun withNoLimitOnLegsAPropParlayOfAnySizeIsQuotedAtThePremiumWhenTheWalletCanBackIt() {
+        // five prop legs of different games and a game line: 0.6 each, the premium 1.2 per prop leg
+        val ids = listOf("a", "b", "c", "d", "e", "m")
+        val f = fairs(*(ids.dropLast(1).mapIndexed { i, id -> leg(id, "e$i", 0.6, type = "POINTS") } + leg("m", "g", 0.6)).toTypedArray())
+        val big = cfg.copy(maxLegs = 100, maxFair = 0.999, maxLegFair = 0.99, maxStake = 12.0, maxCollateral = 1000.0, maxOpenCollateral = 1000.0)
+        val q = RfqPricer.decide(created(*ids.toTypedArray()), now, big, f, 0.0) as RfqDecision.Quote
+        assertEquals("0.6 ^ 6 x 1.2 ^ 5", Math.pow(0.6, 6.0) * Math.pow(1.2, 5.0), q.fair, 1e-9)
+        assertTrue("a 7th prop leg is quoted too", RfqPricer.decide(created(*(ids + "x").toTypedArray()), now, big, fairs(*(ids.dropLast(1).mapIndexed { i, id -> leg(id, "e$i", 0.6, type = "POINTS") } + leg("m", "g", 0.6) + leg("x", "ex", 0.6, type = "ASSISTS")).toTypedArray()), 0.0) is RfqDecision.Quote)
+        assertTrue("the default is no limit", RfqConfig().maxPropLegs == Int.MAX_VALUE)
     }
 }

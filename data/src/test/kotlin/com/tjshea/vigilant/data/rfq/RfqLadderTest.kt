@@ -104,4 +104,12 @@ class RfqLadderTest {
     @Test fun theSlopesCoverTheStatsMeasuredAndAreAllPositive() {
         for (s in listOf("POINTS", "REBOUNDS", "ASSISTS", "THREE_POINTERS_MADE", "POINTS_REBOUNDS_ASSISTS", "SHOTS_ON_GOAL", "RECEIVING_YARDS", "RUSHING_YARDS", "PASSING_YARDS", "RECEPTIONS")) assertTrue(s, (RfqLadder.SLOPES[s] ?: 0.0) > 0.0)
     }
+
+    @Test fun aLadderPricedLegCarriesWhatTheParlayHubNeedsToGradeIt() {
+        val g = RfqLadder.group("e1", "POINTS", "Jalen Brunson 25.5 POINTS", 25.5)
+        val t = RfqLadder.Target(g, 19.5, true, "e1", "POINTS", now + 3_600_000L, "jalen brunson", "Over 19.5", "Knicks @ Spurs", "m-19")
+        val f = RfqLadder.Fairs({ null }, { mapOf("o" to t) }, { mapOf(g to postedPoints) }, { true }).leg("o")!!
+        assertEquals("Over 19.5", f.outcomeName); assertEquals("Knicks @ Spurs", f.eventDesc); assertEquals("m-19", f.marketId)
+        assertTrue(f.extrapolated)
+    }
 }
