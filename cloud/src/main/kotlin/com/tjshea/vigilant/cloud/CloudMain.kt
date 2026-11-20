@@ -592,7 +592,35 @@ fun main(args: Array<String>) = runBlocking {
             return map
         }
     }
-    val rfqLegFairs = com.tjshea.vigilant.data.rfq.RfqLadder.Fairs(rfqDirectFairs, { ladderTargets.get() }, { ladderRungs.get() }, { rfqCfg.get().ladderExtrapolate })
+    // MK22 (Tj 2026-11-20: "the engine should carry fair odds on almost everything"): the fair of a Novig prop strike from EVERY price the feeds carry at it (two-sided rows and "N+" ladders of all books), not only the
+    // lines the scan priced. Rebuilt every minute from the props the scan already holds (no request of its own), paired with Novig's events.
+    val lastVotesLogMs = java.util.concurrent.atomic.AtomicLong(0L)
+    val propVotes = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.rfq.RfqLadder.Consensus?>(null)
+    val novigEventsForVotes = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.novig.NovigEvent>>(emptyList())
+    val rfqLegFairs = com.tjshea.vigilant.data.rfq.RfqLadder.Fairs(rfqDirectFairs, { ladderTargets.get() }, { ladderRungs.get() }, { rfqCfg.get().ladderExtrapolate }, { if (rfqCfg.get().ladderVotes) propVotes.get() else null })
+    scope.launch {
+        delay(150_000L)
+        while (isActive) {
+            val s = latestSettings.get()
+            val cfg = rfqCfg.get()
+            if (s != null && cfg.mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF && cfg.ladderVotes) {
+                runCatching {
+                    val snaps = s.leagues.mapNotNull { lg -> scanner.heldSnapshot(com.tjshea.vigilant.data.reference.PropLinePropsSource.ID, lg) }
+                    val refEvents = snaps.flatMap { it.events }.filter { it.milestones.isNotEmpty() || it.markets.isNotEmpty() }
+                    val novigEvents = novigEventsForVotes.get()
+                    if (refEvents.isNotEmpty() && novigEvents.isNotEmpty()) {
+                        val store = com.tjshea.vigilant.data.rfq.PropLadderFair.build(refEvents)
+                        val pairs = HashMap<String, String>()
+                        for (m in com.tjshea.vigilant.data.scanner.Planner.matchEvents(novigEvents, snaps)) m.refEvent?.let { pairs[m.event.eventId] = it.id }
+                        val idx = com.tjshea.vigilant.data.rfq.PropLadderFair.Index(store, pairs)
+                        propVotes.set(idx)
+                        if (System.currentTimeMillis() - lastVotesLogMs.get() > 10 * 60_000L) { lastVotesLogMs.set(System.currentTimeMillis()); log("RFQ prop votes: ${idx.summary()}") }
+                    }
+                }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("RFQ prop votes not built: ${e.message?.take(120)}") }
+            }
+            delay(60_000L)
+        }
+    }
     scope.launch {
         delay(90_000L)
         while (isActive) {
@@ -605,8 +633,10 @@ fun main(args: Array<String>) = runBlocking {
                     for (mk in ms) {
                         val strike = mk.strike ?: continue
                         val g = com.tjshea.vigilant.data.rfq.RfqLadder.group(mk.eventId, mk.marketType, mk.description, strike)
-                        for (o in mk.outcomes) m[o.outcomeId] = com.tjshea.vigilant.data.rfq.RfqLadder.Target(g, strike, o.name.startsWith("Over", ignoreCase = true), mk.eventId, mk.marketType, mk.startsTs)
+                        val player = com.tjshea.vigilant.data.rfq.RfqLadder.playerOf(mk.description, mk.marketType, strike)
+                        for (o in mk.outcomes) m[o.outcomeId] = com.tjshea.vigilant.data.rfq.RfqLadder.Target(g, strike, o.name.startsWith("Over", ignoreCase = true), mk.eventId, mk.marketType, mk.startsTs, player)
                     }
+                    runCatching { novigEventsForVotes.set(novig.events(s.leagues.toList(), listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME), now + 5 * 86_400_000L)) }
                     ladderTargets.set(m)
                     log("RFQ ladder: ${m.size} prop outcomes known to price from the posted rungs")
                 }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("RFQ ladder catalog not read: ${e.message?.take(120)}") }
