@@ -110,4 +110,13 @@ class LiveFairTest {
         val d = RfqPricer.decide(created("a", "b"), now, cfg.copy(liveMaxCollateral = 10.0), f, 0.0) as RfqDecision.Decline
         assertTrue(d.reason, d.reason.contains("caps allow"))
     }
+
+    @Test fun aLegTheBookHasNoPriceForIsNotedAsDemandAndForgottenAfterTheWindow() {
+        val b = LiveFair.Book()
+        val f = LiveFair.Fairs({ null }, { b }, { true }, { now })
+        assertNull(f.leg("unknown-1")); assertNull(f.leg("unknown-2"))
+        b.demand["old"] = now - 20 * 60_000L
+        assertEquals(setOf("unknown-1", "unknown-2"), b.recentDemand(now, 10 * 60_000L).toSet())
+        assertNull("the old one was forgotten", b.demand["old"])
+    }
 }

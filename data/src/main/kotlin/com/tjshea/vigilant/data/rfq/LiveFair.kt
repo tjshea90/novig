@@ -78,6 +78,15 @@ object LiveFair {
 
     /** The live fair of every in-play leg right now: replaced whole by the engine's loop, read by [Fairs] without a lock. */
     class Book {
+        /** Outcome ids an RFQ asked about that the book had no price for, with when: the engine watches those markets (only what is asked for costs stream tokens). */
+        val demand = java.util.concurrent.ConcurrentHashMap<String, Long>()
+        fun note(outcomeId: String, atMs: Long) { if (demand.size < 200_000) demand[outcomeId] = atMs }
+        /** The outcomes asked for within [windowMs] of [now]; older ones are forgotten. */
+        fun recentDemand(now: Long, windowMs: Long): List<String> {
+            val it = demand.entries.iterator(); val out = ArrayList<Pair<String, Long>>()
+            while (it.hasNext()) { val e = it.next(); if (now - e.value > windowMs) it.remove() else out += e.key to e.value }
+            return out.sortedByDescending { it.second }.map { it.first }
+        }
         @Volatile private var legs: Map<String, Leg> = emptyMap()
         @Volatile var builtAtMs: Long = 0L
             private set
@@ -95,7 +104,9 @@ object LiveFair {
         override fun leg(outcomeId: String): LegFair? {
             val base = inner.leg(outcomeId)
             if (!enabled()) return base
-            book()?.leg(outcomeId)?.let { return it.toLegFair() }
+            val b = book()
+            b?.leg(outcomeId)?.let { return it.toLegFair() }
+            b?.note(outcomeId, clock())
             if (base != null && !base.live && base.startsMs <= clock()) return base.copy(live = true)
             return base
         }

@@ -670,6 +670,9 @@ fun main(args: Array<String>) = runBlocking {
         var markets: List<com.tjshea.vigilant.data.novig.NovigMarket> = emptyList()
         var catalogAt = 0L
         var lastLog = 0L
+        var outcomeMarket: Map<String, String> = emptyMap()
+        var moneyIds: List<String> = emptyList()
+        var pinnedLive: List<String> = emptyList()
         while (isActive) {
             val s = latestSettings.get()
             val cfg = rfqCfg.get()
@@ -682,13 +685,19 @@ fun main(args: Array<String>) = runBlocking {
                         val ms = if (ev.isEmpty()) emptyList() else novig.markets(leagues, com.tjshea.vigilant.data.rfq.LiveFair.TYPES, listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_LIVE), null)
                             .filter { it.isOpen && it.outcomes.size == 2 && ev.containsKey(it.eventId) }
                         events = ev; markets = ms; catalogAt = now
-                        liveView.watchLive(ms.map { it.marketId })
+                        outcomeMarket = HashMap<String, String>(ms.size * 2).also { m -> for (mk in ms) for (o in mk.outcomes) m[o.outcomeId] = mk.marketId }
+                        moneyIds = ms.filter { it.marketType == "MONEY" }.map { it.marketId }
                     }
-                    val books = liveView.liveTop(markets.map { it.marketId })
+                    // Only what is asked for is watched (a market costs 16 stream tokens, the key's allowance is shared with the scan): every in-play moneyline, and the markets of the legs RFQs asked about in the
+                    // last 10 minutes (newest first, at most 300). A market not yet watched has no price: the parlay is declined the first time and priced once its book arrives.
+                    val asked = liveBook.recentDemand(now, 10 * 60_000L).mapNotNull { outcomeMarket[it] }.distinct()
+                    val wanted = (moneyIds + asked).distinct().take(330)
+                    if (wanted != pinnedLive) { liveView.watchLive(wanted); pinnedLive = wanted }
+                    val books = liveView.liveTop(wanted)
                     liveBook.replace(com.tjshea.vigilant.data.rfq.LiveFair.build(markets, books, events, cfg.liveMaxSpread, 10_000L, now), now)
-                    if (now - lastLog > 5 * 60_000L) { lastLog = now; log("RFQ live fair: ${events.size} games in play, ${markets.size} game-line markets watched, ${liveBook.size()} legs priced from Novig's live book (mode ${cfg.liveParlays})") }
+                    if (now - lastLog > 5 * 60_000L) { lastLog = now; log("RFQ live fair: ${events.size} games in play, ${markets.size} game-line markets in the catalog, ${pinnedLive.size} watched, ${liveBook.size()} legs priced from Novig's live book (mode ${cfg.liveParlays})") }
                 }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("RFQ live fair not built: ${e.message?.take(120)}") }
-            } else if (liveBook.size() > 0) { liveBook.replace(emptyMap(), now); liveView.watchLive(emptyList()) }
+            } else if (liveBook.size() > 0 || pinnedLive.isNotEmpty()) { liveBook.replace(emptyMap(), now); liveView.watchLive(emptyList()); pinnedLive = emptyList() }
             delay(2_000L)
         }
     }
