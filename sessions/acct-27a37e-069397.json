@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "c991d051d1dcf6695629cd1089a926300ab6ce47",
+ "head": "78b027e8505aa901ee367c6dd689bbc6ba650813",
  "since": 1795129305,
- "beat": 1795148743,
- "beatIso": "2026-11-20T04:25:43Z",
+ "beat": 1795148955,
+ "beatIso": "2026-11-20T04:29:15Z",
  "done": "MK32: settled maker parlays show adverse selection (31 of 32 legs won vs 23.2 expected, maker won 1 of 16): logged; open decision for Tj on fills vs edge",
  "next": "watch live fills; decide with Tj whether to keep thin floors; collect results of live fills"
 }
