@@ -63,7 +63,7 @@ class LiveFairTest {
     }
 
     // ---- the pricer ----
-    private val cfg = RfqConfig(legCalibration = false, mode = RfqConfig.Mode.LIVE, liveParlays = RfqConfig.Mode.LIVE, margin = 0.015, minReturn = 0.004, liveMinReturn = 0.004, minPoints = 0.002, fairErrorRel = 0.006,
+    private val cfg = RfqConfig(legCalibration = false, allHighMaxLegs = 0, mode = RfqConfig.Mode.LIVE, liveParlays = RfqConfig.Mode.LIVE, margin = 0.015, minReturn = 0.004, liveMinReturn = 0.004, minPoints = 0.002, fairErrorRel = 0.006,
         maxLegs = 100, maxStake = 12.0, maxCollateral = 75.0, maxOpenCollateral = 200.0, maxFair = 0.6, maxLegFair = 0.9, minLeadMs = 60_000L, liveMaxCollateral = 0.0)
     private fun live(id: String, ev: String, p: Double, ageMs: Long = 1_000L, type: String = "MONEY", source: String = LiveFair.SOURCE) =
         LegFair(id, ev, "live", p, 1, now - ageMs, now - 600_000L, true, type, source = source)
