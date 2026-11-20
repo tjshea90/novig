@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "fc3e4019df5c43905f509b824b6e0d89dab866e7",
+ "head": "a7f0284c1e5bf9561e5a58f93737e29c854c4ba9",
  "since": 1795134161,
- "beat": 1795143380,
- "beatIso": "2026-11-20T02:56:20Z",
+ "beat": 1795143623,
+ "beatIso": "2026-11-20T03:00:23Z",
  "done": "MK29b: grade finished legs without a market id from final scores (legsToScore)",
  "next": "land, one engine reset, check leg results (ATP names N/A?)"
 }
