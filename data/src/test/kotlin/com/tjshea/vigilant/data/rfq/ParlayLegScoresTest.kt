@@ -45,4 +45,12 @@ class ParlayLegScoresTest {
         val got = ParlayBook.legsToScore(ParlayBook(parlays = listOf(parlay)), now)
         assertEquals(listOf("a"), got.map { it.outcomeId })
     }
+
+    @Test fun aTennisRoundIsDroppedAndAReversedHomeAwayStillFindsTheGame() = runTest {
+        assertEquals("Vignesh Gogineni @ Stefan Kozlov", ParlayLegScores.cleanDesc("Vignesh Gogineni @ Stefan Kozlov Round of 16"))
+        assertEquals("Stefan Kozlov @ Vignesh Gogineni", ParlayLegScores.reversed("Vignesh Gogineni @ Stefan Kozlov"))
+        // Novig lists "Sacramento Kings @ Phoenix Suns" where the feed has the Suns away.
+        val swapped = leg("MONEY", "Moneyline Phoenix Suns").copy(desc = "Sacramento Kings @ Phoenix Suns")
+        assertEquals("LOSS", ParlayLegScores.grade(swapped, source(game()), now))
+    }
 }

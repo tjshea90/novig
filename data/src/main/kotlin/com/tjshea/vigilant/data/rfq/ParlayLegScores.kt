@@ -39,11 +39,24 @@ object ParlayLegScores {
         val day = FreeScores.etDate(leg.startsMs)
         for (date in listOf(day, day.minusDays(1), day.plusDays(1))) {
             val games = scores.games(league, date) ?: continue
-            val game = BetGrader.gameOf(leg.desc, leg.startsMs, games) ?: continue
+            val desc = cleanDesc(leg.desc)
+            // Novig may list a game with the teams the other way round from ESPN (a neutral site: "West Virginia @ Florida" is ESPN's "Florida at West Virginia"); the pick names a team, so the other order grades the same.
+            val game = BetGrader.gameOf(desc, leg.startsMs, games) ?: reversed(desc)?.let { BetGrader.gameOf(it, leg.startsMs, games) } ?: continue
             if (game.called || !game.final) return null
             val result = BetGrader.gradeDetailed(pick, game) as? BetGrader.Grade.Result ?: return null
             return when (result.status) { BetStatus.WON -> "WIN"; BetStatus.LOST -> "LOSS"; BetStatus.PUSH -> "PUSH"; else -> null }
         }
         return null
+    }
+
+    private val ROUND = Regex("""\s+(Round of \d+|Quarterfinals?|Semifinals?|Finals?|Qualifying.*|Qualification.*)$""", RegexOption.IGNORE_CASE)
+
+    /** A tennis description carries its round ("Vignesh Gogineni @ Stefan Kozlov Round of 16"): ESPN's does not. */
+    fun cleanDesc(desc: String): String = desc.trim().replace(ROUND, "").trim()
+
+    /** "Away @ Home" -> "Home @ Away". */
+    fun reversed(desc: String): String? {
+        val parts = desc.split(" @ ")
+        return if (parts.size == 2 && parts.all { it.isNotBlank() }) parts[1].trim() + " @ " + parts[0].trim() else null
     }
 }
