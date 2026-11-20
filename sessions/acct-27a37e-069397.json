@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "42e9d2a7537cb6656a82127e5f668739c7790834",
+ "head": "c194ad0f206454ff4a1775d5394556b9f3c06f3a",
  "since": 1795129305,
- "beat": 1795159914,
- "beatIso": "2026-11-20T07:31:54Z",
- "done": "MK44 standing job recorded; census label fix for alternate game lines (cloud tests green, not deployed)",
- "next": "keep the PARLAY MANDATE LOOP running (07:40 wake): status, won/filled, census; next deploy >=08:00 only with something worth a reset; US-evening in-play volume is the next test of MK37"
+ "beat": 1795159949,
+ "beatIso": "2026-11-20T07:32:29Z",
+ "done": "MK45: propCashReserve ($90 of free cash kept from any prop-involving quote: props are 53% of RFQs and trade 100x less per collateral-minute than in-play game lines) + reserveAfterCloseMs 36 s; census label for alternate lines; full suite 4496 green",
+ "next": "08:00+: ONE graceful reset to deploy MK45 + the census label (board note first), then rfq_set propCashReserve is already the default 90; watch quotes/min and cash-short share; no reset before 08:00"
 }
