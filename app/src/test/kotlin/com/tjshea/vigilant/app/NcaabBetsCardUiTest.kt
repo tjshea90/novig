@@ -60,6 +60,11 @@ class NcaabBetsCardUiTest {
         }
     }
 
+    /** A whole screen (it scrolls itself): no extra scroll around it. */
+    private fun screen(content: @androidx.compose.runtime.Composable () -> Unit) = compose.setContent {
+        CompositionLocalProvider(LocalClock provides { now }) { VigilantTheme(darkTheme = true) { Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { content() } } }
+    }
+
     @Test fun withNoBetsTheCardSaysWhatItCountsAndShowsNoNumbers() {
         show { NcaabBetsCard(NcaabBetStats.summarize(emptyList(), now)) }
         compose.onNodeWithTag("ncaabBetsEmpty").assertIsDisplayed()
@@ -77,16 +82,16 @@ class NcaabBetsCardUiTest {
         compose.onNodeWithTag("ncaabBets-profit-today").assertTextEquals("−$15.00")
         compose.onNodeWithTag("ncaabBets-record-all").assertTextEquals("2-2")
         compose.onNodeWithTag("ncaabBets-winPct-all").assertTextEquals("50%")
-        compose.onNodeWithTag("ncaabBets-open-all").assertTextContains("1 · $5.00")
-        compose.onNodeWithTag("ncaabBets-facts").assertTextContains("Best win +$20.00")
+        compose.onNodeWithTag("ncaabBets-open-all").assertTextContains("1 · $5.00", substring = true)
+        compose.onNodeWithTag("ncaabBets-facts").assertTextContains("Best win +$20.00", substring = true)
     }
 
     @Test fun inTheTabItIsOneLineUntilOpenedAndThenShowsEveryNumberAndTheDays() {
         show { NcaabBetsCard(summary, collapsible = true) }
-        compose.onNodeWithTag("ncaabBetsLine").assertTextContains("5 bets")
-        compose.onNodeWithTag("ncaabBetsLine").assertTextContains("$60.00 bet")
-        compose.onNodeWithTag("ncaabBetsLine").assertTextContains("+$5.00")
-        compose.onNodeWithTag("ncaabBetsLineToday").assertTextContains("Today: 2 bets")
+        compose.onNodeWithTag("ncaabBetsLine").assertTextContains("5 bets", substring = true)
+        compose.onNodeWithTag("ncaabBetsLine").assertTextContains("$60.00 bet", substring = true)
+        compose.onNodeWithTag("ncaabBetsLine").assertTextContains("+$5.00", substring = true)
+        compose.onNodeWithTag("ncaabBetsLineToday").assertTextContains("Today: 2 bets", substring = true)
         assertEquals("details are not drawn while collapsed", 0, compose.onAllNodesWithTagCount("ncaabBets-profit"))
         compose.onNodeWithTag("ncaabBetsToggle").performClick()
         compose.onNodeWithTag("ncaabBets-profit-all").assertTextEquals("+$5.00")
@@ -107,14 +112,14 @@ class NcaabBetsCardUiTest {
         val s = NcaabBetStats.summarize(all, now)
         assertEquals(5, s.all.bets); assertEquals(60.0, s.all.staked, 1e-9)
         val base = SampleScan.state()
-        show { TrackerScreen(base.copy(bets = all), { _, _ -> }, {}, initialView = TrackerView.STATS) }
+        screen { TrackerScreen(base.copy(bets = all), { _, _ -> }, {}, initialView = TrackerView.STATS) }
         compose.onNodeWithTag("ncaabBets").assertExists()
         compose.onNodeWithTag("ncaabBets-staked-all").assertTextEquals("$60.00")
     }
 
     @Test fun theTrackerShowsNoCardWhenNoBetCameFromTheTab() {
         val base = SampleScan.state()
-        show { TrackerScreen(base, { _, _ -> }, {}, initialView = TrackerView.STATS) }
+        screen { TrackerScreen(base, { _, _ -> }, {}, initialView = TrackerView.STATS) }
         assertEquals(0, compose.onAllNodesWithTagCount("ncaabBets"))
     }
 
