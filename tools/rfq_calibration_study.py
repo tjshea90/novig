@@ -164,8 +164,8 @@ def calibration_buckets(items, edges, rng, boots=300):
 
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------- the live profile
-PROFILE = {"maxLegs": 2, "maxLegFair": 0.8, "maxFair": 0.65, "minFair": 0.25, "minLeadMs": 60_000, "maxDaysAhead": 2, "minBooks": 2, "onlyToday": False, "margin": 0.001, "minPoints": 0.0005, "fairErrorRel": 0.001,
-           "minReturn": 0.001, "holdFloorDays": 1.0, "maxSameParlay": 1, "maxParlaysPerOutcome": 2, "walletLegShare": 0.25, "sameGamePremium": 0.0, "marginAdd": 0.0}
+PROFILE = {"maxLegs": 2, "maxLegFair": 0.8, "maxFair": 0.65, "minFair": 0.35, "minLeadMs": 3_600_000, "maxLeadMs": 43_200_000, "maxDaysAhead": 2, "minBooks": 2, "onlyToday": False, "margin": 0.001, "minPoints": 0.0005, "fairErrorRel": 0.001,
+           "minReturn": 0.001, "holdFloorDays": 1.0, "maxSameParlay": 1, "maxParlaysPerOutcome": 2, "walletLegShare": 0.25, "sameGamePremium": 0.0, "marginAdd": 0.0, "adaptive": False, "scarcityStart": 0.35, "scarcityHigh": 8.0, "scarcityMargin": 0.004, "lockAfter": 3.5}
 
 
 def up(x):
@@ -184,6 +184,8 @@ def passes(r, c):
     if r["n"] > c["maxLegs"] or max(r["ps"]) > c["maxLegFair"] or r["fair"] > c["maxFair"] or r["fair"] < c["minFair"]:
         return False
     if r["lead_h"] * 3.6e6 < c["minLeadMs"] or r["last_h"] > c["maxDaysAhead"] * 24 or min(r["books"]) < c["minBooks"]:
+        return False
+    if c.get("maxLeadMs") and r["last_h"] * 3.6e6 > c["maxLeadMs"]:
         return False
     if c["onlyToday"]:
         end = r["at"] - (r["at"] % 86_400_000) + 10 * 3_600_000          # the slate ends at 5 am ET = 10:00 UTC (November)
@@ -211,6 +213,14 @@ def replay(rows, c, wallet=145.0):
         p = our_price(r["fair"], r["n"], r["lead_h"] * 3.6e6, c)
         if r["n"] == 2 and r["same"] and c["sameGamePremium"]:
             p = up(p * (1 + c["sameGamePremium"]))
+        if c.get("adaptive") and wallet is not None:
+            held = sum(o[1] for o in open_); util = held / max(1e-9, cash + held)
+            if util > c["scarcityStart"]:
+                ramp = min(1.0, (util - c["scarcityStart"]) / (1 - c["scarcityStart"]))
+                score = 24.0 / ((r["last_h"] + c["lockAfter"]) * (1 - p))
+                if score < c["scarcityHigh"] * ramp:
+                    skipped["scarcity gate"] += 1; continue
+                p = up(p + c["scarcityMargin"] * ramp)
         if r["price"] < p - 1e-9:
             skipped["market below our price"] += 1; continue
         if abs(r["price"] - p) < 1e-9 and (zlib.crc32(r["id"].encode()) & 1):
@@ -233,7 +243,7 @@ def replay(rows, c, wallet=145.0):
         fills.append((r["at"], pnl, col, w / p, r["buyer"], r["day"]))
     pnl = sum(f[1] for f in fills); pot = sum(f[3] for f in fills)
     days = max(1, len({f[5] for f in fills}))
-    return {"fills": len(fills), "pnl": pnl, "pot": pot, "roi": pnl / pot if pot else 0.0, "wins": sum(1 - f[4] for f in fills), "per_day": len(fills) / max(1, len({r["day"] for r in ex})), "skipped": dict(skipped), "col": sum(f[2] for f in fills),
+    return {"fills": len(fills), "pot_per_day": pot / max(1, len({r["day"] for r in ex})), "pnl": pnl, "pot": pot, "roi": pnl / pot if pot else 0.0, "wins": sum(1 - f[4] for f in fills), "per_day": len(fills) / max(1, len({r["day"] for r in ex})), "skipped": dict(skipped), "col": sum(f[2] for f in fills),
             "by_day": {d: sum(f[1] for f in fills if f[5] == d) for d in sorted({f[5] for f in fills})}}
 
 
@@ -343,21 +353,31 @@ def report(rows, legs, out):
             out("m=+%.2f pt: wins/day %5.1f (%4.1fx the wallet's fills) | ROI of the wins %+5.1f%% | expected profit per RFQ entered %+5.2f%%" % (m, len(w) / max(1, len(days_n)), len(w) / max(1, len(days_n)) / max(1e-9, cap), 100 * roi, 100 * roi * len(w) / len(t7)))
     out("```")
 
+    out("\n## C5. The scarcity score of the parlays the live profile quotes (24 / (lock hours x (1 - our price)): the daily return on the collateral per unit of pot edge)\n")
+    tier = [r for r in ex if cls(r) and passes(r, PROFILE)]
+    sc = sorted(24.0 / ((r["last_h"] + 3.5) * (1 - our_price(r["fair"], r["n"], r["lead_h"] * 3.6e6, PROFILE))) for r in tier)
+    if sc:
+        out("```")
+        out("n %d | quantiles of the score: p10 %.1f p25 %.1f p50 %.1f p75 %.1f p85 %.1f p90 %.1f p95 %.1f" % (len(sc), *(sc[int(q * (len(sc) - 1))] for q in (.1, .25, .5, .75, .85, .9, .95))))
+        out("```")
+
     out("\n## D. Replay of the live profile on the executed flow, wallet $145, every setting varied one at a time\n")
     out("`fills` = parlays the config would have quoted AND won (the market's price at or above our quote), taken in time order from the wallet's free cash; P&L in dollars at the executed stakes (~$10); `pnl/day` over the days with executed flow.\n")
-    out("| variant | fills | per day | pnl $ | ROI of pot | peak days | skipped (cash / identical / outcome / leg share) |\n|---|---|---|---|---|---|---|")
+    out("| variant | fills | per day | pot $/day (the profit at a constant edge) | pnl $ | ROI of pot | by day | skipped (cash / identical / outcome / leg share / scarcity gate) |\n|---|---|---|---|---|---|---|---|")
     variants = [("PROFILE (live)", {}), ("no wallet limit", {"_wallet": None}), ("wallet $300", {"_wallet": 300.0}),
                 ("maxLegs 3", {"maxLegs": 3}), ("maxLegFair .7", {"maxLegFair": 0.7}), ("maxLegFair .9", {"maxLegFair": 0.9}), ("minFair .15", {"minFair": 0.15}), ("minFair .35", {"minFair": 0.35}), ("maxFair .5", {"maxFair": 0.5}), ("maxFair .8", {"maxFair": 0.8}),
                 ("onlyToday", {"onlyToday": True}), ("maxDaysAhead 1", {"maxDaysAhead": 1}), ("minLead 10 min", {"minLeadMs": 600_000}), ("minLead 30 min", {"minLeadMs": 1_800_000}), ("minLead 1 h", {"minLeadMs": 3_600_000}),
                 ("minBooks 3", {"minBooks": 3}), ("margin +0.5 pt", {"marginAdd": 0.005}), ("margin +1 pt", {"marginAdd": 0.01}), ("margin -0.5 pt", {"marginAdd": -0.005}),
-                ("no guards", {"maxSameParlay": 0, "maxParlaysPerOutcome": 0, "walletLegShare": 9.0})]
+                ("no guards", {"maxSameParlay": 0, "maxParlaysPerOutcome": 0, "walletLegShare": 9.0}),
+                ("PW1 adaptive (live profile + scarcity gate)", {"adaptive": True}), ("PW1 adaptive, wallet $300", {"adaptive": True, "_wallet": 300.0}), ("PW1 adaptive, wallet $600", {"adaptive": True, "_wallet": 600.0}), ("fixed rules, wallet $600", {"_wallet": 600.0}),
+                ("PW1 gate 5 (looser)", {"adaptive": True, "scarcityHigh": 5.0}), ("PW1 gate 11 (stricter)", {"adaptive": True, "scarcityHigh": 11.0}), ("PW1 no margin ramp", {"adaptive": True, "scarcityMargin": 0.0})]
     results = {}
     for name, ch in variants:
         c = dict(PROFILE); wallet = ch.pop("_wallet", 145.0) if "_wallet" in ch else 145.0
         c.update(ch)
         res = results[name] = replay(rows, c, wallet)
         sk = res["skipped"]
-        out("| %s | %d | %.1f | %+.2f | %+.1f%% | %s | %d / %d / %d / %d |" % (name, res["fills"], res["per_day"], res["pnl"], 100 * res["roi"], " ".join("%s:%+.1f" % (d, v) for d, v in res["by_day"].items()), sk.get("cash short", 0), sk.get("identical", 0), sk.get("outcome in 2", 0), sk.get("leg share", 0)))
+        out("| %s | %d | %.1f | %.0f | %+.2f | %+.1f%% | %s | %d / %d / %d / %d / %d |" % (name, res["fills"], res["per_day"], res["pot_per_day"], res["pnl"], 100 * res["roi"], " ".join("%s:%+.1f" % (d, v) for d, v in res["by_day"].items()), sk.get("cash short", 0), sk.get("identical", 0), sk.get("outcome in 2", 0), sk.get("leg share", 0), sk.get("scarcity gate", 0)))
     return results
 
 
