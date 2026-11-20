@@ -1,22 +1,22 @@
-# CHECKPOINT 4774 — read me first, then TASKS.md
+# CHECKPOINT 4775 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T07:15:48Z · **tests:** all 11 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `0abde0d67` (this checkpoint is the commit after it)
+**Written:** 2026-11-20T07:32:28Z · **tests:** all 11 fast checks green
+**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `42e9d2a75` (this checkpoint is the commit after it)
 
 ## Just done
-MK44 standing job recorded; census label fix for alternate game lines (cloud tests green, not deployed)
+MK45: propCashReserve ($90 of free cash kept from any prop-involving quote: props are 53% of RFQs and trade 100x less per collateral-minute than in-play game lines) + reserveAfterCloseMs 36 s; census label for alternate lines; full suite 4496 green
 
 ## Do this next
-keep the PARLAY MANDATE LOOP running (07:40 wake): status, won/filled, census; next deploy >=08:00 only with something worth a reset; US-evening in-play volume is the next test of MK37
+08:00+: ONE graceful reset to deploy MK45 + the census label (board note first), then rfq_set propCashReserve is already the default 90; watch quotes/min and cash-short share; no reset before 08:00
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  2a06e1f66 ckpt 4774: MK44 standing job recorded; census label fix for alternate game lines (clou
   b331e5550 ckpt 4773: MK43: floors cut to ~fair (margin .001, fairErrorRel .001, minPoints .0005,
   ea125d9d9 ckpt 4772: MK41 fix: Novig answered 400 INVALID_QUERY to the combined protected-type l
   cdd39e1bd ckpt 4771: MK42: floors halved (margin .003, fairErrorRel .003, minPoints .001, minRet
@@ -26,8 +26,7 @@ keep the PARLAY MANDATE LOOP running (07:40 wake): status, won/filled, census; n
   0ad71f9a4 ckpt 4767: MK37 evidence: where fills come from (morning vs now, executed-trade win sh
   3abb65590 ckpt 4766: MK37: in-play same-game pairs (moneyline/spread + total) priced through the
   1d27b8673 ckpt 4765: MK36: decline 3+ leg parlays whose legs are all favourites (study: -20.6% o
-  ed905ede7 ckpt 4764: MK31e: live fair current-as-of-now for stream-held books, watch up to 600 m
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(5 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
