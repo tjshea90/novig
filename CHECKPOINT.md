@@ -1,13 +1,13 @@
 # CHECKPOINT 4738 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T01:50:10Z · **tests:** all 11 fast checks green
-**Branch:** `claude/optimistic-curie-aoglz9` · **builds on:** `b498e37bf` (this checkpoint is the commit after it)
+**Written:** 2026-11-20T01:50:58Z · **tests:** all 11 fast checks green
+**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `c49a6208e` (this checkpoint is the commit after it)
 
 ## Just done
-MK27: minLead 1 min, propPairsLive per Tj; marketPricing held for his yes
+MK26: exact replay: engine quotes what Tj's caps allow (25% of the morning's quotes pass today's settings); evening flow 63% in-play
 
 ## Do this next
-confirm by status config, report priceable share warm
+wait for Tj: restore the morning's caps (longshotsOnly off, maxFair 0.85, maxLegFair 0.99) or relax one; then same-game correlation shadow pricing
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -28,3 +28,6 @@ confirm by status config, report priceable share warm
   1cf774173 ckpt 4729: MK23 logged: cold-start fair index explains 'engine priced more earlier'
   7fa234079 ckpt 4728: MK22: PropLadderFair: the maker's prop fair from every book's price at a st
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
