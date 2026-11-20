@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "b95c70d2951fa8088ee0c041c318670731d08a31",
+ "head": "86ed9fb85f53b8e3113edc088b98253dd856fdbd",
  "since": 1795129305,
- "beat": 1795201634,
- "beatIso": "2026-11-20T19:07:14Z",
- "done": "PF1 DONE: parlay profit profile live on cloud-config (rfq-maker-engine.json, 81ac24d85), engine code + app 1.0.146 shipped (release.yml green), research/parlay_profit_profile_2026-11-20.md, SHAPES.txt in the daily study; engine is OFF (Tj's switch) so the first start after he turns it on runs the profile",
- "next": "when Tj turns the engine on: confirm status rfq.configLock is set and rfq.config shows maxLegs 2 / longshotsOnly false (engine-log 'RFQ maker config: LIVE'); after the daily study (10:37 UTC) read SHAPES.txt, judge on 20+ independent settled fills (clusters), tighten before widening; evening summary only if the engine runs"
+ "beat": 1795201663,
+ "beatIso": "2026-11-20T19:07:43Z",
+ "done": "PF2: verified margin-vs-shape on the graded table (shape 8.0% of P&L variance, margin 0.7%), profile v2 minFair .25 + sameGamePremium 0 (cloud-config 7c9dcc0bf), shape study prints the test daily, RfqProfitProfileTest pins it; data tests green",
+ "next": "nothing pending for the engine (it is OFF until Tj turns it on); when it runs confirm status rfq.configLock + config minFair .25; after the 10:37 UTC daily study read SHAPES.txt (margin test + day columns); judge on 20+ independent settled fills"
 }
