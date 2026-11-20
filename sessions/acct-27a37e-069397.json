@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "6e782d76a0941b23112f1a7730ff8f93dbcd069a",
+ "head": "c87fa9036b52dcb49e738a6dc844ad2c7688eb9b",
  "since": 1795129305,
- "beat": 1795211681,
- "beatIso": "2026-11-20T21:54:41Z",
- "done": "NT2: the NCAAB tab leaves out games with no betting odds (no Novig market, no ESPN line) once Novig's board is read, footnote counts them; full suite green (4543); v1.0.148 (code 488)",
- "next": "land on main (push.sh), wait for CI green, ship.sh, release.yml, record-release.sh v1.0.148 488; tell Tj"
+ "beat": 1795211753,
+ "beatIso": "2026-11-20T21:55:53Z",
+ "done": "pre-release: NT2: the NCAAB tab no longer lists small college games with no betting odds (versionCode 488, v1.0.148)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.148), then run: bash tools/record-release.sh v1.0.148 488 \"NT2: the NCAAB tab no longer lists small college games with no betting odds\""
 }
