@@ -67,6 +67,8 @@ data class RfqStatus(
     /** MK13: the refusal codes Novig answered our frames with (`RFQ_CLOSED x3`...), and the sockets' state in words. */
     val refusals: List<String> = emptyList(),
     val sockets: String = "",
+    /** PF1: not empty while the engine's own profit profile (`rfq-maker-engine.json`) configures the maker and the phone's `rfq-maker.json` is not read ([RfqConfigSource]); the words the Parlays tab shows. */
+    val configLock: String = "",
 ) {
     companion object {
         /** The evidence rule's count: LIVE is only recommended from this many priced trades (research/novig_rfq_maker_2026-11-18.md). */
