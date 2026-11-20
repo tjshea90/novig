@@ -217,6 +217,15 @@ def summary(graded):
     segs += [("every leg >= 0.5", lambda r: all(l["p"] >= .5 for l in r["legs"])), ("a leg < 0.4", lambda r: any(l["p"] < .4 for l in r["legs"])),
              ("3+ legs, all >= 0.5", lambda r: r["n"] >= 3 and all(l["p"] >= .5 for l in r["legs"])), ("3+ legs, a leg < 0.5", lambda r: r["n"] >= 3 and any(l["p"] < .5 for l in r["legs"])),
              ("2 legs, price .15-.45", lambda r: r["n"] == 2 and .15 <= r["price"] < .45), ("2 legs, both >= 0.6", lambda r: r["n"] == 2 and all(l["p"] >= .6 for l in r["legs"]))]
+    def same_game(r):
+        ev = [l.get("event") or l.get("desc") for l in r["legs"]]
+        ev = [e for e in ev if e]
+        return len(ev) >= 2 and len(set(ev)) < len(ev)
+    def kinds(r):
+        return sorted((l.get("type") or (l.get("label") or "?").split()[0][:5]) for l in r["legs"])
+    segs += [("different games only", lambda r: not same_game(r)), ("same game, any", same_game), ("same game, 2 legs", lambda r: same_game(r) and r["n"] == 2),
+             ("same game, 3+ legs", lambda r: same_game(r) and r["n"] >= 3), ("same game, SPREAD + TOTAL", lambda r: same_game(r) and r["n"] == 2 and kinds(r) == ["SPREAD", "TOTAL"]),
+             ("same game, MONEY + TOTAL", lambda r: same_game(r) and r["n"] == 2 and kinds(r) == ["MONEY", "TOTAL"])]
     for lg in ("NBA", "NHL", "NFL", "NCAAB", "NCAAF"):
         segs.append(("league " + lg, lambda r, lg=lg: all((l.get("league") or "") in (lg, "") for l in r["legs"]) and any(l.get("league") == lg for l in r["legs"])))
     for name, f in segs:
