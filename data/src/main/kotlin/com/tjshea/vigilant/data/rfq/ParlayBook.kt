@@ -149,9 +149,13 @@ data class ParlayBook(
          */
         fun legsToScore(book: ParlayBook?, now: Long): List<FillLeg> =
             book?.parlays.orEmpty().flatMap { p -> p.legs }
-                .filter { it.result == null && it.startsMs > 0L && now - it.startsMs >= 3 * 3_600_000L && it.desc.isNotBlank() }
+                .filter { it.result == null && it.startsMs > 0L && now - it.startsMs >= ParlayLegScores.MIN_AGE_MS && it.desc.isNotBlank() }
                 .distinctBy { it.outcomeId }
                 .map { FillLeg(outcomeId = it.outcomeId, label = it.label, desc = it.desc, league = it.league, type = it.type, startsMs = it.startsMs, p = it.p) }
+
+        /** [book] with [results] (outcome id to WIN/LOSS/PUSH) laid on every leg that has none: the phone's own grading from final scores when the engine is not running. */
+        fun withLegResults(book: ParlayBook, results: Map<String, String>): ParlayBook =
+            if (results.isEmpty()) book else book.copy(parlays = book.parlays.map { p -> p.copy(legs = p.legs.map { l -> if (l.result == null) results[l.outcomeId]?.let { l.copy(result = it) } ?: l else l }) })
 
         /** The open parlays' outcome ids whose result is still wanted and whose game has begun: what the engine asks Novig's catalog about. */
         fun legsToGrade(book: ParlayBook?, fills: Map<String, FillRecord>, now: Long): List<FillLeg> {

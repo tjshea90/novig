@@ -11,6 +11,8 @@ import com.tjshea.vigilant.data.tracker.ScoreSource
  * spread, moneyline, game total, team total. Props are left to Novig's catalog. Null = not final, not a game line, or not found.
  */
 object ParlayLegScores {
+    /** A game cannot be final sooner than this after its start (the score source's own `final` flag still decides); the Hub says "game over" at 2-2.5 h, so the wait must not be longer (Tj 2026-11-20). */
+    const val MIN_AGE_MS = 2 * 3_600_000L
     private val PREFIXES = listOf("alternate spread", "alternate total", "team total", "moneyline", "spread", "total")
 
     fun marketWord(type: String): String? = when (type.uppercase()) {
@@ -32,7 +34,7 @@ object ParlayLegScores {
 
     /** WIN / LOSS / PUSH for the buyer's leg once the game is final, else null. [now] and the start guard keep a game that may still be in play from being read. */
     suspend fun grade(leg: FillLeg, scores: ScoreSource, now: Long): String? {
-        if (leg.startsMs <= 0L || now - leg.startsMs < 3 * 3_600_000L) return null
+        if (leg.startsMs <= 0L || now - leg.startsMs < MIN_AGE_MS) return null
         val (market, selection) = split(leg.type, leg.label) ?: return null
         val pick = BetGrader.pickOf(market, selection) ?: return null
         val league = leg.league.trim().uppercase().takeIf { it.isNotEmpty() && scores.covers(it) } ?: return null
