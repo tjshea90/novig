@@ -165,7 +165,7 @@ def calibration_buckets(items, edges, rng, boots=300):
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------- the live profile
 PROFILE = {"maxLegs": 2, "maxLegFair": 0.8, "maxFair": 0.65, "minFair": 0.35, "minLeadMs": 3_600_000, "maxLeadMs": 43_200_000, "maxDaysAhead": 2, "minBooks": 2, "onlyToday": False, "margin": 0.001, "minPoints": 0.0005, "fairErrorRel": 0.001,
-           "minReturn": 0.001, "holdFloorDays": 1.0, "maxSameParlay": 1, "maxParlaysPerOutcome": 2, "walletLegShare": 0.25, "sameGamePremium": 0.0, "marginAdd": 0.0, "adaptive": False, "scarcityStart": 0.35, "scarcityHigh": 8.0, "scarcityMargin": 0.004, "lockAfter": 3.5}
+           "minReturn": 0.001, "holdFloorDays": 1.0, "maxSameParlay": 1, "maxParlaysPerOutcome": 2, "walletLegShare": 0.25, "sameGamePremium": 0.0, "marginAdd": 0.0, "outcomeStep": 200.0, "adaptive": False, "scarcityStart": 0.35, "scarcityHigh": 8.0, "scarcityMargin": 0.004, "lockAfter": 3.5}
 
 
 def up(x):
@@ -377,6 +377,8 @@ def report(rows, legs, out):
                 ("core fixed, wallet $1200", {"_wallet": 1200.0}), ("LOOSE fixed, wallet $1200", {"minFair": 0.25, "maxLeadMs": 86_400_000, "_wallet": 1200.0}), ("LOOSE + gate, wallet $1200", {"minFair": 0.25, "maxLeadMs": 86_400_000, "adaptive": True, "_wallet": 1200.0}),
                 ("LOOSE fixed, wallet $300", {"minFair": 0.25, "maxLeadMs": 86_400_000, "_wallet": 300.0}), ("LOOSE + gate, wallet $300", {"minFair": 0.25, "maxLeadMs": 86_400_000, "adaptive": True, "_wallet": 300.0}),
                 ("LOOSE fixed, wallet $600", {"minFair": 0.25, "maxLeadMs": 86_400_000, "_wallet": 600.0}), ("LOOSE + gate, wallet $600", {"minFair": 0.25, "maxLeadMs": 86_400_000, "adaptive": True, "_wallet": 600.0}),
+                ("WALLET $145 (live)", {"outcomeStep": 200.0}), ("WALLET $300", {"outcomeStep": 200.0, "_wallet": 300.0}), ("WALLET $600", {"outcomeStep": 200.0, "_wallet": 600.0}), ("WALLET $1200", {"outcomeStep": 200.0, "_wallet": 1200.0}),
+                ("WALLET $600, outcome count fixed at 2", {"_wallet": 600.0}), ("WALLET $1200, outcome count fixed at 2", {"_wallet": 1200.0}),
                 ("PW1 adaptive (live profile + scarcity gate)", {"adaptive": True}), ("PW1 adaptive, wallet $300", {"adaptive": True, "_wallet": 300.0}), ("PW1 adaptive, wallet $600", {"adaptive": True, "_wallet": 600.0}), ("fixed rules, wallet $600", {"_wallet": 600.0}),
                 ("PW1 gate 5 (looser)", {"adaptive": True, "scarcityHigh": 5.0}), ("PW1 gate 11 (stricter)", {"adaptive": True, "scarcityHigh": 11.0}), ("PW1 no margin ramp", {"adaptive": True, "scarcityMargin": 0.0})]
     results = {}
