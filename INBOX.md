@@ -2041,3 +2041,12 @@ The parlay system is losing money miserably and taking identical bets. Continue 
 ```
 I want the parlay engine to essentially take sucker bets for profit. So far it has been taking and losing against sharp bettors taking heavy favorites
 ```
+
+## 2026-11-20T18:15:57Z
+```
+Forget my preferences. Tweak the engine for maximum profit based on actual data. Change any of my preferences. The engine is currently off due to no money, but make it so when i turn it back on later:
+
+1) the parlay system starts with a goal of maximum profit based on actual data 
+2) ignore whatever settings are on my phone app 
+3) aim for parlay fills but also profit 
+```
