@@ -146,7 +146,8 @@ object PropLadderFair {
     class Index(private val store: Store, private val refByNovigEvent: Map<String, String>) : RfqLadder.Consensus {
         override fun at(t: RfqLadder.Target): Strike? {
             val ref = refByNovigEvent[t.eventId] ?: return null
-            val table = store.table(ref, t.player, t.marketType) ?: return null
+            // Novig's "_PROTECTED" markets (void when the player does not play, fair market value back) are the markets the books post (they void a player who does not play): the same ladder (MK27: 56 legs of 61 pregame trades with no fair were NFL touchdown props).
+            val table = store.table(ref, t.player, t.marketType.removeSuffix("_PROTECTED")) ?: return null
             return atStrike(table, t.strike, t.over)
         }
         fun summary(): String = "${refByNovigEvent.size} games paired, ${store.byRefEvent.values.sumOf { it.size }} player stats, ${store.votes} votes (${store.milestoneVotes} from N+ ladders), margins ${store.holds.entries.sortedBy { it.key }.joinToString(" ") { "${it.key} %.3f".format(it.value) }.ifEmpty { "default" }}"

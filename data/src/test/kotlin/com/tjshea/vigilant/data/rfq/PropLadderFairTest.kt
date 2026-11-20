@@ -135,4 +135,13 @@ class PropLadderFairTest {
         assertEquals("the scan's own fair comes first", 0.123, RfqLadder.Fairs({ scan }, { targets }, { emptyMap() }, { false }, { index }).leg("o20")!!.probability, 0.0)
         assertNull("switched off, nothing else priced it", RfqLadder.Fairs({ null }, { targets }, { emptyMap() }, { false }, { null }).leg("o20"))
     }
+
+    @Test fun aProtectedMarketIsPricedFromTheSameLadderAsItsUnprotectedTwin() {
+        val ev = event(listOf(twoSided("fanduel", "Jalen Brunson", "POINTS", 25.5, -110, -110), twoSided("betmgm", "Jalen Brunson", "POINTS", 25.5, -110, -110), twoSided("pinnacle", "Jalen Brunson", "POINTS", 25.5, -110, -110)), emptyList())
+        val index = PropLadderFair.Index(PropLadderFair.build(listOf(ev)), mapOf("n1" to "pl:1"))
+        val player = RfqLadder.playerOf("Jalen Brunson 25.5 POINTS_PROTECTED", "POINTS_PROTECTED", 25.5)
+        assertEquals("jalen brunson", player)
+        assertNotNull(index.at(RfqLadder.Target("g", 25.5, true, "n1", "POINTS_PROTECTED", now, player)))
+        assertNotNull(index.at(RfqLadder.Target("g", 25.5, true, "n1", "POINTS", now, player)))
+    }
 }
