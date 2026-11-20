@@ -649,6 +649,7 @@ fun main(args: Array<String>) = runBlocking {
     // each leg's result as Novig grades it, and the book the phone reads (`parlays.json`).
     val rfqFills = java.util.concurrent.ConcurrentHashMap<String, com.tjshea.vigilant.data.rfq.FillRecord>()
     val rfqLegResults = java.util.concurrent.ConcurrentHashMap<String, String>()
+    val rfqScores: com.tjshea.vigilant.data.tracker.ScoreSource = com.tjshea.vigilant.data.tracker.FreeScores(http, json)
     val rfqBook = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.rfq.ParlayBook?>(null)
     run {
         val seed = runCatching { com.tjshea.vigilant.data.rfq.FillBook::class.java.getResourceAsStream("/rfq_fills_seed.json")?.bufferedReader()?.readText() }.getOrNull()
@@ -729,6 +730,8 @@ fun main(args: Array<String>) = runBlocking {
                             for (leg in com.tjshea.vigilant.data.rfq.ParlayBook.legsToGrade(draft, fillsMap, nowMs).take(40)) {
                                 val m = runCatching { novig.market(leg.marketId) }.getOrNull()
                                 com.tjshea.vigilant.data.rfq.ParlayBook.gradeOf(m?.outcomes?.firstOrNull { it.outcomeId == leg.outcomeId }?.status)?.let { rfqLegResults[leg.outcomeId] = it }
+                                // A graded market leaves Novig's catalog, so a finished leg often stays ungraded: read the game's final score (MK29).
+                                if (rfqLegResults[leg.outcomeId] == null) runCatching { com.tjshea.vigilant.data.rfq.ParlayLegScores.grade(leg, rfqScores, nowMs) }.getOrNull()?.let { rfqLegResults[leg.outcomeId] = it }
                             }
                             val book = com.tjshea.vigilant.data.rfq.ParlayBook.build(execs, fillsMap, { rfqLegResults[it] }, before, nowMs, mode)
                             val unchanged = before != null && before.parlays == book.parlays && before.mode == book.mode && nowMs - before.ledgerAtMs < 10 * 60_000L
