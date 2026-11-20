@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "d4dc7a7d7fa5afb61a3640d92dbc6fb859806206",
  "since": 1795129305,
- "beat": 1795138031,
- "beatIso": "2026-11-20T01:27:11Z",
+ "beat": 1795138595,
+ "beatIso": "2026-11-20T01:36:35Z",
  "done": "MK25: rfq_set maxLegs guard 10 -> 100; maxLegs=100 written",
  "next": "watch the new job's priceable count and halts"
 }
