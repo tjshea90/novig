@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.data.rfq
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -56,6 +57,9 @@ class RfqProfitProfileTest {
         assertEquals(0.35, c.minFair, 1e-12); assertEquals(0.0, c.sameGamePremium, 1e-12)
         // PS1: a parlay that starts within an hour earns about nothing (informed late buyers), and collateral locked past 12 hours returns less per day than the wallet can use elsewhere
         assertEquals(3_600_000L, c.minLeadMs); assertEquals(43_200_000L, c.maxLeadMs)
+        // PW1: the dollar-sized rules follow the wallet (it will pass $100): prop reserves are shares of it, one more parlay per outcome for every $200; the cash-aware gate is implemented and off (no gain in the replay)
+        assertEquals(0.6, c.propCashReserveShare, 1e-12); assertEquals(0.4, c.propPairsCashReserveShare, 1e-12); assertEquals(200.0, c.outcomeCountWalletStep, 1e-12)
+        assertFalse(c.adaptiveCash); assertEquals(1.0, c.walletShare, 1e-12); assertTrue(c.walletCollateral)
         assertTrue("margin floors stay at the minimum", c.margin <= 0.002 && c.minPoints <= 0.001 && c.fairErrorRel <= 0.002 && c.minReturn <= 0.002)
     }
 
