@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "12d05ce7e2c873dba5862979211b2ebc5c37f856",
+ "head": "e1306ab3ec29f0e79e6f9e982efb55ce808fc032",
  "since": 1795134161,
- "beat": 1795139410,
- "beatIso": "2026-11-20T01:50:10Z",
+ "beat": 1795139661,
+ "beatIso": "2026-11-20T01:54:21Z",
  "done": "MK27: minLead 1 min, propPairsLive per Tj; marketPricing held for his yes",
  "next": "confirm by status config, report priceable share warm"
 }
