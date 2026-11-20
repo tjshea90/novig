@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "0ff1c09be3f277d51fc2d1f220fc5e3c55992220",
+ "head": "ac2832689ba522ecca9f2d394ee33387d5f90729",
  "since": 1795129305,
- "beat": 1795141804,
- "beatIso": "2026-11-20T02:30:04Z",
+ "beat": 1795142142,
+ "beatIso": "2026-11-20T02:35:42Z",
  "done": "MK28: quote markup was 3.9 pts over fair vs the market's +0.3: liveMinReturn back to 0.004",
  "next": "watch quotes won/filled over the next hour; if still none, lower the safe-edge floor (fairErrorRel) toward 0.01 and read QUOTE_SENT vs EXECUTED; protected mapping deploys at next reset; same-game correlation shadow"
 }
