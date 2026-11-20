@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-dxgkit",
- "head": "520f0318fdffad5f42f1016a522d58bdd3013bb4",
+ "head": "199590da401a24a90bea0b1c90ad5d8210b70392",
  "since": 1795134161,
- "beat": 1795214582,
- "beatIso": "2026-11-20T22:43:02Z",
+ "beat": 1795214828,
+ "beatIso": "2026-11-20T22:47:08Z",
  "done": "Parlay tracker: phone grades finished legs from final scores itself (engine stopped = no grading); leg grading wait 3h->2h; data parlay tests green",
  "next": "app compile unverified (0 tests ran); ship in next release; engine is stopped (Tj STOP)"
 }
