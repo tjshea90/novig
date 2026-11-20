@@ -239,6 +239,7 @@ fun TrackerScreen(
         TrackerSort.sorted(filtered(scoped, filter), sort, sortReversed) { ordered(it, filter, now) }
     }
     val periodBets = remember(kindBets, period, minute, pickedEpochDay) { inPeriod(kindBets, period, now, pickedDay) }
+    val ncaabSummary = remember(state.bets, minute) { com.tjshea.vigilant.data.ncaab.NcaabBetStats.summarize(state.bets, now) }
     // The "Check odds now" counter: open bets re-read since the last check began (0 again at each new one), live as batches are saved; a game
     // that starts drops out within the minute.
     val checkStart = state.checkStartedAtMs
@@ -452,6 +453,8 @@ fun TrackerScreen(
                 TrackerView.STATS -> {
                     // The profit card first, whatever the period holds: its all-time figure is the wallet's, and a Today with no game graded yet is a real $0.00 day (Tj, 2026-10-19, PL).
                     if (kindBets.isNotEmpty() || walletMoney.money != null) item(key = "profit") { ProfitChartCard(kindBets, period, walletMoney, day = periodDay(period, now, pickedDay)) }
+                    // NT1 (Tj 2026-11-20): the bets placed by hand from the NCAAB tab, counted alone (the card reads every bet, whatever the filters above say; the NCAAB chip lists and totals them like any scanner's).
+                    if (ncaabSummary.all.bets > 0 || ncaabSummary.voided > 0 || scanner == ScannerFilter.NCAAB) item(key = "ncaabBets") { NcaabBetsCard(ncaabSummary) }
                     if (periodBets.isEmpty()) {
                         item(key = "empty") { EmptyState(TrackerText.emptyStats(made, period == TrackerPeriod.ALL, bets.isEmpty()), if (made == MadeFilter.BIDS) BIDS_HINT else EMPTY_HINT) }
                     } else {

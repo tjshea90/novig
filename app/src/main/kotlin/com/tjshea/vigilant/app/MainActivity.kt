@@ -918,7 +918,10 @@ private fun VigilantRoot(
                         onLock = vm::lockIn,
                     ),
                 )
-                Tab.NCAAB -> com.tjshea.vigilant.app.ui.NcaabScreen(state, onWant = vm::wantNcaab, onTrack = vm::trackBet, onRecheck = { vm.recheck(it) }, onQuote = vm::parlayQuote, listState = ncaabListState)
+                Tab.NCAAB -> com.tjshea.vigilant.app.ui.NcaabScreen(
+                    state, onWant = vm::wantNcaab, onTrack = { o, stake -> vm.trackBet(o, stake, com.tjshea.vigilant.data.tracker.BetTracker.ORIGIN_NCAAB) }, onRecheck = { vm.recheck(it) }, onQuote = vm::parlayQuote, listState = ncaabListState,
+                    onOpenTracker = { tabName = Tab.TRACKER.name },
+                )
                 Tab.PROPLINE -> com.tjshea.vigilant.app.ui.PropLineEvScreen(state, onTrack = vm::trackBet, onRecheck = { vm.recheck(it) }, onRefresh = vm::refreshPropLine)
                 Tab.AUTOBET -> {
                     val context = androidx.compose.ui.platform.LocalContext.current

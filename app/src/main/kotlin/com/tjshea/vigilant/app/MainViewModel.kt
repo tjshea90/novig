@@ -1961,10 +1961,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
 
-    fun trackBet(o: Opportunity, stake: Double) {
+    fun trackBet(o: Opportunity, stake: Double, origin: String? = null) {
         viewModelScope.launch {
             val record = runCatching { BetRecord.opportunity(_state.value, o, com.tjshea.vigilant.data.tracker.AtBet.HOW_MARKED, System.currentTimeMillis(), stake = stake) }.getOrNull()
-            val ok = runCatching { c.tracker.track(o, stake, atBet = record) }.getOrNull() != null
+            val ok = runCatching { c.tracker.track(o, stake, atBet = record, origin = origin) }.getOrNull() != null
             _toasts.tryEmit(if (ok) "Tracked ${o.selection} · ${com.tjshea.vigilant.app.ui.Format.money(stake)}" else "Couldn't save the bet")
         }
     }

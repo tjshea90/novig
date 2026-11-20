@@ -67,6 +67,7 @@ fun NcaabScreen(
     onQuote: (suspend (List<String>) -> com.tjshea.vigilant.data.novig.NovigParlay.Result)? = null,
     modifier: Modifier = Modifier,
     listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
+    onOpenTracker: (() -> Unit)? = null,
 ) {
     val cu = state.cloudUi
     // Looked at: keep the files current while the tab is open (a free 304 when nothing changed).
@@ -74,6 +75,8 @@ fun NcaabScreen(
     val now = rememberNow(30_000)
     val minute = now / 60_000L
     val views = remember(cu.ncaabSlate, cu.ncaabRatings, cu.ncaabBoard, minute) { NcaabView.build(cu.ncaabSlate, cu.ncaabRatings, cu.ncaabBoard, now) }
+    // NT1: the record of the bets placed by hand from this tab (the Tracker's bets, this tab's alone).
+    val myBets = remember(state.bets, minute) { com.tjshea.vigilant.data.ncaab.NcaabBetStats.summarize(state.bets, now) }
     var refreshing by remember { mutableStateOf(false) }
     LaunchedEffect(refreshing) { if (refreshing) { delay(2_500L); refreshing = false } }
     val parlay = remember { ParlayState() }
@@ -83,7 +86,7 @@ fun NcaabScreen(
             views = views, ratingsAsOf = cu.ncaabRatings?.asOf, boardAt = cu.ncaabBoard?.atMs, boardReadAt = cu.ncaabBoardReadAtMs, note = listOf(cu.ncaabNote, cu.ncaabBoardNote).filter { it.isNotBlank() }.joinToString(" \u00B7 "),
             boardLocal = cu.ncaabBoardLocal,
             model = cu.ncaabRatings?.model, ratedTeams = cu.ncaabRatings?.teams?.size ?: 0, hasSlate = cu.ncaabSlate != null, hasToken = cu.hasToken,
-            settings = state.settings, now = now, onTrack = onTrack, onRecheck = onRecheck, listState = listState,
+            settings = state.settings, now = now, onTrack = onTrack, onRecheck = onRecheck, listState = listState, myBets = myBets, onOpenTracker = onOpenTracker,
         )
     }
     }
@@ -111,6 +114,8 @@ internal fun NcaabContent(
     onTrack: (Opportunity, Double) -> Unit,
     onRecheck: (List<String>) -> Unit,
     listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
+    myBets: com.tjshea.vigilant.data.ncaab.NcaabBetStats.Summary? = null,
+    onOpenTracker: (() -> Unit)? = null,
 ) {
     var page by rememberSaveable { mutableStateOf(Page.GAMES.name) }
     var day by rememberSaveable { mutableStateOf("Today") }
@@ -146,6 +151,7 @@ internal fun NcaabContent(
                     listOf("Today", "Tomorrow", "All").forEach { d -> FilterChip(selected = day == d, onClick = { day = d }, label = { Text(d, maxLines = 1) }, modifier = Modifier.testTag("ncaabDay-$d")) }
                 }
                 AtsLegend()
+                if (myBets != null) NcaabBetsCard(myBets, onOpenTracker = onOpenTracker, collapsible = true)
                 if (model != null && model.measured) EvidenceCard(model, evidence, onToggle = { evidence = !evidence })
             }
         }

@@ -33,17 +33,34 @@ import java.util.Locale
  * [NcaabBetStats]'s, which counts nothing from any other tab.
  */
 @Composable
-fun NcaabBetsCard(summary: NcaabBetStats.Summary, modifier: Modifier = Modifier, onOpenTracker: (() -> Unit)? = null) {
+fun NcaabBetsCard(summary: NcaabBetStats.Summary, modifier: Modifier = Modifier, onOpenTracker: (() -> Unit)? = null, collapsible: Boolean = false) {
     val edge = LocalEdgeColors.current
+    // In the NCAAB tab the card is one summary line until opened (the games are what the tab is for); on the Tracker's Stats page it is open.
+    var expanded by rememberSaveable { mutableStateOf(!collapsible) }
     Card(modifier.fillMaxWidth().testTag("ncaabBets"), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("My NCAAB bets", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("My NCAAB bets", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                if (collapsible && !summary.isEmpty) TextButton(onClick = { expanded = !expanded }, modifier = Modifier.testTag("ncaabBetsToggle")) { Text(if (expanded) "Less" else "Details") }
+            }
             if (summary.isEmpty) {
                 Text(
                     "Bets you place by hand from this tab are counted here: how many, the money bet and the profit or loss (all time and by day), the record and the percent won. Nothing from any other tab is in these numbers.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("ncaabBetsEmpty"),
                 )
                 if (summary.voided > 0) Text("${summary.voided} voided (refunded), not counted.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                return@Column
+            }
+            if (!expanded) {
+                // The one-line version: the numbers he looks for first.
+                Text(
+                    "All time: ${summary.all.bets} bets · ${Format.money(summary.all.staked)} bet · ${signed(summary.all)} · ${summary.all.record} · ${pct(summary.all.winPct)} won",
+                    style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, modifier = Modifier.testTag("ncaabBetsLine"),
+                )
+                Text(
+                    "Today: ${summary.today.bets} bets · ${Format.money(summary.today.staked)} bet · ${signed(summary.today)}" + (if (summary.all.open > 0) " · ${summary.all.open} open" else ""),
+                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("ncaabBetsLineToday"),
+                )
                 return@Column
             }
             Text(
