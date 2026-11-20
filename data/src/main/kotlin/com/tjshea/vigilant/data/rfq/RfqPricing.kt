@@ -100,6 +100,8 @@ data class RfqConfig(
     val liveParlays: Mode = Mode.SHADOW,
     /** A parlay with a leg in play is not quoted above this win chance (Tj: "nothing over a 50% or so"). */
     val liveMaxFair: Double = 0.50,
+    /** An in-play leg may be nearly decided (a buyer pads a parlay with a 97% leg): the leg cap is higher than the pregame [maxLegFair], the parlay's win chance is capped by [liveMaxFair] (journal of 2026-11-20: 1,500 of 1,938 priced in-play RFQs were declined by the 90% leg cap). */
+    val liveMaxLegFair: Double = 0.99,
     /** An in-play leg's price must be younger than this at the decision (a buyer accepts 6-29 s after the auction; the game moves meanwhile). */
     val liveMaxAgeMs: Long = 4_000L,
     /** The widest best-bid to buy-price gap of a live market that is priced at all ([LiveFair.DEFAULT_MAX_SPREAD]). */
@@ -337,7 +339,7 @@ object RfqPricer {
                 if (l.marketType !in GAME_LINES) return no("a prop leg is in play")
                 val liveAsOf = l.asOfMs ?: return no("a live leg's price has no age")
                 if (now - liveAsOf > cfg.liveMaxAgeMs) return no("a live leg's price is ${(now - liveAsOf) / 1000L} s old")
-                if (l.probability > cfg.maxLegFair) return no("a leg is too likely to win (${"%.0f".format(l.probability * 100)}% against the ${"%.0f".format(cfg.maxLegFair * 100)}% cap)")
+                if (l.probability > cfg.liveMaxLegFair) return no("a leg is too likely to win (${"%.0f".format(l.probability * 100)}% against the ${"%.0f".format(cfg.liveMaxLegFair * 100)}% cap)")
                 continue
             }
             if (l.startsMs - now < cfg.minLeadMs) return no("a leg starts within ${cfg.minLeadMs / 60_000L} min")

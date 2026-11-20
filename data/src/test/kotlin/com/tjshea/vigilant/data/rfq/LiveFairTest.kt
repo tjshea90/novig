@@ -119,4 +119,12 @@ class LiveFairTest {
         assertEquals(setOf("unknown-1", "unknown-2"), b.recentDemand(now, 10 * 60_000L).toSet())
         assertNull("the old one was forgotten", b.demand["old"])
     }
+
+    @Test fun aNearlyDecidedInPlayLegIsPricedButAPregameOneOverTheLegCapIsNot() {
+        val inPlay = fairs(live("a", "e1", 0.97), pre("b", "e2", 0.45))
+        val q = RfqPricer.decide(created("a", "b"), now, cfg, inPlay, 0.0) as RfqDecision.Quote
+        assertEquals(0.97 * 0.45, q.fair, 1e-12)
+        assertTrue("a 99.5% live leg is over the live leg cap", (RfqPricer.decide(created("a", "b"), now, cfg, fairs(live("a", "e1", 0.995), pre("b", "e2", 0.45)), 0.0) as RfqDecision.Decline).reason.contains("too likely"))
+        assertTrue("a 97% pregame leg still is", (RfqPricer.decide(created("a", "b"), now, cfg, fairs(pre("a", "e1", 0.97), pre("b", "e2", 0.45)), 0.0) as RfqDecision.Decline).reason.contains("too likely"))
+    }
 }
