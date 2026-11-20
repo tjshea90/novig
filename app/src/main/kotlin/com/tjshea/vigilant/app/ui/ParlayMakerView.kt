@@ -75,7 +75,7 @@ fun ParlayMakerView(rfq: RfqStatus?, onSet: (RfqConfig, (String?) -> Unit) -> Un
         Text(v.evidence, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("parlayEvidence"))
         if (rfq != null && rfq.declines.isNotEmpty()) Text("Not priced because: " + rfq.declines.joinToString("; "), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
-        if (rfq != null) {
+        if (rfq != null && !locked) {
             SectionHeader("Limits")
             Text(v.rule, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Stepper("Return asked on the collateral", "%.0f%%".format(Locale.US, cfg.minReturn * 100), "parlayReturn", { apply(cfg.copy(minReturn = (cfg.minReturn - 0.01).coerceAtLeast(0.01))) }, { apply(cfg.copy(minReturn = (cfg.minReturn + 0.01).coerceAtMost(0.2))) })
