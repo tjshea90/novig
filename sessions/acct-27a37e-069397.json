@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "0ad71f9a42593a1cfc4160d55ba2a0c220bd146e",
  "since": 1795129305,
- "beat": 1795153107,
- "beatIso": "2026-11-20T05:38:27Z",
+ "beat": 1795153290,
+ "beatIso": "2026-11-20T05:41:30Z",
  "done": "MK37 evidence: where fills come from (morning vs now, executed-trade win share by class, probes); LEVERS row + index",
  "next": "06:03 wake: ONE graceful reset to deploy MK37 (board note, confirm startedAtMs), watch live same-game pairs quote + won/filled; props need a grader before propPairsLive"
 }
