@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "7bc79a19c07a0862542cc80329f39a32e4e90aa0",
+ "head": "b498e37bfbe4192bbc927f10d420bfb1618689bc",
  "since": 1795134161,
- "beat": 1795139103,
- "beatIso": "2026-11-20T01:45:03Z",
+ "beat": 1795139362,
+ "beatIso": "2026-11-20T01:49:22Z",
  "done": "MK26: warm-job decline breakdown; minLeadMs 10 min",
  "next": "cold-start: partial-result publish (MK23); tell Tj"
 }
