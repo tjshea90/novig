@@ -1,22 +1,22 @@
-# CHECKPOINT 4778 — read me first, then TASKS.md
+# CHECKPOINT 4779 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T09:05:17Z · **tests:** all 11 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `878d5a851` (this checkpoint is the commit after it)
+**Written:** 2026-11-20T09:10:13Z · **tests:** all 11 fast checks green
+**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `4ef883681` (this checkpoint is the commit after it)
 
 ## Just done
-MK47: game-line legs need 2 companies (props 3): 2-company game-line fairs measured as tight as 3+ (n=138 vs 3,274); MK46 deployed 08:57
+MK48: 3% error premium per extrapolated game-line leg (alt-line check: median 1.8 pts, p90 5.6 on held-out rungs); MK47 game-line legs need 2 companies; full suite 4501 green
 
 ## Do this next
-reset >= 10:00 UTC deploys MK47; read 'RFQ alt-line check'; fills; the wallet is the volume lever (tell Tj once)
+reset >= 10:00 UTC deploys MK47+MK48 (board note first); then read alt-line check again + fills
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  80228c079 ckpt 4778: MK47: game-line legs need 2 companies (props 3): 2-company game-line fairs 
   25ff5c451 ckpt 4777: MK37-MK46 shipped (live same-game pairs, prop-pair lane + cash reserve, sta
   cefdacac1 ckpt 4776: MK46: bounded extrapolation of alternate game-line numbers outside the post
   c194ad0f2 ckpt 4775: MK45: propCashReserve ($90 of free cash kept from any prop-involving quote:
@@ -26,8 +26,7 @@ reset >= 10:00 UTC deploys MK47; read 'RFQ alt-line check'; fills; the wallet is
   cdd39e1bd ckpt 4771: MK42: floors halved (margin .003, fairErrorRel .003, minPoints .001, minRet
   be280dcae ckpt 4770: MK40/MK41: coverage fixes (protected prop targets, Yes-only anytime-TD list
   e93e1ba3a ckpt 4769: MK39: maxStake 12 (a code default, not Tj's) -> 100, walletShare .75, liveM
-  3d1d963bc ckpt 4768: MK38: propPairsCashReserve (a prop-pair quote leaves $60 of free cash to th
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
