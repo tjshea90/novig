@@ -185,8 +185,10 @@ def passes(r, c):
     if r["lead_h"] * 3.6e6 < c["minLeadMs"] or r["last_h"] > c["maxDaysAhead"] * 24 or min(r["books"]) < c["minBooks"]:
         return False
     if c["onlyToday"]:
-        end = (math.floor((r["at"] / 3.6e6 + ET - 5) / 24) + 1) * 24 + 5 - ET            # the slate ends at the next 5 am ET, in hours since the epoch (UTC)
-        if (r["at"] + r["last_h"] * 3.6e6) / 3.6e6 > end:
+        end = r["at"] - (r["at"] % 86_400_000) + 10 * 3_600_000          # the slate ends at 5 am ET = 10:00 UTC (November)
+        if end <= r["at"]:
+            end += 86_400_000
+        if r["at"] + r["last_h"] * 3.6e6 > end:
             return False
     return True
 
