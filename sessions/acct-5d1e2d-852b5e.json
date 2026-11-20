@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "e49cc94e0a395568b56f543c478b78c8315ab5f5",
+ "head": "c8413ef4feee103f863bfc5973e2447d74ae5d61",
  "since": 1795134161,
- "beat": 1795146735,
- "beatIso": "2026-11-20T03:52:15Z",
- "done": "MK33: leg calibration from 49k resolved outcomes; whole wallet to parlays",
- "next": "land, one engine reset, then watch quotes won and settle P&L"
+ "beat": 1795146778,
+ "beatIso": "2026-11-20T03:52:58Z",
+ "done": "MK10 03:52: 1 win 8 losses, -25.30; calibration job running, 95 quotes 0 won",
+ "next": "settled-leg calibration of our fairs"
 }
