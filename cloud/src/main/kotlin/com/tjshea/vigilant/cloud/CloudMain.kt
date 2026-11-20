@@ -572,10 +572,14 @@ fun main(args: Array<String>) = runBlocking {
     val ladderRungs = object {
         private var builtFor: List<com.tjshea.vigilant.data.scanner.Opportunity>? = null
         private var map: Map<String, List<com.tjshea.vigilant.data.rfq.RfqLadder.Rung>> = emptyMap()
+        private var slopes: Map<String, Double> = emptyMap()
+        /** MK46: "<league>|<kind>" -> the median probit-per-point slope of that league's posted game-line ladders, the fallback slope of an alternate number outside a game's posted ones. */
+        @Synchronized fun slopes(): Map<String, Double> { get(); return slopes }
         @Synchronized fun get(): Map<String, List<com.tjshea.vigilant.data.rfq.RfqLadder.Rung>> {
             val list = latestFair.get()
             if (list !== builtFor) {
                 val m = HashMap<String, MutableList<com.tjshea.vigilant.data.rfq.RfqLadder.Rung>>()
+                val gameLineKey = HashMap<String, String>()   // game-line group -> "<league>|<kind>"
                 for (o in list) {
                     // MK41: the posted spreads, totals and team totals of a game are the rungs the alternate numbers are interpolated between (x: the line where the "over" side (OVER, or HOME) gets harder, y: its probability)
                     if (o.kind == com.tjshea.vigilant.data.reference.LineKind.SPREAD || o.kind == com.tjshea.vigilant.data.reference.LineKind.TOTAL || o.kind == com.tjshea.vigilant.data.reference.LineKind.TEAM_TOTAL) {
@@ -587,6 +591,7 @@ fun main(args: Array<String>) = runBlocking {
                             val gk = com.tjshea.vigilant.data.rfq.RfqLadder.gameLineKey(o.market.eventId, o.kind, key.period, key.line, key.subject == com.tjshea.vigilant.data.reference.RefBookMarket.AWAY)
                             if (gk != null) {
                                 val overProb = if (side == com.tjshea.vigilant.data.reference.Side.HOME || side == com.tjshea.vigilant.data.reference.Side.OVER) p else 1.0 - p
+                                gameLineKey[gk.first] = "${o.event.league}|${o.kind}"
                                 val rungs = m.getOrPut(gk.first) { ArrayList() }
                                 rungs.removeAll { it.strike == gk.second }
                                 rungs += com.tjshea.vigilant.data.rfq.RfqLadder.Rung(gk.second, overProb, o.fair?.booksUsed?.size ?: 0, asOf)
@@ -605,6 +610,13 @@ fun main(args: Array<String>) = runBlocking {
                     val overProb = if (over) p else 1.0 - p
                     if (over || rungs.none { it.strike == strike }) { rungs.removeAll { it.strike == strike }; rungs += com.tjshea.vigilant.data.rfq.RfqLadder.Rung(strike, overProb, o.fair?.booksUsed?.size ?: 0, asOf) }
                 }
+                val own = HashMap<String, MutableList<Double>>()
+                for ((g, key) in gameLineKey) {
+                    val rungs = m[g] ?: continue
+                    val near = rungs.minByOrNull { Math.abs(it.overProb - 0.5) }?.strike ?: continue
+                    com.tjshea.vigilant.data.rfq.RfqLadder.gameLineSlope(rungs, near)?.let { own.getOrPut(key) { ArrayList() } += it }
+                }
+                slopes = own.filterValues { it.size >= 5 }.mapValues { (_, v) -> v.sorted()[v.size / 2] }
                 map = m; builtFor = list
             }
             return map
