@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "a047ad3abb014cd19a445a6d5eebea6c50924675",
  "since": 1795129305,
- "beat": 1795200697,
- "beatIso": "2026-11-20T18:51:37Z",
+ "beat": 1795201086,
+ "beatIso": "2026-11-20T18:58:06Z",
  "done": "pre-release: PF1: the parlay maker runs on Claude's profit profile; the Parlays tab says so and hides the controls the engine no longer reads (versionCode 486, v1.0.146)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.146), then run: bash tools/record-release.sh v1.0.146 486 \"PF1: the parlay maker runs on Claude's profit profile; the Parlays tab says so and hides the controls the engine no longer reads\""
 }
