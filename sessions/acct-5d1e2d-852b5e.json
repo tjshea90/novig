@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "58ffee2b3e3735ad76a25624a63906441ee09d79",
+ "head": "b1a8863fd760e7f5f99d8c4c11c60087b539395c",
  "since": 1795134161,
- "beat": 1795144131,
- "beatIso": "2026-11-20T03:08:51Z",
- "done": "MK29c: leg grading drops tennis round suffix and retries reversed home/away",
- "next": "land, reset once, recheck the 6 stale legs"
+ "beat": 1795144180,
+ "beatIso": "2026-11-20T03:09:40Z",
+ "done": "MK29d: tennis legs with no score source say so instead of waiting",
+ "next": "ship with the next app release; tell Tj 20 of 24 graded, 4 Challenger matches not on ESPN"
 }
