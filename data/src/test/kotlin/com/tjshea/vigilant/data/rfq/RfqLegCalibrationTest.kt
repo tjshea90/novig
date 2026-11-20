@@ -25,3 +25,18 @@ class RfqLegCalibrationTest {
         }
     }
 }
+
+class RfqAllHighLegsTest {
+    private val now = 1_800_000_000_000L
+    private fun leg(id: String, event: String, p: Double) = LegFair(id, event, "l$id", p, 5, now - 60_000L, now + 3 * 3_600_000L, false, "MONEY")
+    private val cfg = RfqConfig(legCalibration = false, mode = RfqConfig.Mode.LIVE, margin = 0.0, minReturn = 0.0, liveMinReturn = 0.0, minPoints = 0.0, longshotsOnly = false, maxFair = 0.99, maxLegFair = 0.99, maxLegCollateral = 0.0)
+    private fun decide(vararg l: LegFair, c: RfqConfig = cfg) = RfqPricer.decide(RfqProtocol.Created(now, "r", l.map { it.outcomeId }, now + 3_000L, 10.0), now, c, LegFairs { id -> l.firstOrNull { it.outcomeId == id } }, 0.0)
+
+    @Test fun threeLegsThatAreAllFavouritesAreDeclinedButTwoLegsAndMixedParlaysAreNot() {
+        val d = decide(leg("a", "e1", 0.7), leg("b", "e2", 0.65), leg("c", "e3", 0.6)) as RfqDecision.Decline
+        assertTrue(d.reason, d.reason.contains("favourites"))
+        assertTrue(decide(leg("a", "e1", 0.7), leg("b", "e2", 0.65)) is RfqDecision.Quote)
+        assertTrue(decide(leg("a", "e1", 0.7), leg("b", "e2", 0.65), leg("c", "e3", 0.4)) is RfqDecision.Quote)
+        assertTrue(decide(leg("a", "e1", 0.7), leg("b", "e2", 0.65), leg("c", "e3", 0.6), c = cfg.copy(allHighMaxLegs = 0)) is RfqDecision.Quote)
+    }
+}

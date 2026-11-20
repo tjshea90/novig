@@ -89,6 +89,12 @@ data class RfqConfig(
     val ladderVotes: Boolean = true,
     /** MK33: correct each leg's fair for the devig's measured bias before the legs are multiplied ([RfqLegCalibration]: longshot legs win ~10% less often than priced, 60-75% legs 2-3% more often). OFF = the raw fair. */
     val legCalibration: Boolean = true,
+    /**
+     * MK36 (the other session's graded study of 5,951 executed game-line parlays, Release rfq-pnl-study; Tj 2026-11-20): a parlay whose legs are ALL at least [allHighLegFloor] and that has more than this many legs cost the makers
+     * 20.6% of the pot (1,376 trades, se 1.2%; buyers won 53% against a price of 32%), while 2-leg parlays earned +3.2% and parlays with a leg under 50% earned +2.1%. 0 = no such rule.
+     */
+    val allHighMaxLegs: Int = 2,
+    val allHighLegFloor: Double = 0.5,
     /** MK24: a parlay of 3 up to this many player-prop legs is priced at the plain product of the legs' fair and declined as shadow (journal evidence), never quoted; 0 = declined unpriced. */
     val propLegsShadowMax: Int = 6,
     /** The most player-prop legs a quoted parlay may carry (Tj 2026-11-20: "Put no limit on the amount of prop legs and the amount of legs total"): no limit by default; each prop leg still carries [propPremium]. Beyond it the parlay is priced in shadow up to [propLegsShadowMax]. */
@@ -310,6 +316,7 @@ object RfqPricer {
         for (l in legs) p *= l.probability
         if (premiumProps) p = minOf(0.999, p * Math.pow(1.0 + cfg.propPremium, propLegs.toDouble()))
         fun no(why: String) = RfqDecision.Decline(why, p, legs)
+        if (cfg.allHighMaxLegs > 0 && legs.size > cfg.allHighMaxLegs && legs.all { it.probability >= cfg.allHighLegFloor }) return no("${legs.size} legs that are all favourites (at least ${"%.0f".format(cfg.allHighLegFloor * 100)}%): makers lose on these (graded study)")
         var via = ""
         if (legs.map { it.eventId }.toSet().size != legs.size) {
             // Legs of one game are not independent: price each such group through the copula (game lines only), the groups of different games still multiply. A group the model cannot price declines the RFQ,
