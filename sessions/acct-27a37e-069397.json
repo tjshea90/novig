@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "481ba6522860a5318bf22b4f36ce4650062abdce",
+ "head": "d285976346c21fa26ceec8e1168acaa07d560bb9",
  "since": 1795129305,
- "beat": 1795142984,
- "beatIso": "2026-11-20T02:49:44Z",
+ "beat": 1795143264,
+ "beatIso": "2026-11-20T02:54:24Z",
  "done": "MK30: 0 of 203 quotes' RFQs ever traded; 95% of evening trades are in-play parlays; trade rates by kind logged",
  "next": "Tj decision: live (in-play) parlay pricing from Novig live mid in shadow first, or wait for morning pregame flow; 02:46 scheduled check reports counts"
 }
