@@ -2055,3 +2055,8 @@ Forget my preferences. Tweak the engine for maximum profit based on actual data.
 ```
 The other claude session said that the margin is not what makes parlays profitable for the maker, it is the types of parlays made. Verify this and make sure the engine runs on settings designed for profit in line with this data 
 ```
+
+## 2026-11-20T19:26:14Z
+```
+Do another study on how to best profit with the parlay system . Verify your current settings 
+```
