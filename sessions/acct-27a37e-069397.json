@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "e9578733961f7befd879410846fd422298e571fc",
+ "head": "ddd5912745583ff33a247581da49ea9999e62f44",
  "since": 1795129305,
- "beat": 1795136795,
- "beatIso": "2026-11-20T01:06:35Z",
+ "beat": 1795137148,
+ "beatIso": "2026-11-20T01:12:28Z",
  "done": "MK14 follow-up check ok; ladder legs now carry name/desc/market id for hub grading; full suite green",
  "next": "reset the engine once to deploy (confirm startedAtMs); then read the journal for ladder-votes legs; price 3+ prop legs / 8+ legs in shadow; Tj's decision on the win-chance limit"
 }
