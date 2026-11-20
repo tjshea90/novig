@@ -116,6 +116,7 @@ class NcaabUiTest {
     private var boardLocal = false
     private var myBets: com.tjshea.vigilant.data.ncaab.NcaabBetStats.Summary? = null
     private var trackerOpened = 0
+    private var hiddenNoOdds = 0
 
     private fun show(v: List<com.tjshea.vigilant.data.ncaab.NcaabGameView>, bet: Boolean = true, model: NcaabModel = this.model, quote: suspend (List<String>) -> com.tjshea.vigilant.data.novig.NovigParlay.Result = instantQuote) {
         compose.setContent {
@@ -127,7 +128,7 @@ class NcaabUiTest {
                         com.tjshea.vigilant.app.ui.LocalParlayQuote provides quote,
                     ) {
                         NcaabContent(v, ratingsAsOf = now - 3_600_000L, boardAt = now - 20_000L, boardReadAt = now, note = "", model = model, boardLocal = boardLocal, ratedTeams = 2, hasSlate = true, hasToken = true,
-                            settings = ScanSettings(), now = now, onTrack = { _, _ -> }, onRecheck = {}, myBets = myBets, onOpenTracker = { trackerOpened++ })
+                            settings = ScanSettings(), now = now, onTrack = { _, _ -> }, onRecheck = {}, myBets = myBets, onOpenTracker = { trackerOpened++ }, hiddenNoOdds = hiddenNoOdds)
                     }
                 }
             }
@@ -347,5 +348,21 @@ class NcaabUiTest {
         myBets = com.tjshea.vigilant.data.ncaab.NcaabBetStats.summarize(emptyList(), now)
         show(views())
         compose.onNodeWithTag("ncaabBetsEmpty").assertIsDisplayed()
+    }
+
+    @Test
+    fun `the footnote says how many small games with no betting odds are left out, and nothing when none is`() {
+        hiddenNoOdds = 3
+        show(views())
+        compose.onNodeWithTag("ncaabFootnote").assertTextContains("3 games with no betting odds", substring = true)
+    }
+
+    @Test
+    fun `no footnote line about hidden games when every game has odds`() {
+        hiddenNoOdds = 0
+        show(views())
+        val t = compose.onNodeWithTag("ncaabFootnote")
+        t.assertIsDisplayed()
+        assertTrue(compose.onAllNodes(hasText("no betting odds", substring = true)).fetchSemanticsNodes().isEmpty())
     }
 }
