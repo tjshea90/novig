@@ -1313,8 +1313,13 @@ private const val STALL_GRACE_MS = 5 * 60_000L
 private class ConfigReader(private val git: Git, private val dir: File) {
     private var sha: String? = null
     private var cached: CloudConfig? = null
-    /** `rfq-maker.json` of the same `cloud-config` commit (the parlay maker's mode and caps, MK 2026-11-18); null when the file is not there: the maker is OFF. */
+    /**
+     * The parlay maker's configuration of the same `cloud-config` commit (mode and caps, MK 2026-11-18): the engine's own profit profile (`rfq-maker-engine.json`) when it exists, else the phone's `rfq-maker.json`
+     * ([com.tjshea.vigilant.data.rfq.RfqConfigSource], PF1); null when neither is there: the maker is OFF.
+     */
     @Volatile var rfqText: String? = null
+        private set
+    @Volatile var rfqLock: String = ""
         private set
 
     @Synchronized
