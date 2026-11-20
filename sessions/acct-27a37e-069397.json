@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "405ce12799103d69dbf56fc7657a083566473a87",
+ "head": "6e782d76a0941b23112f1a7730ff8f93dbcd069a",
  "since": 1795129305,
- "beat": 1795211141,
- "beatIso": "2026-11-20T21:45:41Z",
- "done": "NT1 SHIPPED: v1.0.147 (release.yml green, recorded in BUILDLOG): NCAAB tab bet record in the NCAAB tab and the Tracker, Tracker NCAAB chip",
- "next": "nothing pending for NT1; the parlay engine is OFF (Tj's switch), profile on cloud-config; the PARLAY MANDATE LOOP wake is 10:50 UTC 11-21 (read the daily rfq-pnl-study STUDY.md/SHAPES.txt)"
+ "beat": 1795211184,
+ "beatIso": "2026-11-20T21:46:24Z",
+ "done": "NT2: the NCAAB tab leaves out games with no betting odds (no Novig market, no ESPN line) once Novig's board is read, footnote counts them; full suite green (4543); v1.0.148 (code 488)",
+ "next": "land on main (push.sh), wait for CI green, ship.sh, release.yml, record-release.sh v1.0.148 488; tell Tj"
 }
