@@ -568,6 +568,7 @@ fun main(args: Array<String>) = runBlocking {
     // MK11 (Tj 2026-11-19, high priority: "paying for apis and the system can't even price legs"): a player-prop rung Novig lists and the books do not post is priced from the posted rungs of the same player and stat
     // (`RfqLadder`: interpolation between two posted rungs, never extrapolated). The targets are Novig's open prop markets (public catalog, every 10 minutes), the posted rungs are the scan's priced props.
     val ladderTargets = java.util.concurrent.atomic.AtomicReference<Map<String, com.tjshea.vigilant.data.rfq.RfqLadder.Target>>(emptyMap())
+    val protectedTypes = java.util.concurrent.atomic.AtomicReference<List<String>?>(null)
     val ladderRungs = object {
         private var builtFor: List<com.tjshea.vigilant.data.scanner.Opportunity>? = null
         private var map: Map<String, List<com.tjshea.vigilant.data.rfq.RfqLadder.Rung>> = emptyMap()
@@ -646,8 +647,26 @@ fun main(args: Array<String>) = runBlocking {
             if (s != null && rfqCfg.get().mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF && novigKeyed?.addressRefused(now) != true) {
                 runCatching {
                     // Novig lists every prop twice, as itself and as `<TYPE>_PROTECTED` (void if the player does not play); parlays hold either, and the books' lines price both the same (MK40: the protected ones had no target, so no fair)
-                    val propTypes = com.tjshea.vigilant.data.reference.PropLineProps.STATS.flatMap { listOf(it, it + "_PROTECTED") }
-                    val ms = novig.markets(s.leagues.toList(), propTypes, listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME), now + 5 * 86_400_000L)
+                    val pregame = listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME)
+                    val plainMs = novig.markets(s.leagues.toList(), com.tjshea.vigilant.data.reference.PropLineProps.STATS.toList(), pregame, now + 5 * 86_400_000L)
+                    // The protected twins are asked for apart from the plain ones: Novig answers 400 INVALID_QUERY for a type name it does not have (not every stat has a protected twin), and a failed
+                    // read here would empty the whole target list. The first read learns which twin names exist (one request each), later reads ask for those only.
+                    val protectedMs: List<com.tjshea.vigilant.data.novig.NovigMarket> = runCatching {
+                        val known = protectedTypes.get()
+                        val candidates = known ?: com.tjshea.vigilant.data.reference.PropLineProps.STATS.map { it + "_PROTECTED" }
+                        try {
+                            if (candidates.isEmpty()) emptyList() else novig.markets(s.leagues.toList(), candidates, pregame, now + 5 * 86_400_000L)
+                        } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
+                            val valid = ArrayList<String>(); val got = ArrayList<com.tjshea.vigilant.data.novig.NovigMarket>()
+                            for (t in candidates) {
+                                try { got += novig.markets(s.leagues.toList(), listOf(t), pregame, now + 5 * 86_400_000L); valid += t } catch (e2: kotlinx.coroutines.CancellationException) { throw e2 } catch (e2: Exception) { }
+                            }
+                            protectedTypes.set(valid)
+                            log("RFQ ladder: Novig market types with a protected twin: ${valid.joinToString(", ").ifEmpty { "none" }}")
+                            got
+                        }
+                    }.getOrDefault(emptyList())
+                    val ms = plainMs + protectedMs
                     runCatching { novigEventsForVotes.set(novig.events(s.leagues.toList(), listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME), now + 5 * 86_400_000L)) }
                     val eventDescs = novigEventsForVotes.get().associate { it.eventId to it.description }
                     val m = HashMap<String, com.tjshea.vigilant.data.rfq.RfqLadder.Target>(ms.size * 2)
