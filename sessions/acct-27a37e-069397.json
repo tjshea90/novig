@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "9a272c5baca7545afe618701870802ae60736f33",
+ "head": "124c900f80407a7b4cd7749c1626a282d373794f",
  "since": 1795129305,
- "beat": 1795197160,
- "beatIso": "2026-11-20T17:52:40Z",
- "done": "MK56: identical-parlay guard (maxSameParlay 1, maxParlaysPerOutcome 2) coded + tested (data 3201 + cloud 11 green), losses study written (20 settled -$63.42, 13 in one cluster), CHANGES/TASKS/LEVERS updated; NOT yet landed/deployed",
- "next": "land main (bash tools/push.sh), board note, ONE graceful reset (>=1h since the 15:54 handover; confirm new startedAtMs), tell Tj once; 19:30 check, evening summary 23:00, rfq-pnl-study after 05:00 UTC 11-21"
+ "beat": 1795197241,
+ "beatIso": "2026-11-20T17:54:01Z",
+ "done": "MK57: maxLegFair .8 -> .7 (Tj: sucker bets, not sharp heavy-favourite action); graded study cut by shape/accept delay/stake (no sharp-vs-casual signal); note section 6",
+ "next": "18:31 UTC: ONE graceful reset ships MK56 (check new startedAtMs, status rfq.config shows maxSameParlay 1); then tell Tj it is live; rfq-pnl-study after 05:00 UTC 11-21"
 }
