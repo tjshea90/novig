@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "03264fefb298b1d89249ca826cc3dcb97c16fe26",
  "since": 1795129305,
- "beat": 1795147331,
- "beatIso": "2026-11-20T04:02:11Z",
+ "beat": 1795147912,
+ "beatIso": "2026-11-20T04:11:52Z",
  "done": "MK31d: live legs up to 99% (liveMaxLegFair): 1,500 of 1,938 priced in-play RFQs were declined by the 90% leg cap",
  "next": "land, one graceful reset, watch live quotes/fills; judge EV after 20 fills; thin edge (market pays ~fair)"
 }
