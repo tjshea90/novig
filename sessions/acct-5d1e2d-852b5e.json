@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "a7f0284c1e5bf9561e5a58f93737e29c854c4ba9",
+ "head": "58ffee2b3e3735ad76a25624a63906441ee09d79",
  "since": 1795134161,
- "beat": 1795143623,
- "beatIso": "2026-11-20T03:00:23Z",
- "done": "MK29b: grade finished legs without a market id from final scores (legsToScore)",
- "next": "land, one engine reset, check leg results (ATP names N/A?)"
+ "beat": 1795143648,
+ "beatIso": "2026-11-20T03:00:48Z",
+ "done": "MK29c: leg grading drops tennis round suffix and retries reversed home/away",
+ "next": "land, reset once, recheck the 6 stale legs"
 }
