@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "1d27b86731a06556e439bb313b5db5bd164eadb3",
  "since": 1795129305,
- "beat": 1795151589,
- "beatIso": "2026-11-20T05:13:09Z",
+ "beat": 1795151785,
+ "beatIso": "2026-11-20T05:16:25Z",
  "done": "MK31e: live fair current-as-of-now for stream-held books, watch up to 600 markets / 20 min demand; full suite green",
  "next": "deploy with the next reset (05:05+; board note), watch fills; mandate loop wake 05:01"
 }
