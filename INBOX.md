@@ -2075,3 +2075,8 @@ Put a feature into the Android app which tracks bets i hand bet on the ncaab tab
 ```
 This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
 ```
+
+## 2026-11-20T21:38:30Z
+```
+Also for the ncaab tab, remove and no longer show the very small college games on the schedule that have no betting odds and usually aren't bet on because the school is so small 
+```
