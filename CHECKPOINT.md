@@ -1,13 +1,13 @@
-# CHECKPOINT 4764 — read me first, then TASKS.md
+# CHECKPOINT 4765 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T04:55:45Z · **tests:** all 11 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `0aa1ce3ec` (this checkpoint is the commit after it)
+**Written:** 2026-11-20T04:58:46Z · **tests:** all 11 fast checks green
+**Branch:** `claude/optimistic-curie-aoglz9` · **builds on:** `2e1a3d00c` (this checkpoint is the commit after it)
 
 ## Just done
-MK31e: live fair current-as-of-now for stream-held books, watch up to 600 markets / 20 min demand; full suite green
+MK36: decline 3+ leg parlays whose legs are all favourites (study: -20.6% of pot)
 
 ## Do this next
-deploy with the next reset (05:05+; board note), watch fills; mandate loop wake 05:01
+land, one reset, tell Tj, watch settled
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ deploy with the next reset (05:05+; board note), watch fills; mandate loop wake 
 
 ## Last ten checkpoints
 ```
+  ed905ede7 ckpt 4764: MK31e: live fair current-as-of-now for stream-held books, watch up to 600 m
   2b82c5518 ckpt 4763: MK35: pregame 3+ leg parlays need a longshot leg (manyLegsNeedLongshot); ba
   93e4e8541 ckpt 4762: MK33c: study adds same-game segments; same-game 2-leg parlays +8% on the 11
   e974a4fc4 ckpt 4761: MK33b: rfq_pnl_study tool + daily workflow + research note: maker P&L at th
@@ -26,8 +27,7 @@ deploy with the next reset (05:05+; board note), watch fills; mandate loop wake 
   c8413ef4f ckpt 4758: MK10 03:52: 1 win 8 losses, -25.30; calibration job running, 95 quotes 0 wo
   e49cc94e0 ckpt 4757: MK33: leg calibration from 49k resolved outcomes; whole wallet to parlays
   b7809c7e5 ckpt 4754: MK31c: live in-play parlays ON (premium floors removed on shadow evidence: 
-  81a2287de ckpt 4756: MK32: engine bids off + auto-bet paper: parlays get the wallet (Tj)
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
