@@ -1,0 +1,36 @@
+# The parlay maker's profit profile (PF1, tj Gmail, 2026-11-20 18:40 UTC)
+
+Tj, 18:2x UTC: "Forget my preferences. Tweak the engine for maximum profit based on actual data. Change any of my preferences. The engine is currently off due to no money, but make it so when i turn it back on later: 1) the parlay system starts with a goal of maximum profit based on actual data 2) ignore whatever settings are on my phone app 3) aim for parlay fills but also profit."
+
+## 1. What was built
+- **The phone's settings no longer configure the maker.** `rfq-maker-engine.json` on `cloud-config` (written only by `python3 tools/rfq_set.py`, never by the app) is the whole maker configuration while it exists; the phone's `rfq-maker.json` is not read (`RfqConfigSource`, `CloudMain.ConfigReader`; a broken profile leaves the maker OFF, never the phone's settings). `rfq_set.py --release` deletes the profile and hands the maker back. The app's Parlays tab says "Claude's profit profile runs the parlay maker" and hides the controls (`RfqStatus.configLock`, `ParlayMakerUiTest`). The phone still owns the engine's master switch and the keys; STOP ALL stays Tj's. The scan's league list and API switches (`settings.json`) still decide which fair-odds feeds are read (an API switched off is never called: Tj's 2026-10-11 rule).
+- **The profile** (values in section 3), seeded while the engine is off, so the first start after Tj turns it on already runs it.
+- **The evidence stays collectable.** A parlay over the leg limit is still priced (the plain product of its legs, in the decline) up to 12 legs, so the journal keeps our fair beside the market's price for the classes the profile does not quote; `tools/rfq_pnl_study.py` needs that fair. The daily study (`rfq-pnl-study.yml`) now also writes `SHAPES.txt` (`tools/rfq_shape_study.py`) into its Release.
+
+## 2. What the data says, and how sure it is
+Graded executed pregame game-line parlays on Novig (6,471, three slates, 83% of them one slate; Release `rfq-pnl-study`), maker P&L per $ of pot at the clearing price (price - 1[buyer won]):
+
+| shape | n | maker ROI | by day | vs shared-leg null |
+|---|---|---|---|---|
+| all | 6,471 | -0.9% | -5.2 / +5.4 / -1.9 | |
+| 2 legs | 3,196 | +4.0% | -7.1 / +9.2 / +3.1 | |
+| **2 legs, no leg >= .8 (the profile)** | 2,777 | **+6.2%** (+9.9% on collateral) | -3.2 / +10.9 / +5.4 | z +1.1, P(luck) .12 |
+| 2 legs, both legs .5-.8 | 1,216 | +12.1% (+19.5% on collateral) | +3.6 / +9.6 / +12.8 | z +1.9, P(luck) .02 |
+| 2 legs, strongest leg .70-.80 | 385 | +13.0% | +11.9 / +12.9 | |
+| 2 legs, strongest leg .80-.90 | 384 | -9.5% / -17.2% | -1.9 / -12.6 / -16.8 | |
+| 3 legs | 1,488 | -8.4% | -4.1 / -9.5 | z -1.0 |
+| 4+ legs, no leg >= .8 | 989 | +1.9% | +0.3 / +2.3 | price .06: collateral 15x the stake |
+| 3+ legs, all legs >= .5 | 1,556 | -14.5% | +1.2 / -17.1 | z -1.2 |
+| a leg >= .8, any legs | 1,759 | -13.2% | | z -0.9 |
+
+**Honest reading.** The naive standard errors (about 1%) count 1,200 parlays as independent when they are built from ~270 distinct legs that win or lose together. Redrawn with one outcome per distinct leg (`tools/rfq_shape_study.py`, 4,000 draws), the profile's +6.2% sits 1.1 spreads above luck and no excluded pocket is below -1.2 spreads. **Nothing here is proven; three slates cannot prove a shape.** The profile is the best current estimate, not a certainty: it avoids every pocket with a negative point estimate (a leg of 80%+, 3+ legs, parlays over .65), keeps the class with the best estimate, and is judged daily (SHAPES.txt) with 20+ independent settled fills of our own (count clusters of parlays that share a leg, not parlays).
+Mechanism, which is why the point estimates are believed at all: parlay buyers who stack two moderate favourites are the classic parlay customer, the market's maker margin on a 2-leg parlay is the largest relative to its variance, and heavy-favourite legs (80%+) are where sharp money and favourite-longshot bias bite. The old sample of our 20 settled fills (-$63.42) was exactly the excluded pockets.
+Also measured, no signal: the buyer's accept delay and the requested stake (no sharp-versus-casual difference), no buyer id on any row.
+
+**Fills.** A 2-leg parlay of two favourites prices at .25-.64: collateral $6-$30 per $10 stake against $23-$90+ for the longshot parlays the old settings preferred, so the same wallet carries 2-4 times the fills. The old `onlyToday` filter declined 77% of the qualifying 2-leg RFQs overnight (their games start after the slate ends); `longshotsOnly` at 40% declined all of the +12% class priced over .40. **Margin:** at fair + 0.1 point the quote wins about 78% of the auctions of the best class (fair + 0.5: 51%, + 1.0: 25%) while profit per fill is the class edge either way; the margin is not a lever, the class is.
+
+## 3. The profile (`rfq-maker-engine.json`)
+mode LIVE; `maxLegs` 2 (was 100); `maxLegFair` .80 (MK57's .70 reverted: the best bucket is .70-.80); `maxFair` .65; `longshotsOnly` off (Tj's 40% cap); `onlyToday` off and `maxDaysAhead` 2 (Tj's slate filter and the 5-day horizon); `dayLossStopPct` .30 (the loss stop was off by Tj's order; with the edge unproven, 24 hours of settled losses over 30% of the wallet stop quoting for six hours and the engine re-judges, no tap needed); everything else as it ran at 17:30 (floors fair + 0.1 point, concentration guards MK54/MK56, props with the 20% premium, in-play parlays in shadow). Revert any value with `rfq_set.py name=value`; hand the maker back to the phone with `rfq_set.py --release`.
+
+## 4. Next
+After the daily study (10:37 UTC) read `SHAPES.txt`: if the profile's day columns turn negative on two days in a row, or our own settled fills (hub `parlays.json`, clusters not parlays) are 20+ and negative, tighten (`maxLegFair` .75, only the both-legs-.5-.8 class) before widening. Needs Tj: money in the wallet (the engine is off for lack of cash: free cash $82 of $145, $83 locked in 7 open parlays).
