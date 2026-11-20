@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "3fdac6112e47a6e668d8198859d981b25e3a0176",
+ "head": "3d56fa660aa530b2a6a0d8511c795093c6e802e1",
  "since": 1795129305,
- "beat": 1795198736,
- "beatIso": "2026-11-20T18:18:56Z",
+ "beat": 1795198917,
+ "beatIso": "2026-11-20T18:21:57Z",
  "done": "MK57: maxLegFair .8 -> .7 (Tj: sucker bets, not sharp heavy-favourite action); graded study cut by shape/accept delay/stake (no sharp-vs-casual signal); note section 6",
  "next": "18:31 UTC: ONE graceful reset ships MK56 (check new startedAtMs, status rfq.config shows maxSameParlay 1); then tell Tj it is live; rfq-pnl-study after 05:00 UTC 11-21"
 }
