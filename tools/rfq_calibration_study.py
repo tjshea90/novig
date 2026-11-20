@@ -63,15 +63,16 @@ def load_created(directory, execs, sample):
                     r = json.loads(line); d = json.loads(r["data"])
                 except (ValueError, KeyError):
                     continue
-                ls = [l for l in (d.get("legs") or []) if isinstance(l, dict) and l.get("outcome")]
+                ls = [l for l in (d.get("legs") or []) if isinstance(l, dict) and l.get("label") and l.get("startsMs")]
                 if d.get("fair") is None or not (2 <= len(ls) <= 4) or len(ls) != len(d.get("legs") or []):
                     continue
-                outs = tuple(l["outcome"] for l in ls)
-                for l in ls:
-                    t = legs.get(l["outcome"])
+                keys = [l.get("outcome") or "%s|%s|%s" % (l.get("desc") or "", l["label"], l["startsMs"]) for l in ls]      # older journal rows carry no outcome id: the label, game and start name the leg
+                outs = tuple(keys)
+                for k, l in zip(keys, ls):
+                    t = legs.get(k)
                     if t is None:
-                        t = legs[l["outcome"]] = {"label": l.get("label") or "", "desc": l.get("desc") or "", "league": l.get("league") or "", "startsMs": l.get("startsMs") or 0, "type": l.get("type") or "",
-                                                  "event": l.get("event") or "", "psum": 0.0, "pn": 0, "res": None}
+                        t = legs[k] = {"label": l.get("label") or "", "desc": l.get("desc") or "", "league": l.get("league") or "", "startsMs": l.get("startsMs") or 0, "type": l.get("type") or "",
+                                       "event": l.get("event") or l.get("desc") or "", "psum": 0.0, "pn": 0, "res": None}
                     t["psum"] += l.get("p") or 0.0; t["pn"] += 1
                 rfqs[rid] = (r["atMs"], float(d["fair"]), float(d.get("minWager") or 10.0), outs, tuple(float(l.get("p") or 0.0) for l in ls), tuple(int(l.get("books") or 0) for l in ls))
         except EOFError:
@@ -294,6 +295,18 @@ def report(rows, legs, out):
     out("-- fair of the parlay")
     for lo, hi in [(.25, .3), (.3, .35), (.35, .45), (.45, .55), (.55, .7)]:
         roi_line("fair [%.2f,%.2f)" % (lo, hi), ex, lambda r, lo=lo, hi=hi: r["n"] == 2 and max(r["ps"]) < .8 and lo <= r["fair"] < hi, win, out=out)
+    out("```")
+
+    out("\n## C2. The strongest leg, and capital: lock time and return on the collateral (executed parlays, 2 legs)\n")
+    out("```")
+    for lo, hi in [(0, .5), (.5, .6), (.6, .7), (.7, .8), (.8, .85), (.85, .9), (.9, 1.01)]:
+        roi_line("2 legs, strongest leg [%.2f,%.2f)" % (lo, hi), ex, lambda r, lo=lo, hi=hi: r["n"] == 2 and lo <= max(r["ps"]) < hi, win, out=out)
+    out("-- per lead bucket (profile class): lock = lead + game (3.5 h); ROC = ROI / (1 - price) = return on the collateral; per day = ROC x 24 / lock hours")
+    for lo, hi in [(0, 1), (1, 3), (3, 8), (8, 99)]:
+        s_ = [r for r in ex if cls(r) and lo <= r["lead_h"] < hi]
+        if len(s_) >= 40:
+            roi = np.mean([r["price"] - r["buyer"] for r in s_]); roc = np.mean([(r["price"] - r["buyer"]) / (1 - r["price"]) for r in s_]); lock = np.mean([r["lead_h"] + 3.5 for r in s_])
+            out("lead [%g,%g) h  n=%4d  ROI %+5.1f%%  ROC %+5.1f%%  lock %.1f h  ROC per day of lock %+6.1f%%" % (lo, hi, len(s_), 100 * roi, 100 * roc, lock, 100 * roc * 24 / lock))
     out("```")
 
     out("\n## D. Replay of the live profile on the executed flow, wallet $145, every setting varied one at a time\n")
