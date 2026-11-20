@@ -19,7 +19,7 @@ def load(path):
             continue
         legs = [(x.rsplit("@", 1)[0], float(x.rsplit("@", 1)[1])) for x in r["legs"].split("|")]
         day = datetime.datetime.fromtimestamp(int(r["atMs"]) / 1000 - 10 * 3600, datetime.timezone.utc).strftime("%m-%d")
-        rows.append({"price": float(r["price"]), "n": int(r["n"]), "pnl": float(r["pnl"]), "legs": legs, "ps": [p for _, p in legs], "day": day, "buyer": int(r["buyer"])})
+        rows.append({"price": float(r["price"]), "fair": float(r["fair"]) if r.get("fair") else None, "n": int(r["n"]), "pnl": float(r["pnl"]), "legs": legs, "ps": [p for _, p in legs], "day": day, "buyer": int(r["buyer"])})
     return rows
 
 
@@ -84,6 +84,59 @@ def report(rows, out=print):
     out("shared-leg null for the whole profile:  observed %+.1f%%, null mean %+.1f%% sd %.1f%%, P(null >= observed) = %.3f" % (100 * obs, 100 * mu, 100 * sd, p))
 
 
+SHAPES = [("2 legs, no leg >= .8 (profile)", lambda r: r["n"] == 2 and max(r["ps"]) < .8), ("2 legs, both .5-.8", lambda r: r["n"] == 2 and min(r["ps"]) >= .5 and max(r["ps"]) < .8),
+          ("3 legs", lambda r: r["n"] == 3), ("4+ legs", lambda r: r["n"] >= 4), ("3+ legs, all >= .5", lambda r: r["n"] >= 3 and min(r["ps"]) >= .5), ("a leg >= .8", lambda r: max(r["ps"]) >= .8)]
+
+
+def margin_report(rows, out=print):
+    """Is it the MARGIN over our fair or the SHAPE of the parlay that makes a maker profitable? (the other session's claim, tested 2026-11-20). `gap` is the market's executed price over our fair, in points."""
+    rows = [r for r in rows if r.get("fair") is not None]
+    for r in rows:
+        r["gap"] = 100 * (r["price"] - r["fair"])
+    out("")
+    out("== Margin or shape? (%d executed parlays with our fair) ==" % len(rows))
+    out("A. maker ROI of the executed parlays whose price was AT LEAST k points over our fair (a bad shape does not turn good at a bigger margin):")
+    ks = (-9, 0, 0.5, 1, 2, 3)
+    out("%-32s" % "shape" + "".join("%15s" % ("k>=%g" % k) for k in ks))
+    for name, f in [("ALL", lambda r: True)] + SHAPES:
+        sub = [r for r in rows if f(r)]
+        cells = []
+        for k in ks:
+            t = [r for r in sub if r["gap"] >= k]
+            cells.append("%15s" % ("%+.1f%% (n%d)" % (100 * sum(r["pnl"] for r in t) / len(t), len(t)) if len(t) >= 30 else "-"))
+        out("%-32s" % name + "".join(cells))
+    out("B. if WE had quoted our fair + m points on every parlay of the shape: share of the auctions won | ROI of what we win | expected profit per RFQ entered (% of pot):")
+    ms = (-1.0, -0.5, 0.1, 0.5, 1.0, 2.0)
+    out("%-32s" % "shape" + "".join("%22s" % ("m=%+g" % m) for m in ms))
+    for name, f in SHAPES:
+        sub = [r for r in rows if f(r)]
+        cells = []
+        for m in ms:
+            w = [r for r in sub if r["gap"] >= m]
+            cells.append("%22s" % ("%.0f%% | %+.1f%% | %+.2f%%" % (100 * len(w) / len(sub), 100 * (sum(r["fair"] + m / 100 - r["buyer"] for r in w) / len(w)), 100 * sum(r["fair"] + m / 100 - r["buyer"] for r in w) / len(sub)) if len(w) >= 20 else "-"))
+        out("%-32s" % name + "".join(cells))
+
+    def explained(key):
+        g = collections.defaultdict(list)
+        for r in rows:
+            g[key(r)].append(r["pnl"])
+        mean = sum(r["pnl"] for r in rows) / len(rows)
+        return sum(len(v) * (sum(v) / len(v) - mean) ** 2 for v in g.values()) / sum((r["pnl"] - mean) ** 2 for r in rows)
+    shape = lambda r: ("2" if r["n"] == 2 else "3" if r["n"] == 3 else "4+") + ("H" if max(r["ps"]) >= .8 else "L") + ("F" if min(r["ps"]) >= .5 else "D")
+    bucket = lambda r: min(5, max(-3, int(math.floor(r["gap"]))))
+    out("C. share of the variance of per-parlay maker P&L explained by the shape (legs x heavy leg x all-favourites): %.1f%%, by the margin over our fair (1-point buckets): %.1f%%, by both: %.1f%%" % (100 * explained(shape), 100 * explained(bucket), 100 * explained(lambda r: (shape(r), bucket(r)))))
+    out("D. 2-leg parlays with no leg >= .8 by OUR parlay fair: ROI | collateral per $1 of stake (what a quote ties up while the game runs; the capital the wallet is short of):")
+    base = [r for r in rows if r["n"] == 2 and max(r["ps"]) < .8]
+    for lo, hi in [(0, .1), (.1, .2), (.2, .25), (.25, .3), (.3, .4), (.4, .5), (.5, .7)]:
+        t = [r for r in base if lo <= r["fair"] < hi]
+        if len(t) >= 30:
+            out("   fair [%.2f,%.2f)  n=%4d  ROI %+5.1f%%  collateral $%.2f per $1 stake" % (lo, hi, len(t), 100 * sum(r["pnl"] for r in t) / len(t), sum((1 - r["price"]) / r["price"] for r in t) / len(t)))
+    keep = [r for r in base if r["fair"] >= .25]
+    drop = [r for r in base if r["fair"] < .25]
+    if keep and drop:
+        out("   minFair .25 keeps n=%d at %+.1f%% (collateral $%.2f per $1) and drops n=%d at %+.1f%% (collateral $%.2f per $1)" % (len(keep), 100 * sum(r["pnl"] for r in keep) / len(keep), sum((1 - r["price"]) / r["price"] for r in keep) / len(keep), len(drop), 100 * sum(r["pnl"] for r in drop) / len(drop), sum((1 - r["price"]) / r["price"] for r in drop) / len(drop)))
+
+
 def selftest():
     rows = []
     rnd = random.Random(1)
@@ -94,6 +147,10 @@ def selftest():
     lines = []
     report(rows, out=lines.append)
     assert any("PROFILE" in l for l in lines)
+    for r in rows:
+        r["fair"] = r["price"] + rnd.choice([-0.01, 0.0, 0.01])
+    margin_report(rows, out=lines.append)
+    assert any("Margin or shape" in l for l in lines) and any(l.startswith("C. share") for l in lines)
     obs, mu, sd, p = shared_leg_null(rows, lambda r: True, draws=300)
     assert abs(mu) < 0.15 and 0 <= p <= 1 and sd > 0
     print("rfq_shape_study selftest ok"); return 0
@@ -104,4 +161,6 @@ if __name__ == "__main__":
         sys.exit(selftest())
     if len(sys.argv) != 2:
         sys.exit(__doc__)
-    report(load(sys.argv[1]))
+    rows_ = load(sys.argv[1])
+    report(rows_)
+    margin_report(rows_)
