@@ -129,7 +129,12 @@ object ParlayHub {
             LegState.WON -> "Won for the buyer"
             LegState.LOST -> "Lost: the buyer's parlay is dead"
             LegState.PUSH -> "Void (pushed)"
-            LegState.IN_PLAY -> if (l.startsMs + (gameHours(l.league) * 3_600_000L).toLong() < now) "Game over, waiting for Novig's result" else "In play since ${clock(l.startsMs, now, zone)}"
+            LegState.IN_PLAY -> when {
+                // Tj 2026-11-20: small tennis tournaments (Challengers) are on no free score feed, so the result may never come: say that instead of "waiting".
+                (l.league == "ATP" || l.league == "WTA") && now - l.startsMs > 12 * 3_600_000L -> "Match over; no score source for this tournament, result unknown"
+                l.startsMs + (gameHours(l.league) * 3_600_000L).toLong() < now -> "Game over, waiting for the result"
+                else -> "In play since ${clock(l.startsMs, now, zone)}"
+            }
             LegState.UPCOMING -> "Starts $started"
         }
         LegView(l.label.ifBlank { "Leg" }, listOf(l.desc, l.league).filter { it.isNotBlank() }.joinToString(" · "), state, l.startsMs, l.p.takeIf { it > 0.0 }, text)
