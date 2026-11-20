@@ -485,3 +485,4 @@ day that changes.
 | v1.0.144 | code 484 | 2026-11-19T22:54Z | MK18: parlay controls show your change at once and confirm when the engine has it; faster engine config read; coverage study
 | v1.0.145 | code 485 | 2026-11-20T02:35Z | MK29: parlay legs graded from final scores; in-play legs blue not green
 | v1.0.146 | code 486 | 2026-11-20T18:58Z | PF1: the parlay maker runs on Claude's profit profile; the Parlays tab says so and hides the controls the engine no longer reads
+| v1.0.147 | code 487 | 2026-11-20T21:37Z | NT1: your NCAAB tab bets tracked: bets, money bet, profit/loss, record and percent won, all time and by day, in the NCAAB tab and on the Tracker (new NCAAB filter)
