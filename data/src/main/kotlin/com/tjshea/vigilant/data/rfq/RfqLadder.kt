@@ -20,7 +20,28 @@ object RfqLadder {
     /** One Novig rung we may be asked to price: which player-and-stat [group] it belongs to, its line and which side the outcome is. */
     data class Target(val group: String, val strike: Double, val over: Boolean, val eventId: String, val marketType: String, val startsMs: Long, val player: String = "",
         /** What the parlay hub needs to grade a leg of a filled parlay (MK15): the outcome's own name, its game's "Away @ Home" and its market id. */
-        val outcomeName: String = "", val eventDesc: String = "", val marketId: String = "")
+        val outcomeName: String = "", val eventDesc: String = "", val marketId: String = "",
+        /** A game line's alternate number (MK41): what the same-game copula needs of the leg. Null for a player prop. */
+        val line: GameLine? = null)
+
+    /** The kind and side of an alternate game line, as [LiveFair.structure] reads them from Novig's names, and its league's calibration. */
+    data class GameLine(val kind: com.tjshea.vigilant.data.reference.LineKind, val side: com.tjshea.vigilant.data.reference.Side, val homeLine: Double?, val awayTeam: Boolean, val league: String)
+
+    /**
+     * The ladder a game line belongs to and where on it (MK41, Tj 2026-11-20: "the APIs should offer lines on almost everything, including alternate ladders"): the books post a few of Novig's many alternate
+     * spreads and totals. The x of a rung is the line in the direction where the "over" side gets harder: a total's number, a spread's NEGATED home handicap (the home side covers less often as it lays more points);
+     * the y is the probability of the "over" side (OVER, or HOME). Between two posted rungs the margin (or total) is close to Gaussian, so the interpolation in probit space is exact there.
+     * Returns (group, x), or null for a line this does not model (a moneyline, a period line, a team total whose team is unknown).
+     */
+    fun gameLineKey(eventId: String, kind: com.tjshea.vigilant.data.reference.LineKind, period: Int, line: Double?, teamTotalAway: Boolean): Pair<String, Double>? {
+        if (period != 0 || line == null) return null
+        return when (kind) {
+            com.tjshea.vigilant.data.reference.LineKind.SPREAD -> "$eventId|GL_SPREAD" to -line
+            com.tjshea.vigilant.data.reference.LineKind.TOTAL -> "$eventId|GL_TOTAL" to line
+            com.tjshea.vigilant.data.reference.LineKind.TEAM_TOTAL -> "$eventId|GL_TEAM_TOTAL_${if (teamTotalAway) "AWAY" else "HOME"}" to line
+            else -> null
+        }
+    }
 
     /** The player of a Novig prop market, in [com.tjshea.vigilant.data.match.PlayerNames] form: its description with the strike and the stat taken out ("Jalen Brunson 25.5 POINTS" -> "jalen brunson"). */
     fun playerOf(description: String, marketType: String, strike: Double): String =
@@ -102,6 +123,14 @@ object RfqLadder {
                 return LegFair(outcomeId, t.eventId, "ladder-votes ${t.group} $side ${strikeText(t.strike)}", p, s.companies, s.asOfMs, t.startsMs, false, t.marketType, outcomeName = t.outcomeName, eventDesc = t.eventDesc, marketId = t.marketId)
             }
             val posted = rungs()[t.group] ?: return null
+            t.line?.let { gl ->
+                // an alternate game line: interpolated between the posted numbers of its game, never extrapolated
+                val r = interpolate(posted, t.strike) ?: return null
+                val p = if (t.over) r.overProb else 1.0 - r.overProb
+                return LegFair(outcomeId, t.eventId, "ladder ${t.group} ${if (t.over) "over" else "under"} ${strikeText(t.strike)}", p, r.books, r.asOfMs, t.startsMs, false, t.marketType,
+                    kind = gl.kind, side = gl.side, period = 0, homeLine = gl.homeLine, awayTeam = gl.awayTeam, league = gl.league,
+                    outcomeName = t.outcomeName, eventDesc = t.eventDesc, marketId = t.marketId)
+            }
             interpolate(posted, t.strike)?.let { r ->
                 val p = if (t.over) r.overProb else 1.0 - r.overProb
                 return LegFair(outcomeId, t.eventId, "ladder ${t.group} $side ${strikeText(t.strike)}", p, r.books, r.asOfMs, t.startsMs, false, t.marketType, outcomeName = t.outcomeName, eventDesc = t.eventDesc, marketId = t.marketId)
