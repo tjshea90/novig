@@ -1,21 +1,23 @@
-# CHECKPOINT 4773 — read me first, then TASKS.md
+# CHECKPOINT 4774 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T07:13:58Z · **tests:** all 11 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `65b3c28c5` (this checkpoint is the commit after it)
+**Written:** 2026-11-20T07:15:48Z · **tests:** all 11 fast checks green
+**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `0abde0d67` (this checkpoint is the commit after it)
 
 ## Just done
-MK43: floors cut to ~fair (margin .001, fairErrorRel .001, minPoints .0005, minReturn .001), in-play floor livePremium .008 / .0015 per leg; evidence: 811 quotes, 9 on executed RFQs, our price +0.9 pt over theirs
+MK44 standing job recorded; census label fix for alternate game lines (cloud tests green, not deployed)
 
 ## Do this next
-watch won/filled at the 07:40 wake; no reset before 08:00; fix explain() label for alternate game lines at the next deploy
+keep the PARLAY MANDATE LOOP running (07:40 wake): status, won/filled, census; next deploy >=08:00 only with something worth a reset; US-evening in-play volume is the next test of MK37
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  b331e5550 ckpt 4773: MK43: floors cut to ~fair (margin .001, fairErrorRel .001, minPoints .0005,
   ea125d9d9 ckpt 4772: MK41 fix: Novig answered 400 INVALID_QUERY to the combined protected-type l
   cdd39e1bd ckpt 4771: MK42: floors halved (margin .003, fairErrorRel .003, minPoints .001, minRet
   be280dcae ckpt 4770: MK40/MK41: coverage fixes (protected prop targets, Yes-only anytime-TD list
@@ -25,7 +27,6 @@ watch won/filled at the 07:40 wake; no reset before 08:00; fix explain() label f
   3abb65590 ckpt 4766: MK37: in-play same-game pairs (moneyline/spread + total) priced through the
   1d27b8673 ckpt 4765: MK36: decline 3+ leg parlays whose legs are all favourites (study: -20.6% o
   ed905ede7 ckpt 4764: MK31e: live fair current-as-of-now for stream-held books, watch up to 600 m
-  2b82c5518 ckpt 4763: MK35: pregame 3+ leg parlays need a longshot leg (manyLegsNeedLongshot); ba
 ```
 
 (2 automatic checkpoint(s) since the last deliberate one — the
