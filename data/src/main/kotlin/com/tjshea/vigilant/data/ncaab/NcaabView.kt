@@ -56,6 +56,12 @@ data class NcaabGameView(
     val mlSwapped: Boolean? = null,
     val spreadSwapped: Boolean? = null,
 ) {
+    /**
+     * Any betting odds at all (NT2, Tj 2026-11-20: "remove and no longer show the very small college games on the schedule that have no betting odds and usually aren't bet on because the school is so small"):
+     * a Novig market of the game, or ESPN's line. A small school's game has neither.
+     */
+    val hasOdds: Boolean get() = moneyline != null || spreads.isNotEmpty() || totals.isNotEmpty() || game.sp != null || game.tt != null
+
     val id: String get() = game.id
 
     /** The Novig spread side that belongs to ESPN's home ([espnHome] true) or away team. */
@@ -75,7 +81,23 @@ object NcaabView {
     /** Games on screen: a game that started more than this long ago and is not final is still shown (a delayed one), anything older drops. */
     private const val KEEP_AFTER_START_MS = 6 * 3_600_000L
 
-    fun build(slate: NcaabSlate?, ratings: NcaabRatings?, board: NcaabBoardFeed?, now: Long): List<NcaabGameView> {
+    /** The games the tab shows, and how many it left out for having no odds. */
+    data class Split(val games: List<NcaabGameView>, val hiddenNoOdds: Int)
+
+    /**
+     * The schedule without its games that have no betting odds (NT2). Judged only once Novig's board has been read: with no board yet, a game's odds are not known to be missing, so none is hidden for that
+     * (an empty schedule because the lines are late would be worse than a few small games).
+     */
+    fun split(slate: NcaabSlate?, ratings: NcaabRatings?, board: NcaabBoardFeed?, now: Long): Split {
+        val all = all(slate, ratings, board, now)
+        if (board == null) return Split(all, 0)
+        val shown = all.filter { it.hasOdds }
+        return Split(shown, all.size - shown.size)
+    }
+
+    fun build(slate: NcaabSlate?, ratings: NcaabRatings?, board: NcaabBoardFeed?, now: Long): List<NcaabGameView> = split(slate, ratings, board, now).games
+
+    private fun all(slate: NcaabSlate?, ratings: NcaabRatings?, board: NcaabBoardFeed?, now: Long): List<NcaabGameView> {
         val rows = board?.rows.orEmpty()
         val events = rows.map { it.event }.distinctBy { it.eventId }
         val byEvent = rows.groupBy { it.event.eventId }

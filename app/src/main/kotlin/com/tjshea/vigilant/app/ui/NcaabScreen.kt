@@ -74,7 +74,8 @@ fun NcaabScreen(
     LaunchedEffect(Unit) { while (true) { onWant(false); delay(60_000L) } }
     val now = rememberNow(30_000)
     val minute = now / 60_000L
-    val views = remember(cu.ncaabSlate, cu.ncaabRatings, cu.ncaabBoard, minute) { NcaabView.build(cu.ncaabSlate, cu.ncaabRatings, cu.ncaabBoard, now) }
+    val split = remember(cu.ncaabSlate, cu.ncaabRatings, cu.ncaabBoard, minute) { NcaabView.split(cu.ncaabSlate, cu.ncaabRatings, cu.ncaabBoard, now) }
+    val views = split.games
     // NT1: the record of the bets placed by hand from this tab (the Tracker's bets, this tab's alone).
     val myBets = remember(state.bets, minute) { com.tjshea.vigilant.data.ncaab.NcaabBetStats.summarize(state.bets, now) }
     var refreshing by remember { mutableStateOf(false) }
@@ -86,7 +87,7 @@ fun NcaabScreen(
             views = views, ratingsAsOf = cu.ncaabRatings?.asOf, boardAt = cu.ncaabBoard?.atMs, boardReadAt = cu.ncaabBoardReadAtMs, note = listOf(cu.ncaabNote, cu.ncaabBoardNote).filter { it.isNotBlank() }.joinToString(" \u00B7 "),
             boardLocal = cu.ncaabBoardLocal,
             model = cu.ncaabRatings?.model, ratedTeams = cu.ncaabRatings?.teams?.size ?: 0, hasSlate = cu.ncaabSlate != null, hasToken = cu.hasToken,
-            settings = state.settings, now = now, onTrack = onTrack, onRecheck = onRecheck, listState = listState, myBets = myBets, onOpenTracker = onOpenTracker,
+            settings = state.settings, now = now, onTrack = onTrack, onRecheck = onRecheck, listState = listState, myBets = myBets, onOpenTracker = onOpenTracker, hiddenNoOdds = split.hiddenNoOdds,
         )
     }
     }
@@ -116,6 +117,7 @@ internal fun NcaabContent(
     listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
     myBets: com.tjshea.vigilant.data.ncaab.NcaabBetStats.Summary? = null,
     onOpenTracker: (() -> Unit)? = null,
+    hiddenNoOdds: Int = 0,
 ) {
     var page by rememberSaveable { mutableStateOf(Page.GAMES.name) }
     var day by rememberSaveable { mutableStateOf("Today") }
@@ -163,7 +165,7 @@ internal fun NcaabContent(
             current == Page.LEANS -> leans(shown, onOpen = { open = it })
             else -> unlike(shown, onOpen = { open = it })
         }
-        item { Text(footnote(model), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp)) }
+        item { Text(footnote(model) + (if (hiddenNoOdds > 0) " $hiddenNoOdds games with no betting odds (small schools) are not listed." else ""), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp).testTag("ncaabFootnote")) }
     }
     ParlayBar(Modifier.align(Alignment.BottomCenter).padding(horizontal = 8.dp, vertical = 4.dp))
     }
