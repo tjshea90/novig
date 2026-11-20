@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "0934ea2dc654514cc07254f894e10ec1d2f23161",
+ "head": "1240d5302bd25a6cf2e8dcf7a1f75bda5542dd41",
  "since": 1795129305,
- "beat": 1795139531,
- "beatIso": "2026-11-20T01:52:11Z",
- "done": "MK21 evidence check: extrapolated legs mostly in same-game combos (none quoted); pair shadow fair at the market median (-0.20 pts)",
- "next": "wait for Tj's restore decision; same-game correlation shadow pricing; lower pair ratios toward measured values before propPairsLive"
+ "beat": 1795139725,
+ "beatIso": "2026-11-20T01:55:25Z",
+ "done": "MK27: longshotsOnly off (Tj's filter), protected markets use the unprotected ladder; trade-level analysis logged",
+ "next": "full suite then land the protected mapping; deploy with the next reset; same-game correlation shadow pricing (market pays +4.1 pts over independent for those trades); more cash is the real limit"
 }
