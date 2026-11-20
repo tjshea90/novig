@@ -2065,3 +2065,8 @@ Do another study on how to best profit with the parlay system . Verify your curr
 ```
 Later the wallet will have over 100 dollars, so the parlay engine should be able to adapt and use the full wallet and price the most profitable parlays using available money in the wallet 
 ```
+
+## 2026-11-20T20:59:23Z
+```
+Put a feature into the Android app which tracks bets i hand bet on the ncaab tab and tracks relevant information such as amount of bets, total money bet all time and daily, total profit and loss all time and daily, total wins and losses, percent of bets won, etc. All is this may be put in the tracker and in the ncaab tab where i can easily see it. Make sure all of the information is for the ncaab tab bets 
+```
