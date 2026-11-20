@@ -53,7 +53,7 @@ class PropPairsTest {
         assertEquals("the same player's different stats are covered", true, PropPairs.joint(pair(a, prop("b", "Assists", "A One", false, 0.5))) != null)
     }
 
-    private val base = RfqConfig(mode = RfqConfig.Mode.LIVE, margin = 0.0, minReturn = 0.0, liveMinReturn = 0.0, minPoints = 0.005, maxLegs = 3, propPremium = 0.0, allowProps = true,
+    private val base = RfqConfig(legCalibration = false, mode = RfqConfig.Mode.LIVE, margin = 0.0, minReturn = 0.0, liveMinReturn = 0.0, minPoints = 0.005, maxLegs = 3, propPremium = 0.0, allowProps = true,
         maxCollateral = 80.0, maxOpenCollateral = 150.0, maxFair = 0.99, maxLegFair = 0.99)
     private val created = RfqProtocol.Created(now, "r", listOf("a", "b"), now + 3_000L, 10.0)
 

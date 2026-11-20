@@ -61,7 +61,7 @@ class RfqMakerTest {
 
     private fun fairs(vararg l: LegFair) = LegFairs { id -> l.firstOrNull { it.outcomeId == id } }
     private fun created(vararg ids: String, minWager: Double = 10.0) = RfqProtocol.Created(now, "rfq-1", ids.toList(), now + 3_000L, minWager)
-    private val cfg = RfqConfig(mode = RfqConfig.Mode.LIVE, margin = 0.08, minReturn = 0.0, liveMinReturn = 0.0, minPoints = 0.0, maxLegs = 3, maxStake = 12.0, maxCollateral = 45.0, maxOpenCollateral = 90.0, maxLegCollateral = 0.0)   // the old flat-margin rule (the per-leg cap is tested apart); the new terms are tested apart
+    private val cfg = RfqConfig(legCalibration = false, mode = RfqConfig.Mode.LIVE, margin = 0.08, minReturn = 0.0, liveMinReturn = 0.0, minPoints = 0.0, maxLegs = 3, maxStake = 12.0, maxCollateral = 45.0, maxOpenCollateral = 90.0, maxLegCollateral = 0.0)   // the old flat-margin rule (the per-leg cap is tested apart); the new terms are tested apart
 
     @Test fun twoLegsFromDifferentGamesArePricedAtTheFairProductPlusTheMargin() {
         val d = RfqPricer.decide(created("a", "b"), now, cfg, fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4)), 0.0) as RfqDecision.Quote
@@ -540,7 +540,7 @@ class RfqMakerTest {
     }
 
     // ---- pricing by what the quote ties up (first shadow day, 188 priced trades: a relative margin tied $22,000 of collateral for $50 of EV, a 4% return on collateral $2,700 for $82) ----
-    private val roc = RfqConfig(mode = RfqConfig.Mode.LIVE, margin = 0.02, minReturn = 0.04, liveMinReturn = 0.0, minPoints = 0.01, maxLegs = 5)
+    private val roc = RfqConfig(legCalibration = false, mode = RfqConfig.Mode.LIVE, margin = 0.02, minReturn = 0.04, liveMinReturn = 0.0, minPoints = 0.01, maxLegs = 5)
 
     @Test fun theQuoteAsksAReturnOnTheCollateralAndMoreForLongerLockUpsAndMoreLegs() {
         val h = 3_600_000L
@@ -558,7 +558,7 @@ class RfqMakerTest {
     // ---- MK14: capital is the scarce thing, so LIVE asks a return per day of collateral; SHADOW keeps the looser rule and only journals what the hurdle would have asked ----
     @Test fun liveAsksTheCapitalHurdleAndShadowOnlyRecordsIt() {
         val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                                  // fair 0.20, a game 3 h away
-        val loose = RfqConfig(mode = RfqConfig.Mode.SHADOW, margin = 0.015, minReturn = 0.004, liveMinReturn = 0.03, minPoints = 0.007, maxLegs = 5)
+        val loose = RfqConfig(legCalibration = false, mode = RfqConfig.Mode.SHADOW, margin = 0.015, minReturn = 0.004, liveMinReturn = 0.03, minPoints = 0.007, maxLegs = 5)
         val shadow = RfqPricer.decide(created("a", "b"), now, loose, f, 0.0) as RfqDecision.Quote
         // SHADOW: (0.20 + 0.004 x 1)/1.004 = 0.2032 -> 0.204 (the 1.5% floor 0.203 and the 0.7-point floor 0.207: the points floor binds at 0.207)
         assertEquals(0.207, shadow.price, 1e-9)
