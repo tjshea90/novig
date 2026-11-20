@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "69a0134920eba9bcde61d6c2046c7aa98dcccd43",
  "since": 1795129305,
- "beat": 1795200634,
- "beatIso": "2026-11-20T18:50:34Z",
+ "beat": 1795200648,
+ "beatIso": "2026-11-20T18:50:48Z",
  "done": "PF1: CLAUDE.md standing rule for the profile file; waiting for CI on d92a8f21 then ship 1.0.146",
  "next": "CI green -> bash ship.sh, release.yml, confirm, record-release.sh v1.0.146 486 note; Tj gets the release link"
 }
