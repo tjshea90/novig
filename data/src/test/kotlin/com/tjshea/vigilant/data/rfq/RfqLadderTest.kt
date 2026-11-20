@@ -135,7 +135,8 @@ class RfqLadderTest {
         assertEquals("the two sides of the market add up to one", 1.0, h.probability + a.probability, 1e-12)
         assertEquals(com.tjshea.vigilant.data.reference.LineKind.SPREAD, h.kind); assertEquals(com.tjshea.vigilant.data.reference.Side.HOME, h.side); assertEquals(-5.5, h.homeLine!!, 0.0)
         assertEquals(com.tjshea.vigilant.data.reference.Side.AWAY, a.side); assertEquals("NCAAB", a.league); assertEquals(0, a.period)
-        assertNull("a number beyond the posted ones is not guessed", RfqLadder.Fairs({ null }, { mapOf("x" to target(true, com.tjshea.vigilant.data.reference.Side.HOME).copy(strike = 17.5)) }, { mapOf(g to posted) }, { true }).leg("x"))
+        assertNull("a number beyond the posted ones is not guessed with extrapolation off", RfqLadder.Fairs({ null }, { mapOf("x" to target(true, com.tjshea.vigilant.data.reference.Side.HOME).copy(strike = 17.5)) }, { mapOf(g to posted) }, { false }).leg("x"))
+        assertTrue("with it on (MK46) it is extrapolated along the game's own slope and says so", RfqLadder.Fairs({ null }, { mapOf("x" to target(true, com.tjshea.vigilant.data.reference.Side.HOME).copy(strike = 17.5)) }, { mapOf(g to posted) }, { true }).leg("x")!!.extrapolated)
     }
 
     // ---- MK46: a game-line number outside the game's posted ones ----
