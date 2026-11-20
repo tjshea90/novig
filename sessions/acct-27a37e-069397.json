@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "4aeca6c7c2c8200c7733c9e7166c904de363410e",
+ "head": "cd41e97d7d868d24bc8c1fc1cfa86e6b376d8416",
  "since": 1795129305,
- "beat": 1795199522,
- "beatIso": "2026-11-20T18:32:02Z",
- "done": "MK57: maxLegFair .8 -> .7 (Tj: sucker bets, not sharp heavy-favourite action); graded study cut by shape/accept delay/stake (no sharp-vs-casual signal); note section 6",
- "next": "18:31 UTC: ONE graceful reset ships MK56 (check new startedAtMs, status rfq.config shows maxSameParlay 1); then tell Tj it is live; rfq-pnl-study after 05:00 UTC 11-21"
+ "beat": 1795199650,
+ "beatIso": "2026-11-20T18:34:10Z",
+ "done": "PF1: engine profit profile file + precedence over the phone's rfq-maker.json (RfqConfigSource), configLock banner in the Parlays tab, over-limit parlays priced for the journal, rfq_shape_study + SHAPES.txt in the daily study; full suite green (4511 passed); research note, CHANGES, TASKS, LEVERS",
+ "next": "land on main (push.sh), then write the profile with rfq_set.py (mode LIVE maxLegs 2 maxLegFair .8 maxFair .65 longshotsOnly off onlyToday off maxDaysAhead 2 dayLossStopPct .3) and mirror it into rfq-maker.json; verify via a dry read; tell Tj once; ship the app release (banner)"
 }
