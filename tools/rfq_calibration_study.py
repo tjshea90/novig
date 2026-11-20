@@ -231,7 +231,8 @@ def replay(rows, c, wallet=145.0):
             skipped["cash short"] += 1; continue
         if c["maxSameParlay"] and any(set(o[3]) == set(r["outs"]) for o in open_):
             skipped["identical"] += 1; continue
-        if c["maxParlaysPerOutcome"] and any(sum(1 for o in open_ if x in o[3]) >= c["maxParlaysPerOutcome"] for x in r["outs"]):
+        limit = c["maxParlaysPerOutcome"] + (int(wallet / c["outcomeStep"]) if c.get("outcomeStep") and wallet is not None else 0)
+        if c["maxParlaysPerOutcome"] and any(sum(1 for o in open_ if x in o[3]) >= limit for x in r["outs"]):
             skipped["outcome in 2"] += 1; continue
         if wallet is not None and any(legcol[x] + col > c["walletLegShare"] * wallet for x in r["outs"]):
             skipped["leg share"] += 1; continue
