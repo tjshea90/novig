@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "a380a4657998c14bce8f573660034a8debc6b5b7",
+ "head": "7ef443c0d663216aa200a577716441b91cd512a5",
  "since": 1795134161,
- "beat": 1795145283,
- "beatIso": "2026-11-20T03:28:03Z",
+ "beat": 1795145609,
+ "beatIso": "2026-11-20T03:33:29Z",
  "done": "MK32: engine bids off + auto-bet paper: parlays get the wallet (Tj)",
  "next": "outcome study (MK5) next"
 }
