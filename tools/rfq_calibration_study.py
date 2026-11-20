@@ -311,11 +311,13 @@ def report(rows, legs, out):
 
     out("\n## C3. Tiers: how picky can the maker be and still fill the wallet? (the wallet is the limit, so the quality of the fills is what the filters can buy)\n")
     cap_c = dict(PROFILE)
-    days_n = sorted(d for d, k in collections.Counter(r["day"] for r in ex).items() if k >= 100)
+    days_n = sorted(d for d, k in collections.Counter(r["day"] for r in ex).items() if k >= 30)
     out("`wins/day` = executed parlays of the tier whose price was at or above our quote (what we would win with unlimited cash), average over the %d days with real flow; `wallet fills/day` = the replay's count with $145 of cash locked until the games end.\n" % len(days_n))
     out("```")
     tiers = [("T0 live profile", lambda r: True), ("T1  + lead >= 1 h", lambda r: r["lead_h"] >= 1), ("T2  + lead 1-8 h", lambda r: 1 <= r["lead_h"] < 8), ("T3  + fair >= .35", lambda r: 1 <= r["lead_h"] < 8 and r["fair"] >= .35),
-             ("T4  lead 1-8 h, fair >= .30", lambda r: 1 <= r["lead_h"] < 8 and r["fair"] >= .30), ("T5  lead 1-24 h, fair >= .35", lambda r: 1 <= r["lead_h"] < 24 and r["fair"] >= .35), ("T6  lead 1-8 h, fair .25-.35", lambda r: 1 <= r["lead_h"] < 8 and .25 <= r["fair"] < .35)]
+             ("T4  lead 1-8 h, fair >= .30", lambda r: 1 <= r["lead_h"] < 8 and r["fair"] >= .30), ("T5  lead 1-24 h, fair >= .35", lambda r: 1 <= r["lead_h"] < 24 and r["fair"] >= .35), ("T6  lead 1-8 h, fair .25-.35", lambda r: 1 <= r["lead_h"] < 8 and .25 <= r["fair"] < .35),
+             ("T7  first start >= 1 h, last <= 8 h, fair >= .35", lambda r: r["lead_h"] >= 1 and r["last_h"] <= 8 and r["fair"] >= .35), ("T8  first >= 1 h, last <= 12 h, fair >= .35", lambda r: r["lead_h"] >= 1 and r["last_h"] <= 12 and r["fair"] >= .35),
+             ("T9  first >= 1 h, last <= 8 h, fair >= .40", lambda r: r["lead_h"] >= 1 and r["last_h"] <= 8 and r["fair"] >= .40)]
     for name, f in tiers:
         sel = lambda r, f=f: cls(r) and f(r)
         m = roi_line(name, ex, sel, win, out=out)
@@ -326,6 +328,19 @@ def report(rows, legs, out):
             c2 = dict(PROFILE)
             rp = replay([dict(r) for r in rows if (r["price"] is None or sel(r))], c2, 145.0)
             out("      wins/day %.0f | ROC %+.1f%% over %.1f h of lock = %+.0f%% per day | wallet fills/day %.1f (skipped for cash %d)" % (len(wins) / max(1, len(days_n)), 100 * roc, lock, 100 * roc * 24 / lock, rp["fills"] / max(1, len(days_n)), rp["skipped"].get("cash short", 0)))
+    out("```")
+
+    out("\n## C4. Margin when the wallet is the limit: tier T7, our quote at fair + m points (the wins per day beyond the wallet's capacity are worth nothing, so the margin can rise until the wins just fill it)\n")
+    t7 = [r for r in ex if cls(r) and r["lead_h"] >= 1 and r["last_h"] <= 8 and r["fair"] >= .35]
+    rp7 = replay([dict(r) for r in rows if (r["price"] is None or (cls(r) and r["lead_h"] >= 1 and r["last_h"] <= 8 and r["fair"] >= .35))], dict(PROFILE), 145.0)
+    cap = rp7["fills"] / max(1, len(days_n))
+    out("```")
+    out("wallet capacity of T7 (replay, $145): %.1f fills a day; executed parlays in the tier: %d over %d days" % (cap, len(t7), len(days_n)))
+    for m in (0.0, 0.1, 0.3, 0.5, 0.75, 1.0, 1.5, 2.0):
+        w = [r for r in t7 if 100 * r["price"] >= 100 * r["fair"] + m]
+        if len(w) >= 10:
+            roi = np.mean([r["fair"] + m / 100 - r["buyer"] for r in w])
+            out("m=+%.2f pt: wins/day %5.1f (%4.1fx the wallet's fills) | ROI of the wins %+5.1f%% | expected profit per RFQ entered %+5.2f%%" % (m, len(w) / max(1, len(days_n)), len(w) / max(1, len(days_n)) / max(1e-9, cap), 100 * roi, 100 * roi * len(w) / len(t7)))
     out("```")
 
     out("\n## D. Replay of the live profile on the executed flow, wallet $145, every setting varied one at a time\n")
