@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "474452154f59215ac40b6fe5663fc11e49348a56",
+ "head": "da0f9fad9fae8ef7a190cdbfa181f233b8058c43",
  "since": 1795134161,
- "beat": 1795141536,
- "beatIso": "2026-11-20T02:25:36Z",
- "done": "pre-ship: MK29: parlay legs graded from final scores; in-play legs blue not green",
- "next": "ship.sh gates and releases this"
+ "beat": 1795141702,
+ "beatIso": "2026-11-20T02:28:22Z",
+ "done": "pre-release: MK29: parlay legs graded from final scores; in-play legs blue not green (versionCode 485, v1.0.145)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.145), then run: bash tools/record-release.sh v1.0.145 485 \"MK29: parlay legs graded from final scores; in-play legs blue not green\""
 }
