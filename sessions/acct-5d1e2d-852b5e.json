@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "68d5bcadc4e4f9d6dd1d24dc38fcfcbc6074ae37",
  "since": 1795134161,
- "beat": 1795141052,
- "beatIso": "2026-11-20T02:17:32Z",
+ "beat": 1795141262,
+ "beatIso": "2026-11-20T02:21:02Z",
  "done": "MK29: grade parlay legs from final scores (ParlayLegScores) so finished legs show WIN/LOSS",
  "next": "land, one engine reset (check board), confirm leg results in parlays.json"
 }
