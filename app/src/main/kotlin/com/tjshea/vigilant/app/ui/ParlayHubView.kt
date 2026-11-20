@@ -148,7 +148,7 @@ private fun Legend() {
             Text(if (open) "How to read this (tap to close)" else "How to read this (tap)", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
             if (open) {
                 Text("You are the maker: you sold each parlay to a buyer. The buyer's stake is yours if any leg loses; if every leg wins you pay the buyer, from the collateral you put up.", style = MaterialTheme.typography.bodySmall)
-                Text("A leg that WON moves the buyer closer to winning, so it is amber (bad for you). A leg that LOST kills the buyer's parlay, so it is green (good for you). Grey legs have not started or are still being played.", style = MaterialTheme.typography.bodySmall)
+                Text("A leg that WON moves the buyer closer to winning, so it is amber (bad for you). A leg that LOST kills the buyer's parlay, so it is green (good for you). Blue legs are being played or finished and waiting for their result. Grey legs have not started.", style = MaterialTheme.typography.bodySmall)
                 Text("Each parlay is final when its LAST leg's game ends (shown as an estimate from the game's usual length). Novig then settles it and the money moves.", style = MaterialTheme.typography.bodySmall)
             }
         }
@@ -176,7 +176,8 @@ private fun legBarColor(s: ParlayHub.LegState): Color = when (s) {
     ParlayHub.LegState.WON -> Edge.colors.warning
     ParlayHub.LegState.LOST -> Edge.colors.positive
     ParlayHub.LegState.PUSH -> MaterialTheme.colorScheme.outline
-    ParlayHub.LegState.IN_PLAY -> MaterialTheme.colorScheme.primary
+    // Tj 2026-11-20: "there are green bars for legs with no results at all": the theme's primary is green, the same green as a LOST leg. In play / waiting for the result is blue.
+    ParlayHub.LegState.IN_PLAY -> Color(0xFF5B9BFF)
     ParlayHub.LegState.UPCOMING -> MaterialTheme.colorScheme.surfaceVariant
 }
 
