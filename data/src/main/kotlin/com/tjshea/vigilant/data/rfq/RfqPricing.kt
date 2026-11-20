@@ -324,6 +324,7 @@ object RfqPricer {
         fun no(why: String) = RfqDecision.Decline(why, p, legs)
         if (cfg.allHighMaxLegs > 0 && legs.size > cfg.allHighMaxLegs && legs.all { it.probability >= cfg.allHighLegFloor }) return no("${legs.size} legs that are all favourites (at least ${"%.0f".format(cfg.allHighLegFloor * 100)}%): makers lose on these (graded study)")
         var via = ""
+        var pairModelUsed = false
         if (legs.map { it.eventId }.toSet().size != legs.size) {
             // Legs of one game are not independent: price each such group through the copula (game lines only), the groups of different games still multiply. A group the model cannot price declines the RFQ,
             // with the PURE independent product as its fair (the evidence of what the market charges over it), unless the market's own ratio for the class prices it (props of one game, MK12).
