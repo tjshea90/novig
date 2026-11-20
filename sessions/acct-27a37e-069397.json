@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "8ddbf3625826d4b2d97a0aba04e7a1ce4f342ec8",
+ "head": "9a272c5baca7545afe618701870802ae60736f33",
  "since": 1795129305,
- "beat": 1795196763,
- "beatIso": "2026-11-20T17:46:03Z",
+ "beat": 1795196955,
+ "beatIso": "2026-11-20T17:49:15Z",
  "done": "MK56: identical-parlay guard (maxSameParlay 1, maxParlaysPerOutcome 2) coded + tested (data 3201 + cloud 11 green), losses study written (20 settled -$63.42, 13 in one cluster), CHANGES/TASKS/LEVERS updated; NOT yet landed/deployed",
  "next": "land main (bash tools/push.sh), board note, ONE graceful reset (>=1h since the 15:54 handover; confirm new startedAtMs), tell Tj once; 19:30 check, evening summary 23:00, rfq-pnl-study after 05:00 UTC 11-21"
 }
