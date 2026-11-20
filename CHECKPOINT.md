@@ -1,13 +1,13 @@
-# CHECKPOINT 4799 — read me first, then TASKS.md
+# CHECKPOINT 4800 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T21:38:01Z · **tests:** all 11 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `2fb1aa3c5` (this checkpoint is the commit after it)
+**Written:** 2026-11-20T21:46:24Z · **tests:** all 11 fast checks green
+**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `405ce1279` (this checkpoint is the commit after it)
 
 ## Just done
-NT1 SHIPPED: v1.0.147 (release.yml green, recorded in BUILDLOG): NCAAB tab bet record in the NCAAB tab and the Tracker, Tracker NCAAB chip
+NT2: the NCAAB tab leaves out games with no betting odds (no Novig market, no ESPN line) once Novig's board is read, footnote counts them; full suite green (4543); v1.0.148 (code 488)
 
 ## Do this next
-nothing pending for NT1; the parlay engine is OFF (Tj's switch), profile on cloud-config; the PARLAY MANDATE LOOP wake is 10:50 UTC 11-21 (read the daily rfq-pnl-study STUDY.md/SHAPES.txt)
+land on main (push.sh), wait for CI green, ship.sh, release.yml, record-release.sh v1.0.148 488; tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ nothing pending for NT1; the parlay engine is OFF (Tj's switch), profile on clou
 
 ## Last ten checkpoints
 ```
+  2a8959f6f ckpt 4799: NT1 SHIPPED: v1.0.147 (release.yml green, recorded in BUILDLOG): NCAAB tab 
   2dd3aab57 ckpt 4798: pre-release: NT1: your NCAAB tab bets tracked: bets, money bet, profit/loss
   3ed97d792 ckpt 4797: NT1: the NCAAB tab's own bet record (origin tag, NcaabBetStats, card in the
   51170169b ckpt 4796: PW1: wallet-adaptive parlay maker (prop reserve shares, outcome count per $
@@ -25,5 +26,7 @@ nothing pending for NT1; the parlay engine is OFF (Tj's switch), profile on clou
   a047ad3ab ckpt 4792: pre-release: PF1: the parlay maker runs on Claude's profit profile; the Par
   69a013492 ckpt 4791: PF1: CLAUDE.md standing rule for the profile file; waiting for CI on d92a8f
   d92a8f21d ckpt 4790: PF1: profile written to cloud-config rfq-maker-engine.json (81ac24d85) and 
-  cd41e97d7 ckpt 4789: PF1: engine profit profile file + precedence over the phone's rfq-maker.jso
 ```
+
+(6 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
