@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "fd84d3160eb87aad332c0b6da0543c44d528d6c8",
  "since": 1795134161,
- "beat": 1795139806,
- "beatIso": "2026-11-20T01:56:46Z",
+ "beat": 1795140019,
+ "beatIso": "2026-11-20T02:00:19Z",
  "done": "MK28: liveMinReturn .008 (rfq_set, stake cap unchanged)",
  "next": "confirm in status, watch quotes won"
 }
