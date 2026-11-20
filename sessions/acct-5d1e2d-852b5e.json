@@ -5,11 +5,11 @@
  "nonce": "852b5e",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-jlb96q",
- "head": "3fdac6112e47a6e668d8198859d981b25e3a0176",
+ "branch": "claude/optimistic-curie-11kmla",
+ "head": "e85b8a87600f773bccb0b1ff10b032f9da09bb65",
  "since": 1795134161,
- "beat": 1795200693,
- "beatIso": "2026-11-20T18:51:33Z",
+ "beat": 1795203173,
+ "beatIso": "2026-11-20T19:32:53Z",
  "done": "MK36: decline 3+ leg parlays whose legs are all favourites (study: -20.6% of pot)",
  "next": "land, one reset, tell Tj, watch settled"
 }
