@@ -1895,3 +1895,8 @@ This makes no sense. Propline and parlayapi both carry all kinds of props and al
 This is completely ridiculous that i have paid apis with sockets and the engine can only price 56 out of 200000 rfqs. It has to be fixed 
 You said it was paper only earlier. Wrong. I had over 15 parlay orders filled with a lot more the engine was able to price. Now out is doing almost nothing 
 ```
+
+## 2026-11-20T01:16:38Z
+```
+Put no limit on the amount of prop legs and the amount of legs total
+```
