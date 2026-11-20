@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "a047ad3abb014cd19a445a6d5eebea6c50924675",
+ "head": "2a90063445bdb2d44095d40ce878fbd408eca0ac",
  "since": 1795129305,
- "beat": 1795201086,
- "beatIso": "2026-11-20T18:58:06Z",
- "done": "pre-release: PF1: the parlay maker runs on Claude's profit profile; the Parlays tab says so and hides the controls the engine no longer reads (versionCode 486, v1.0.146)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.146), then run: bash tools/record-release.sh v1.0.146 486 \"PF1: the parlay maker runs on Claude's profit profile; the Parlays tab says so and hides the controls the engine no longer reads\""
+ "beat": 1795201124,
+ "beatIso": "2026-11-20T18:58:44Z",
+ "done": "PF1 DONE: parlay profit profile live on cloud-config (rfq-maker-engine.json, 81ac24d85), engine code + app 1.0.146 shipped (release.yml green), research/parlay_profit_profile_2026-11-20.md, SHAPES.txt in the daily study; engine is OFF (Tj's switch) so the first start after he turns it on runs the profile",
+ "next": "when Tj turns the engine on: confirm status rfq.configLock is set and rfq.config shows maxLegs 2 / longshotsOnly false (engine-log 'RFQ maker config: LIVE'); after the daily study (10:37 UTC) read SHAPES.txt, judge on 20+ independent settled fills (clusters), tighten before widening; evening summary only if the engine runs"
 }
