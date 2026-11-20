@@ -157,6 +157,8 @@ class CloudLink(private val c: AppContainer) {
             }
         }
     }
+    /** Leg results this phone graded itself from final scores (outcome id to WIN/LOSS/PUSH); laid over every parlay book read. */
+    private val phoneLegResults = java.util.concurrent.ConcurrentHashMap<String, String>()
     val ui: StateFlow<Ui> = _ui.asStateFlow()
 
     /** The dashboard's graphs (TCL24b): one point per scan the engine finished, kept on the phone (a day's worth) so the lines are there when the screen opens. */
@@ -558,9 +560,21 @@ class CloudLink(private val c: AppContainer) {
             while (isActive) {
                 awake()
                 if (hasToken()) when (val p = client.fetchParlays(etag)) {
-                    is CloudClient.Poll.Fresh -> { etag = p.etag; _ui.update { it.copy(parlays = p.value, parlaysReadAtMs = System.currentTimeMillis()) } }
+                    is CloudClient.Poll.Fresh -> { etag = p.etag; _ui.update { it.copy(parlays = com.tjshea.vigilant.data.rfq.ParlayBook.withLegResults(p.value, phoneLegResults), parlaysReadAtMs = System.currentTimeMillis()) } }
                     is CloudClient.Poll.NotModified -> _ui.update { it.copy(parlaysReadAtMs = System.currentTimeMillis()) }
                     is CloudClient.Poll.Failed -> {}
+                }
+                // Tj 2026-11-20: the engine was stopped and a finished parlay stayed "waiting". Legs the book still shows without a result are graded here from the final scores (read-only, free feeds), as the engine does.
+                runCatching {
+                    val book = _ui.value.parlays
+                    if (book != null) {
+                        val now = System.currentTimeMillis()
+                        var changed = false
+                        for (leg in com.tjshea.vigilant.data.rfq.ParlayBook.legsToScore(book, now).take(20)) {
+                            com.tjshea.vigilant.data.rfq.ParlayLegScores.grade(leg, c.scores, now)?.let { phoneLegResults[leg.outcomeId] = it; changed = true }
+                        }
+                        if (changed) _ui.update { u -> u.parlays?.let { b -> u.copy(parlays = com.tjshea.vigilant.data.rfq.ParlayBook.withLegResults(b, phoneLegResults)) } ?: u }
+                    }
                 }
                 nap(if (c.onScreen) paced(TRADES_POLL_MS) else TRADES_POLL_BACKGROUND_MS)
             }
