@@ -2017,3 +2017,12 @@ Still not getting any fills. Maybe we are asking for too high a margin. Add what
 ```
 So far 48 quotes but 0 won. That is missed opportunity 
 ```
+
+## 2026-11-20T07:14:32Z
+```
+Keep the parlay system running and check in on it regularly.
+
+Claude has full permission to use the entire wallet and change all settings and run the github engine as needed.
+
+The goal is to have as much fair odds coverage as possible and provide as many quotes as possible for the parlay engine. The goal is filled parlays with maximum profit potential but not to fill parlays that are too easy to win such as the 15 I already lost money on.
+```
