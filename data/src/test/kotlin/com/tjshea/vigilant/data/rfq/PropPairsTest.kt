@@ -76,7 +76,7 @@ class PropPairsTest {
 
     @Test fun aPropPairQuoteLeavesTheCashReserveToTheClassesThatTrade() {
         val legs = mapOf("a" to prop("a", "Points", "A One", true, 0.5), "b" to prop("b", "Rebounds", "B Two", true, 0.4))
-        val live = base.copy(propPairsLive = true, propPairsCashReserve = 60.0)
+        val live = base.copy(propPairsLive = true, propPairsCashReserve = 60.0, propCashReserve = 0.0)
         // a $10 stake at a ~0.32 price needs about $21 of collateral
         val tight = RfqPricer.decide(created, now, live, LegFairs { legs[it] }, 0.0, cashRoom = 70.0) as RfqDecision.Decline
         assertTrue(tight.reason, tight.reason.contains("cash is short"))
