@@ -114,4 +114,13 @@ class PropPairsTest {
         assertTrue("a prop keeps the general floor of 3: ${prop.reason}", prop.reason.contains("2 companies (need 3)"))
         assertTrue("the setting back at 3 restores the old rule", (decide(gl("a", "e1", 2), gl("b", "e2", 5), base.copy(minBooksGameLines = 3)) as RfqDecision.Decline).reason.contains("(need 3)"))
     }
+
+    @Test fun anExtrapolatedGameLineLegAsksItsErrorPremiumAndAnInterpolatedOneDoesNot() {
+        fun gl(id: String, ev: String, extrapolated: Boolean) = LegFair(id, ev, "m", 0.6, 5, now - 60_000L, now + 3 * 3_600_000L, false, "TOTAL", league = "NBA", extrapolated = extrapolated)
+        val c = RfqProtocol.Created(now, "r", listOf("a", "b"), now + 3_000L, 10.0)
+        fun fair(a: Boolean, cfg: RfqConfig) = (RfqPricer.decide(c, now, cfg, LegFairs { if (it == "a") gl("a", "e1", a) else gl("b", "e2", false) }, 0.0) as RfqDecision.Quote).fair
+        assertEquals("a plain pair: the product", 0.36, fair(false, base), 1e-12)
+        assertEquals("one extrapolated leg: 3% on the fair", 0.36 * 1.03, fair(true, base), 1e-12)
+        assertEquals("switched off", 0.36, fair(true, base.copy(extrapolatedLegPremium = 0.0)), 1e-12)
+    }
 }

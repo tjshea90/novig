@@ -102,6 +102,12 @@ data class RfqConfig(
      * (n=3,274: +0.27, -0.03, +0.71), so a 2-company game-line fair is as good; props on 2 companies (n=112) p10 -6.9, p25 -2.5: too noisy, they keep [minBooks]; one company never passes.
      */
     val minBooksGameLines: Int = 2,
+    /**
+     * MK48: relative premium on the parlay's fair per EXTRAPOLATED game-line leg (an alternate number outside the game's posted ones, [RfqLadder.extrapolateGameLine]). The engine's own held-out check
+     * (`RFQ alt-line check`, 232 outer rungs of posted ladders predicted from the rest): median error 1.8 points of probability, p90 5.6, worst 7.1; against a parlay margin of +0.16 pt that noise decides who
+     * wins the auction (the winner is the one whose error favours the buyer), so each such leg asks 3% on top, as a prop leg asks 20% ([RfqConfig.propPremium]). 0 = none.
+     */
+    val extrapolatedLegPremium: Double = 0.03,
     /** MK45: how long a quote's collateral stays reserved after its 3 s auction closes: buyers accepted 6 to 29 s after the quote (16 fills, 9 more measured 2026-11-20: 6.6-25.3 s); 45 s was 1.5x the slowest, 36 s is 1.25x. */
     val reserveAfterCloseMs: Long = 36_000L,
     /** MK21: price a player-prop rung outside the posted range from the posted rung nearest even ([RfqLadder.extrapolate]); such a leg is a prop leg like any (premium, at most two). OFF = only posted and interpolated rungs. */
@@ -336,6 +342,8 @@ object RfqPricer {
         var p = 1.0
         for (l in legs) p *= l.probability
         if (premiumProps) p = minOf(0.999, p * Math.pow(1.0 + cfg.propPremium, propLegs.toDouble()))
+        val extrapolatedGameLegs = legs.count { it.extrapolated && it.marketType in GAME_LINES }
+        if (extrapolatedGameLegs > 0 && cfg.extrapolatedLegPremium > 0.0) p = minOf(0.999, p * Math.pow(1.0 + cfg.extrapolatedLegPremium, extrapolatedGameLegs.toDouble()))
         fun no(why: String) = RfqDecision.Decline(why, p, legs)
         if (cfg.allHighMaxLegs > 0 && legs.size > cfg.allHighMaxLegs && legs.all { it.probability >= cfg.allHighLegFloor }) return no("${legs.size} legs that are all favourites (at least ${"%.0f".format(cfg.allHighLegFloor * 100)}%): makers lose on these (graded study)")
         var via = ""
