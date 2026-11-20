@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "da43ef6a14ee349103fa323adeef266ed026eb09",
+ "head": "0bd600291a9346354e434d1d971d5ba287f31940",
  "since": 1795129305,
- "beat": 1795202985,
- "beatIso": "2026-11-20T19:29:45Z",
+ "beat": 1795203209,
+ "beatIso": "2026-11-20T19:33:29Z",
  "done": "PF2: verified margin-vs-shape on the graded table (shape 8.0% of P&L variance, margin 0.7%), profile v2 minFair .25 + sameGamePremium 0 (cloud-config 7c9dcc0bf), shape study prints the test daily, RfqProfitProfileTest pins it; data tests green",
  "next": "nothing pending for the engine (it is OFF until Tj turns it on); when it runs confirm status rfq.configLock + config minFair .25; after the 10:37 UTC daily study read SHAPES.txt (margin test + day columns); judge on 20+ independent settled fills"
 }
