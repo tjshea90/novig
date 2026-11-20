@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "d4dc7a7d7fa5afb61a3640d92dbc6fb859806206",
+ "head": "b498e37bfbe4192bbc927f10d420bfb1618689bc",
  "since": 1795129305,
- "beat": 1795139170,
- "beatIso": "2026-11-20T01:46:10Z",
- "done": "MK25: rfq_set maxLegs guard 10 -> 100; maxLegs=100 written",
- "next": "watch the new job's priceable count and halts"
+ "beat": 1795139252,
+ "beatIso": "2026-11-20T01:47:32Z",
+ "done": "MK22-MK25 done and deployed (job 44653302569): prop votes fair, ladder extrapolation, pair model shadow, prop-leg shadow, no limit on legs; evening RFQ flow is 66% live-game parlays",
+ "next": "build same-game correlation pricing in SHADOW (game line + prop of one game, 3+ legs of one game): 41% of pregame RFQs; read journal rows 'N prop legs ... shadow' and 'ladder-votes' legs vs market EXECUTED prices; Tj decision pending on win-chance limit; app stepper 'No limit' in next app release; MK21 check fires 01:42 UTC"
 }
