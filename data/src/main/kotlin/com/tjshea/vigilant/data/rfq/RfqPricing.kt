@@ -103,6 +103,12 @@ data class RfqConfig(
      */
     val minBooksGameLines: Int = 2,
     /**
+     * MK56: parlays (open or quoted) with the same set of legs the maker may hold: 1 = an identical parlay is never taken twice. 0 = no limit. The same two legs (Magic + Thunder) were filled twice in 7 minutes.
+     */
+    val maxSameParlay: Int = 1,
+    /** MK56: open parlays and quotes still out one outcome may be in: the Houston Texans moneyline was in 6 of the 20 settled parlays, which all lost together. 0 = no limit. */
+    val maxParlaysPerOutcome: Int = 2,
+    /**
      * MK48: relative premium on the parlay's fair per EXTRAPOLATED game-line leg (an alternate number outside the game's posted ones, [RfqLadder.extrapolateGameLine]). The engine's own held-out check
      * (`RFQ alt-line check`, 232 outer rungs of posted ladders predicted from the rest): median error 1.8 points of probability, p90 5.6, worst 7.1; against a parlay margin of +0.16 pt that noise decides who
      * wins the auction (the winner is the one whose error favours the buyer), so each such leg asks 3% on top, as a prop leg asks 20% ([RfqConfig.propPremium]). 0 = none.

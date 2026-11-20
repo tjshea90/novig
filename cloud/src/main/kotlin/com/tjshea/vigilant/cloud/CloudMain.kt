@@ -814,7 +814,7 @@ fun main(args: Array<String>) = runBlocking {
         tell = { title, body -> scope.launch { runCatching { postMessage(CloudMessages.Message("rfq-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title.take(90), body.take(400), 1, "CLOUD")) } } },
         log = { log("RFQ maker: $it") },
         legInfo = { id -> outcomeIndex.get()[id]?.marketLabel },
-        market = rfqMarket, probe = rfqProbe, cash = { rfqCash.get() }, exposure = { com.tjshea.vigilant.data.rfq.RfqLedger.exposure(rfqExecs.get()) },
+        market = rfqMarket, probe = rfqProbe, cash = { rfqCash.get() }, exposure = { com.tjshea.vigilant.data.rfq.RfqLedger.exposure(rfqExecs.get()) }, openSets = { com.tjshea.vigilant.data.rfq.RfqLedger.openSets(rfqExecs.get()) },
         onFill = { r -> if (rfqFills.putIfAbsent(r.rfqId, r) == null) runCatching { publisher.stageExtra("rfq-fills.json", com.tjshea.vigilant.data.rfq.FillBook.encode(rfqFills.values)) } },
     )
     val rfqSocket = com.tjshea.vigilant.data.rfq.RfqSocket(http, { rfqClient }, rfqMaker, { rfqCfg.get() }, scope, log = { log(it) }).also { rfqSocketRef.set(it) }

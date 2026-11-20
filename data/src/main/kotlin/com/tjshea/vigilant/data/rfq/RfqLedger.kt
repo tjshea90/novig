@@ -49,6 +49,9 @@ object RfqLedger {
         return m
     }
 
+    /** The outcome ids of every parlay still open, one list each (MK56: the repeat guard counts identical parlays and the parlays one outcome is in). */
+    fun openSets(execs: List<Exec>): List<List<String>> = execs.filter { !it.settled }.map { it.outcomeIds }
+
     data class Summary(val settled: Int, val makerWon: Int, val makerLost: Int, val open: Int, val openCollateral: Double, val pnlTotal: Double, val pnl24h: Double)
 
     fun summarize(execs: List<Exec>, now: Long): Summary {

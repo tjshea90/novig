@@ -39,6 +39,8 @@ class RfqMaker(
     private val cash: () -> Double? = { null },
     /** The collateral each outcome carries across the maker's open parlays (`GET /rfq/v3/executions`, [RfqLedger.exposure]); empty when not read. */
     private val exposure: () -> Map<String, Double> = { emptyMap() },
+    /** The outcome ids of each open parlay (MK56), for the guard against identical parlays and one outcome in many. */
+    private val openSets: () -> List<List<String>> = { emptyList() },
     /** Called once for each quote of ours that is filled, with what the parlay hub needs to show its legs later (MK15). */
     private val onFill: (FillRecord) -> Unit = {},
 ) {
@@ -267,6 +269,22 @@ class RfqMaker(
      */
     private fun concentrated(e: RfqProtocol.Created, q: RfqDecision.Quote, cfg: RfqConfig, now: Long, walletTotal: Double? = null): RfqDecision.Decline? {
         // With the wallet as the limit (MK17) one outcome may carry [RfqConfig.walletLegShare] of the wallet, not a fixed $30.
+        // MK56 (Tj 2026-11-20: "the parlay system is losing money miserably and taking identical bets"): 19 of the 20 settled parlays were buyer wins, but they were not 20 bets: the Houston Texans moneyline alone was in
+        // 6 of them and the same Magic + Thunder parlay was filled twice in 7 minutes. A parlay that repeats the legs of one already held (or quoted) is the same bet again, and one outcome in many parlays makes them
+        // one position that wins or loses together: neither the cap on one parlay nor the collateral cap saw it.
+        if (cfg.maxSameParlay > 0 || cfg.maxParlaysPerOutcome > 0) {
+            val sets = ArrayList<Set<String>>(); for (l in openSets()) sets += l.toSet()
+            synchronized(pending) { for (p in pending.values) if (p.reservedUntilMs > now && p.reserved > 0.0) sets += p.created.outcomeIds.toSet() }
+            val mineSet = e.outcomeIds.toSet()
+            if (cfg.maxSameParlay > 0) {
+                val same = sets.count { it == mineSet }
+                if (same >= cfg.maxSameParlay) return RfqDecision.Decline("the same parlay is already held or quoted ($same time${if (same == 1) "" else "s"}: an identical bet is not a new one)", q.fair, q.legs)
+            }
+            if (cfg.maxParlaysPerOutcome > 0) {
+                val worstCount = e.outcomeIds.maxOfOrNull { id -> sets.count { id in it } } ?: 0
+                if (worstCount >= cfg.maxParlaysPerOutcome) return RfqDecision.Decline("a leg is already in $worstCount open parlays or quotes (the limit is ${cfg.maxParlaysPerOutcome}: they would win or lose together)", q.fair, q.legs)
+            }
+        }
         val cap = if (cfg.walletCollateral && walletTotal != null) cfg.walletLegShare * walletTotal else cfg.maxLegCollateral
         if (cap <= 0.0) return null
         val held = HashMap(exposure())
