@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "cdd39e1bd315c4b3946c0b335484f41f18e760a1",
+ "head": "ea125d9d9628da263598f41b40c4b4b706268723",
  "since": 1795129305,
- "beat": 1795157542,
- "beatIso": "2026-11-20T06:52:22Z",
- "done": "MK42: floors halved (margin .003, fairErrorRel .003, minPoints .001, minReturn .002); engine restarted 06:44 (job 44689559689) with MK40/MK41 coverage fixes",
- "next": "read 'RFQ ladder' + 'RFQ prop coverage' log lines, then quotes/won/filled; judge the thinner margin after 20 fills; no reset before 07:45"
+ "beat": 1795157652,
+ "beatIso": "2026-11-20T06:54:12Z",
+ "done": "MK41 fix: Novig answered 400 INVALID_QUERY to the combined protected-type list and the ladder catalog read failed (targets empty): plain and protected twins are read apart, the twin names that exist are learned one request each",
+ "next": "reset the engine once to deploy the fix (job 44689559689 has an empty ladder target list until then); confirm 'RFQ ladder: N outcomes' + 'RFQ prop coverage' in the log"
 }
