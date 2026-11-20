@@ -112,4 +112,29 @@ class RfqLadderTest {
         assertEquals("Over 19.5", f.outcomeName); assertEquals("Knicks @ Spurs", f.eventDesc); assertEquals("m-19", f.marketId)
         assertTrue(f.extrapolated)
     }
+
+    // ---- MK41: alternate game lines ----
+    @Test fun aGameLinesLadderIsKeyedByItsGameAndThePointWhereTheOverSideGetsHarder() {
+        val spread = RfqLadder.gameLineKey("e1", com.tjshea.vigilant.data.reference.LineKind.SPREAD, 0, -3.5, false)!!
+        assertEquals("a spread is keyed by the negated home handicap: the home side covers less as it lays more", 3.5, spread.second, 0.0)
+        assertEquals(7.5, RfqLadder.gameLineKey("e1", com.tjshea.vigilant.data.reference.LineKind.SPREAD, 0, -7.5, false)!!.second, 0.0)
+        assertEquals("a total keeps its number", 150.5, RfqLadder.gameLineKey("e1", com.tjshea.vigilant.data.reference.LineKind.TOTAL, 0, 150.5, false)!!.second, 0.0)
+        assertTrue("the home and away team totals are different ladders", RfqLadder.gameLineKey("e1", com.tjshea.vigilant.data.reference.LineKind.TEAM_TOTAL, 0, 70.5, true)!!.first != RfqLadder.gameLineKey("e1", com.tjshea.vigilant.data.reference.LineKind.TEAM_TOTAL, 0, 70.5, false)!!.first)
+        assertNull("a first-half line is not modelled", RfqLadder.gameLineKey("e1", com.tjshea.vigilant.data.reference.LineKind.SPREAD, 1, -3.5, false))
+        assertNull(RfqLadder.gameLineKey("e1", com.tjshea.vigilant.data.reference.LineKind.MONEYLINE, 0, null, false))
+    }
+
+    @Test fun anAlternateSpreadIsInterpolatedBetweenTheGamesPostedOnesBothSidesAddUpAndNothingIsExtrapolated() {
+        val g = RfqLadder.gameLineKey("e1", com.tjshea.vigilant.data.reference.LineKind.SPREAD, 0, -3.5, false)!!.first
+        val posted = listOf(rung(3.5, 0.50), rung(7.5, 0.38), rung(11.5, 0.26))         // P(home covers -3.5 / -7.5 / -11.5)
+        val gl = RfqLadder.GameLine(com.tjshea.vigilant.data.reference.LineKind.SPREAD, com.tjshea.vigilant.data.reference.Side.HOME, -5.5, false, "NCAAB")
+        fun target(over: Boolean, side: com.tjshea.vigilant.data.reference.Side) = RfqLadder.Target(g, 5.5, over, "e1", "SPREAD", now, "", "name", "Away @ Home", "m1", gl.copy(side = side))
+        val home = RfqLadder.Fairs({ null }, { mapOf("home" to target(true, com.tjshea.vigilant.data.reference.Side.HOME), "away" to target(false, com.tjshea.vigilant.data.reference.Side.AWAY)) }, { mapOf(g to posted) }, { true })
+        val h = home.leg("home")!!; val a = home.leg("away")!!
+        assertTrue("between the -3.5 and -7.5 numbers", h.probability < 0.50 && h.probability > 0.38)
+        assertEquals("the two sides of the market add up to one", 1.0, h.probability + a.probability, 1e-12)
+        assertEquals(com.tjshea.vigilant.data.reference.LineKind.SPREAD, h.kind); assertEquals(com.tjshea.vigilant.data.reference.Side.HOME, h.side); assertEquals(-5.5, h.homeLine!!, 0.0)
+        assertEquals(com.tjshea.vigilant.data.reference.Side.AWAY, a.side); assertEquals("NCAAB", a.league); assertEquals(0, a.period)
+        assertNull("a number beyond the posted ones is not guessed", RfqLadder.Fairs({ null }, { mapOf("x" to target(true, com.tjshea.vigilant.data.reference.Side.HOME).copy(strike = 17.5)) }, { mapOf(g to posted) }, { true }).leg("x"))
+    }
 }
