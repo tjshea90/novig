@@ -912,6 +912,25 @@ internal data class PlMarket(
         }
     }
 
+    /**
+     * A Yes/No market (anytime touchdown scorer, double-double) the book posts as a Yes-ONLY list (MK40, Tj 2026-11-20: "the APIs should offer lines on almost everything"): 8 of the 11 books post
+     * the anytime-TD market as one outcome per player named after the player, with no "No", so [props] (which needs both sides to devig) dropped them and Novig's touchdown legs had one or two prices to
+     * go on. Each is the 1+ line (strike 0.5) of a one-sided price, a milestone like "20+ Points"; a player the book also posts a No for stays a two-sided market ([props]) and is not counted twice.
+     */
+    private fun yesOnlyMilestones(stat: String, bookKey: String): List<RefMilestone> {
+        val all = outcomes.orEmpty().filterNotNull()
+        fun playerOf(o: PlOutcome): String? = o.description?.trim()?.takeIf { it.isNotEmpty() }
+        val twoSided = all.filter { o -> o.name.orEmpty().trim().lowercase() in setOf("no", "under") }.mapNotNull { playerOf(it) }.toSet()
+        return all.mapNotNull { o ->
+            val player = playerOf(o) ?: return@mapNotNull null
+            if (player in twoSided) return@mapNotNull null
+            val name = o.name.orEmpty().trim()
+            val yes = name.equals("Yes", ignoreCase = true) || (name.equals("Over", ignoreCase = true) && o.point == 0.5) || (o.point == null && name.equals(player, ignoreCase = true))
+            if (!yes) return@mapNotNull null
+            RefMilestone(bookKey, player, stat, 0.5, PropLineClient.decimal(o.price) ?: return@mapNotNull null, o.seenAt(bookKey))
+        }
+    }
+
     fun toDomain(book: PlBook, home: String, away: String, wantPeriod: String? = null): List<RefBookMarket> {
         val key = key ?: return emptyList()
         val bookKeyRaw = book.key ?: return emptyList()
