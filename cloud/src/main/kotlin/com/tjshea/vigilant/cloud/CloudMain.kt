@@ -1181,7 +1181,7 @@ fun main(args: Array<String>) = runBlocking {
                 locksNote = sources.novigLocks.describe(),
                 rfqNote = (rfqMaker.status(rfqSocket.connected) + (if (rfqCfg.get().mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF && !rfqSocket.connected) " · ${rfqSocket.lastNote}" else "")).take(800),
                 rfq = rfqMaker.snapshot(rfqSocket.connected, rfqCfg.get(), rfqSocket.makerId, rfqCollateral.get(), rfqSocket.lastNote, System.currentTimeMillis())
-                    .copy(sockets = "pricing ${if (rfqSocket.connected) "up" else "down"} (${rfqSocket.connects} connects)" + (if (rfqCfg.get().mode == com.tjshea.vigilant.data.rfq.RfqConfig.Mode.LIVE) " · last look ${if (rfqLastLook.connected) "up" else "down"} (${rfqLastLook.connects} connects)" else "")),
+                    .copy(configLock = config.rfqLock, sockets = "pricing ${if (rfqSocket.connected) "up" else "down"} (${rfqSocket.connects} connects)" + (if (rfqCfg.get().mode == com.tjshea.vigilant.data.rfq.RfqConfig.Mode.LIVE) " · last look ${if (rfqLastLook.connected) "up" else "down"} (${rfqLastLook.connects} connects)" else "")),
                 ledgerProfit = ledgerProfit.get()?.profit, ledgerOpenCost = ledgerProfit.get()?.openCost, ledgerRows = ledgerProfit.get()?.rows ?: 0,
                 ledgerAtMs = ledgerProfit.get()?.atMs ?: 0L, ledgerDetail = ledgerProfit.get()?.detail.orEmpty().take(300),
             )
