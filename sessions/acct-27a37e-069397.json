@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "83538f861edfcbb397886b695a2cddd92c33349f",
+ "head": "3ed97d7924b573da8a6c8450cfcb276f888d8e46",
  "since": 1795129305,
- "beat": 1795209236,
- "beatIso": "2026-11-20T21:13:56Z",
- "done": "PW1: wallet-adaptive parlay maker (prop reserve shares, outcome count per $200 of wallet, cash-aware gate built and off), replay at $145/$300/$600/$1200, profile f322a1d06 pinned by tests; full suite green (4519 passed)",
- "next": "land on main (push.sh); the engine is OFF; when it runs confirm status rfq.config shows outcomeCountWalletStep 200 / propCashReserveShare .6; read STUDY.md in the rfq-pnl-study Release daily; scale maxStake and guards again past ~$1000"
+ "beat": 1795209420,
+ "beatIso": "2026-11-20T21:17:00Z",
+ "done": "NT1: the NCAAB tab's own bet record (origin tag, NcaabBetStats, card in the NCAAB tab and the Tracker Stats page, Tracker NCAAB chip), full suite green (4536), v1.0.147 (code 487)",
+ "next": "land on main (push.sh), wait for CI, ship.sh, release.yml, record-release.sh v1.0.147 487; tell Tj the release link and what is counted (bets placed from the tab by hand; older tab bets recognised by their fair basis; the game-sheet \u2713 before this release can't be told apart)"
 }
