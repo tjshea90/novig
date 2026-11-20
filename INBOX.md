@@ -2031,3 +2031,8 @@ The goal is to have as much fair odds coverage as possible and provide as many q
 ```
 Almost 200 quotes and 0 won. This needs to be fixed 
 ```
+
+## 2026-11-20T17:34:23Z
+```
+The parlay system is losing money miserably and taking identical bets. Continue to study and research on how to make it profitable 
+```
