@@ -6,6 +6,8 @@ import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigOutcome
 import com.tjshea.vigilant.data.novig.stream.MarketLifecycle
+import com.tjshea.vigilant.data.reference.LineKind
+import com.tjshea.vigilant.data.reference.Side
 import com.tjshea.vigilant.engine.MarketFee
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
