@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "e3bf13421ae35d5a05af2ed93c7b674356396b73",
  "since": 1795134161,
- "beat": 1795140593,
- "beatIso": "2026-11-20T02:09:53Z",
+ "beat": 1795140596,
+ "beatIso": "2026-11-20T02:09:56Z",
  "done": "MK28b: correction: journal under-samples no-fair declines; live legs and cash are the real limits",
  "next": "give Tj options: capital, live legs, cash allocation vs bids"
 }
