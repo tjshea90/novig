@@ -899,8 +899,9 @@ internal data class PlMarket(
     fun milestones(book: PlBook): List<RefMilestone> {
         val key = key ?: return emptyList()
         val stat = PropLineProps.MARKETS[key] ?: return emptyList()
-        if (key in PropLineProps.YES_NO || suspended_at != null || period != null || team != null) return emptyList()
+        if (suspended_at != null || period != null || team != null) return emptyList()
         val bookKey = PropLineClient.bookKey(book.key ?: return emptyList())
+        if (key in PropLineProps.YES_NO) return yesOnlyMilestones(stat, bookKey)
         return outcomes.orEmpty().filterNotNull().mapNotNull { o ->
             if (o.point != null) return@mapNotNull null
             val m = MILESTONE.find(o.name.orEmpty().trim()) ?: return@mapNotNull null
