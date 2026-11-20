@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "cefdacac1947a889221924a07bf10c08264dd545",
+ "head": "25ff5c4513dea07a91e4637d94bebb63d55d1e06",
  "since": 1795129305,
- "beat": 1795162185,
- "beatIso": "2026-11-20T08:09:45Z",
- "done": "MK46: bounded extrapolation of alternate game-line numbers outside the posted ones (game's own slope, league fallback, <=1 probit), held-out-rung validation log; full suite 4499 green",
- "next": "next engine reset >= 08:50 UTC (the 07:47 job was someone's reset): deploys MK46; then read 'RFQ alt-line check' (held-out rung error) and 'RFQ prop coverage'; judge fills"
+ "beat": 1795162242,
+ "beatIso": "2026-11-20T08:10:42Z",
+ "done": "MK37-MK46 shipped (live same-game pairs, prop-pair lane + cash reserve, stake cap lifted, coverage fixes, floors ~fair, alt-line extrapolation); engine job 44697283631 runs through MK45; MK46 on main not deployed; 0 wins so far at 8 quotes/min (cash-time bound)",
+ "next": "PARLAY MANDATE LOOP trigger_017JPpLnJ23Y8NAFcMRFnmph fires 08:52 UTC: board, status, ONE reset >= 08:50 to deploy MK46, read 'RFQ alt-line check' + 'RFQ prop coverage', log any fill; US evening in-play is the real test; no 2 resets within an hour; revert lines for every change are in research/review/CHANGES.md (MK37-MK46)"
 }
