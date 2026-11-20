@@ -127,4 +127,15 @@ class LiveFairTest {
         assertTrue("a 99.5% live leg is over the live leg cap", (RfqPricer.decide(created("a", "b"), now, cfg, fairs(live("a", "e1", 0.995), pre("b", "e2", 0.45)), 0.0) as RfqDecision.Decline).reason.contains("too likely"))
         assertTrue("a 97% pregame leg still is", (RfqPricer.decide(created("a", "b"), now, cfg, fairs(pre("a", "e1", 0.97), pre("b", "e2", 0.45)), 0.0) as RfqDecision.Decline).reason.contains("too likely"))
     }
+
+    @Test fun aPregameParlayOfThreeOrMoreLegsNeedsALongshotAmongThem() {
+        val allFav = fairs(pre("a", "e1", 0.7), pre("b", "e2", 0.7), pre("c", "e3", 0.7))
+        val d = RfqPricer.decide(created("a", "b", "c"), now, cfg.copy(maxFair = 0.99), allFav, 0.0) as RfqDecision.Decline
+        assertTrue(d.reason, d.reason.contains("every leg a favourite"))
+        assertEquals("the plain product is the evidence", 0.343, d.fair!!, 1e-9)
+        val mixed = fairs(pre("a", "e1", 0.7), pre("b", "e2", 0.7), pre("c", "e3", 0.4))
+        assertTrue(RfqPricer.decide(created("a", "b", "c"), now, cfg, mixed, 0.0) is RfqDecision.Quote)
+        assertTrue("two favourites are quoted", RfqPricer.decide(created("a", "b"), now, cfg, fairs(pre("a", "e1", 0.7), pre("b", "e2", 0.7)), 0.0) is RfqDecision.Quote)
+        assertTrue("switched off", RfqPricer.decide(created("a", "b", "c"), now, cfg.copy(maxFair = 0.99, manyLegsNeedLongshot = 0.0), allFav, 0.0) is RfqDecision.Quote)
+    }
 }

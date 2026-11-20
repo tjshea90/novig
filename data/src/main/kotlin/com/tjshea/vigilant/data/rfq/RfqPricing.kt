@@ -100,6 +100,11 @@ data class RfqConfig(
     val liveParlays: Mode = Mode.SHADOW,
     /** A parlay with a leg in play is not quoted above this win chance (Tj: "nothing over a 50% or so"). */
     val liveMaxFair: Double = 0.50,
+    /**
+     * MK35 (research/rfq_maker_pnl_2026-11-20.md, backtest on 5,951 executed game-line parlays graded by final scores): a pregame parlay of 3 or more legs needs at least one leg below this win chance. Parlays of 3+
+     * legs where every leg is a favourite are the segment makers lose 20% of the pot in (buyers won 52.8% against a price of 32.2%); with a longshot among them it is about even. 0 = no such rule.
+     */
+    val manyLegsNeedLongshot: Double = 0.50,
     /** An in-play leg may be nearly decided (a buyer pads a parlay with a 97% leg): the leg cap is higher than the pregame [maxLegFair], the parlay's win chance is capped by [liveMaxFair] (journal of 2026-11-20: 1,500 of 1,938 priced in-play RFQs were declined by the 90% leg cap). */
     val liveMaxLegFair: Double = 0.99,
     /** An in-play leg's price must be younger than this at the decision (a buyer accepts 6-29 s after the auction; the game moves meanwhile). */
@@ -350,6 +355,7 @@ object RfqPricer {
             if (l.probability > cfg.maxLegFair) return no("a leg is too likely to win (${"%.0f".format(l.probability * 100)}% against the ${"%.0f".format(cfg.maxLegFair * 100)}% cap)")
         }
         if (manyProps) return no("$propLegs prop legs (priced at the plain product, shadow: not quoted)")
+        if (!anyLive && cfg.manyLegsNeedLongshot > 0.0 && ids.size >= 3 && legs.none { it.probability < cfg.manyLegsNeedLongshot }) return no("${ids.size} legs and every leg a favourite (makers lose about 20% of the pot on these)")
         if (anyLive) {
             if (p > cfg.liveMaxFair) return no("an in-play parlay: wins ${"%.0f".format(p * 100)}% of the time, over the ${"%.0f".format(cfg.liveMaxFair * 100)}% live cap")
             if (cfg.liveParlays == RfqConfig.Mode.SHADOW || cfg.mode != RfqConfig.Mode.LIVE) return no("an in-play parlay (priced from Novig's live book, shadow: not quoted)")
