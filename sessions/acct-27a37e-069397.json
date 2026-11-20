@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "152d1281665ee24b1cb486d216406591d40305db",
+ "head": "03264fefb298b1d89249ca826cc3dcb97c16fe26",
  "since": 1795129305,
- "beat": 1795147297,
- "beatIso": "2026-11-20T04:01:37Z",
- "done": "MK31c: live in-play parlays ON (premium floors removed on shadow evidence: market pays +0.25 pt over Novig live mid)",
- "next": "watch fills/won of live quotes; after ~20 fills judge EV from graded results; read journal rows of live quotes vs executed; tune liveMaxCollateral/premium on evidence; kill switch liveParlays=OFF"
+ "beat": 1795147331,
+ "beatIso": "2026-11-20T04:02:11Z",
+ "done": "MK31d: live legs up to 99% (liveMaxLegFair): 1,500 of 1,938 priced in-play RFQs were declined by the 90% leg cap",
+ "next": "land, one graceful reset, watch live quotes/fills; judge EV after 20 fills; thin edge (market pays ~fair)"
 }
