@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "e974a4fc47a6f776e3a68997da33b8fef1243ba1",
+ "head": "93e4e8541f08c28f2ecb20da59fcdeba23c7cb38",
  "since": 1795129305,
- "beat": 1795149007,
- "beatIso": "2026-11-20T04:30:07Z",
- "done": "MK33b: rfq_pnl_study tool + daily workflow + research note: maker P&L at the clearing price by segment (first read: favourite-heavy parlays -20.6%, longshot-leg parlays +2.1%)",
- "next": "land, dispatch rfq-pnl-study.yml once to verify, then keep the live maker monitored: send_later chain every 30 min (fills, won/lost, P&L, halts), re-run the study daily and tune segments on it"
+ "beat": 1795149154,
+ "beatIso": "2026-11-20T04:32:34Z",
+ "done": "MK33c: study adds same-game segments; same-game 2-leg parlays +8% on the 11-19 slate (one day: wait)",
+ "next": "mandate loop wakes every 30 min (send_later PARLAY MANDATE LOOP); read rfq-pnl-study daily; when same-game SPREAD+TOTAL holds across >=3 days quote it through the copula"
 }
