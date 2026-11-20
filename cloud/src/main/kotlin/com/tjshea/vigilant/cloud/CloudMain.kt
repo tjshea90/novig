@@ -576,6 +576,23 @@ fun main(args: Array<String>) = runBlocking {
             if (list !== builtFor) {
                 val m = HashMap<String, MutableList<com.tjshea.vigilant.data.rfq.RfqLadder.Rung>>()
                 for (o in list) {
+                    // MK41: the posted spreads, totals and team totals of a game are the rungs the alternate numbers are interpolated between (x: the line where the "over" side (OVER, or HOME) gets harder, y: its probability)
+                    if (o.kind == com.tjshea.vigilant.data.reference.LineKind.SPREAD || o.kind == com.tjshea.vigilant.data.reference.LineKind.TOTAL || o.kind == com.tjshea.vigilant.data.reference.LineKind.TEAM_TOTAL) {
+                        val key = o.lineKey
+                        val side = (o.target as? com.tjshea.vigilant.data.scanner.OutcomeTarget.Is)?.side
+                        val p = o.fairProbability
+                        val asOf = o.fairAsOfMs ?: o.fairUpdatedMs
+                        if (key != null && side != null && p != null && asOf != null) {
+                            val gk = com.tjshea.vigilant.data.rfq.RfqLadder.gameLineKey(o.market.eventId, o.kind, key.period, key.line, key.subject == com.tjshea.vigilant.data.reference.RefBookMarket.AWAY)
+                            if (gk != null) {
+                                val overProb = if (side == com.tjshea.vigilant.data.reference.Side.HOME || side == com.tjshea.vigilant.data.reference.Side.OVER) p else 1.0 - p
+                                val rungs = m.getOrPut(gk.first) { ArrayList() }
+                                rungs.removeAll { it.strike == gk.second }
+                                rungs += com.tjshea.vigilant.data.rfq.RfqLadder.Rung(gk.second, overProb, o.fair?.booksUsed?.size ?: 0, asOf)
+                            }
+                        }
+                        continue
+                    }
                     val strike = o.market.strike ?: continue
                     if (o.market.marketType !in com.tjshea.vigilant.data.reference.PropLineProps.STATS) continue
                     val p = o.fairProbability ?: continue
@@ -640,8 +657,26 @@ fun main(args: Array<String>) = runBlocking {
                         val player = com.tjshea.vigilant.data.rfq.RfqLadder.playerOf(mk.description, mk.marketType, strike)
                         for (o in mk.outcomes) m[o.outcomeId] = com.tjshea.vigilant.data.rfq.RfqLadder.Target(g, strike, o.name.startsWith("Over", ignoreCase = true), mk.eventId, mk.marketType, mk.startsTs, player, o.name, eventDescs[mk.eventId].orEmpty(), mk.marketId)
                     }
+                    // MK41: the alternate spreads, totals and team totals of the games (the books post a few of the numbers Novig lists), targets to interpolate between the posted ones
+                    val eventsById = novigEventsForVotes.get().associateBy { it.eventId }
+                    var gameLineTargets = 0
+                    runCatching {
+                        for (mk in novig.markets(s.leagues.toList(), listOf("SPREAD", "TOTAL", "TEAM_TOTAL"), listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME), now + 5 * 86_400_000L)) {
+                            val ev = eventsById[mk.eventId] ?: continue
+                            val st = com.tjshea.vigilant.data.rfq.LiveFair.structure(mk, ev) ?: continue
+                            val lineNumber = if (st.kind == com.tjshea.vigilant.data.reference.LineKind.SPREAD) st.homeLine else mk.strike
+                            val gk = com.tjshea.vigilant.data.rfq.RfqLadder.gameLineKey(mk.eventId, st.kind, 0, lineNumber, st.awayTeam) ?: continue
+                            for ((i, o) in mk.outcomes.withIndex()) {
+                                val side = if (i == 0) st.sideA else st.sideB
+                                val over = side == com.tjshea.vigilant.data.reference.Side.HOME || side == com.tjshea.vigilant.data.reference.Side.OVER
+                                m[o.outcomeId] = com.tjshea.vigilant.data.rfq.RfqLadder.Target(gk.first, gk.second, over, mk.eventId, mk.marketType, mk.startsTs, "", o.name, ev.description, mk.marketId,
+                                    com.tjshea.vigilant.data.rfq.RfqLadder.GameLine(st.kind, side, st.homeLine, st.awayTeam, ev.league))
+                                gameLineTargets++
+                            }
+                        }
+                    }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("RFQ game-line ladder targets not read: ${e.message?.take(120)}") }
                     ladderTargets.set(m)
-                    log("RFQ ladder: ${m.size} prop outcomes known to price from the posted rungs")
+                    log("RFQ ladder: ${m.size} outcomes known to price from the posted rungs ($gameLineTargets of them alternate game lines)")
                     // What is still missing, and why (MK40): every Novig prop outcome run through the fair store, the reasons counted by stat.
                     runCatching {
                         val idx = propVotes.get() as? com.tjshea.vigilant.data.rfq.PropLadderFair.Index
