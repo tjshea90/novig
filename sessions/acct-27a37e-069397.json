@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "2b82c551805eeefa0784bf32f60a7681d61fa99e",
  "since": 1795129305,
- "beat": 1795149507,
- "beatIso": "2026-11-20T04:38:27Z",
+ "beat": 1795149711,
+ "beatIso": "2026-11-20T04:41:51Z",
  "done": "MK35: pregame 3+ leg parlays need a longshot leg (manyLegsNeedLongshot); backtest evidence on executed parlays",
  "next": "land, one graceful reset (board note first), then rfq_set maxLegFair=0.8 (mirage's 0.5 stops the +7% 2-leg segment), watch fills"
 }
