@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "8e60330acd0de6e5be801cfe50ed2d2b7c54462e",
+ "head": "7fa2340790f92a7ba6123f8e9d91e272c69f381f",
  "since": 1795129305,
- "beat": 1795135519,
- "beatIso": "2026-11-20T00:45:19Z",
- "done": "MK22: propcov task (what PropLine really sends for player props: two-sided rungs vs milestone rows, strikes per player, Novig rungs vs books) in propline.py + workflow",
- "next": "dispatch propline.yml task=propcov on main, read the log; then decide: milestone ladders (N+ Yes-only), alt rungs; build a fair store independent of the Novig-book scan"
+ "beat": 1795135545,
+ "beatIso": "2026-11-20T00:45:45Z",
+ "done": "MK22: PropLadderFair: the maker's prop fair from every book's price at a strike incl. N+ milestone ladders (36% -> 99% of Novig prop strikes), PropLine parser keeps milestones, ladderVotes switch, tests, real-board validation, research note; full suite green",
+ "next": "deploy: engine reset, confirm startedAtMs; read engine log 'RFQ prop votes:' and the status no-fair share; then ParlayAPI ladders, game-line alternates, protected markets, prop premium on journal evidence"
 }
