@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "52afcfd55a3e348a086d8ee6139166130e68c3c3",
+ "head": "bb00c28591b8caf2d199192537c8468fcf2bfd42",
  "since": 1795134161,
- "beat": 1795137735,
- "beatIso": "2026-11-20T01:22:15Z",
+ "beat": 1795139039,
+ "beatIso": "2026-11-20T01:43:59Z",
  "done": "MK23 refined: carry-over alone is not enough (fair age); partial-result publish is the fix",
  "next": "look at CloudEngine first-pass flow before building"
 }
