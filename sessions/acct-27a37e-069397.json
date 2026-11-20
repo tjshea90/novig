@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "58e2bf3e6f2335bc22d8fcf71c6d9f0ded464a2b",
+ "head": "576c3d04d3223b8d12793ac8fee78b9d228ff058",
  "since": 1795129305,
- "beat": 1795196423,
- "beatIso": "2026-11-20T17:40:23Z",
+ "beat": 1795196641,
+ "beatIso": "2026-11-20T17:44:01Z",
  "done": "MK55: 16:20 check: job handover ok (44767621550), 8 fills today (15:37 FSU same-game pair), 1 settled (ATP, -$1.09), 7 open $83, cash $38.6",
  "next": "wake ~19:30 UTC; evening summary to Tj ~23:00 UTC (quotes/min, in-play pairs, fills, settled P&L); rfq-pnl-study after 05:00 UTC 11-21"
 }
