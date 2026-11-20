@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "a73e68eaade3b34d3310f10eeeb743c12269405a",
  "since": 1795047736,
- "beat": 1795132322,
- "beatIso": "2026-11-19T23:52:02Z",
+ "beat": 1795133467,
+ "beatIso": "2026-11-20T00:11:07Z",
  "done": "MK10 23:51: loss stop set to 0 from the app by Tj; quoting again",
  "next": "watch settlements; calibrate favourite legs at 10+ settled"
 }
