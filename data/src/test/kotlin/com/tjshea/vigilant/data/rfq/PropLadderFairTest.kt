@@ -153,10 +153,10 @@ class PropLadderFairTest {
               {"name":"Anthony Gould","description":"Anthony Gould","price":675,"point":null},{"name":"C.J. Stroud","description":"C.J. Stroud","price":450,"point":null}]}]},
             {"key":"hardrock","title":"Hard Rock","last_update":"2026-11-20T00:26:22Z","markets":[{"key":"player_anytime_td","last_update":"2026-11-20T00:26:22Z","outcomes":[
               {"name":"Yes","description":"C.J. Stroud","price":420,"point":null},{"name":"No","description":"C.J. Stroud","price":-600,"point":null}]}]},
-            {"key":"fliff","title":"Fliff","last_update":"2026-11-20T00:26:22Z","markets":[{"key":"player_anytime_td","last_update":"2026-11-20T00:26:22Z","outcomes":[
+            {"key":"fanatics","title":"Fanatics","last_update":"2026-11-20T00:26:22Z","markets":[{"key":"player_anytime_td","last_update":"2026-11-20T00:26:22Z","outcomes":[
               {"name":"Yes","description":"Anthony Gould","price":600,"point":null}]}]}]}]"""
         val e = PropLineClient.parseEvents(raw, Json { ignoreUnknownKeys = true }, "americanfootball_nfl").single()
-        assertEquals("Betway's two names and Fliff's lone Yes; Hard Rock's Yes+No is a two-sided market, not a milestone", 3, e.milestones.size)
+        assertEquals("Betway's two names and Fanatics' lone Yes; Hard Rock's Yes+No is a two-sided market, not a milestone", 3, e.milestones.size)
         assertTrue(e.milestones.all { it.stat == "TOUCHDOWNS" && it.strike == 0.5 })
         assertEquals(1, e.markets.count { it.stat == "TOUCHDOWNS" && it.quotes.size == 2 })
         val store = PropLadderFair.build(listOf(e))
@@ -165,7 +165,7 @@ class PropLadderFairTest {
         assertEquals(0.1750, stroud.overProb, 0.002)
         assertEquals(2, stroud.companies)
         val gould = store.table("pl:7", "anthony gould", "TOUCHDOWNS")!!.strikes.getValue(0.5)
-        assertEquals("two Yes-only prices, one margin: Betway 1/7.75/1.09 = 0.1184, Fliff 1/7/1.09 = 0.1311", 0.1248, gould.overProb, 0.002)
+        assertEquals("two Yes-only prices, one margin: Betway 1/7.75/1.09 = 0.1184, Fanatics 1/7/1.09 = 0.1311", 0.1248, gould.overProb, 0.002)
     }
 
     @Test fun aProtectedMarketSharesItsTwinsGroupAndAnUnpricedLegSaysWhy() {
