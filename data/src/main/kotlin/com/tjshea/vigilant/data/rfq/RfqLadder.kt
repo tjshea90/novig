@@ -34,7 +34,7 @@ object RfqLadder {
 
     /** The player-and-stat a rung belongs to: event, market type and the description with the line taken out ("George Kittle 53.5 RECEIVING_YARDS" -> "George Kittle  RECEIVING_YARDS"). */
     fun group(eventId: String, marketType: String, description: String, strike: Double): String =
-        "$eventId|$marketType|" + description.replaceFirst(strikeText(strike), " ").replace(Regex("\\s+"), " ").trim()
+        "$eventId|${marketType.removeSuffix("_PROTECTED")}|" + description.replaceFirst(strikeText(strike), " ").replace(Regex("\\s+"), " ").trim().removeSuffix("_PROTECTED").trim()
 
     fun strikeText(x: Double): String = if (x == Math.floor(x) && abs(x) < 1e9) x.toLong().toString() else x.toString()
 

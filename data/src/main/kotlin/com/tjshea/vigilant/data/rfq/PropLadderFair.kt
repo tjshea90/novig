@@ -24,6 +24,12 @@ import com.tjshea.vigilant.engine.ReputableBooks
 object PropLadderFair {
     /** Margin of a book's "N+" price over the fair when the book has too few strikes to measure it. */
     const val DEFAULT_HOLD = 1.07
+    /**
+     * The margin of a Yes-ONLY price (MK40: anytime touchdown scorer, double-double) over the fair, 1.09: on the real NFL anytime-TD board of 2026-11-20 the books' Yes-only prices ran 1.06 (DraftKings) to 1.16 (Betway)
+     * over the two-sided consensus, median 1.085-1.13 by book; a per-book margin measured on the yardage ladders does not carry over to this market, and too few books post both sides to measure it here.
+     */
+    const val YES_ONLY_HOLD = 1.09
+    val YES_ONLY_STATS: Set<String> = setOf("TOUCHDOWNS", "DOUBLE_DOUBLE")
     /** The calibrated margin is kept inside this range; a book outside it is mis-quoted and its ratio is not trusted. */
     const val HOLD_MIN = 1.02
     const val HOLD_MAX = 1.15
@@ -65,6 +71,7 @@ object PropLadderFair {
         for (ev in events) {
             val two = twoSided(ev)
             for (ms in ev.milestones) {
+                if (ms.stat in YES_ONLY_STATS) continue
                 val votes = two["${PlayerNames.key(ms.subject)}|${ms.stat}|${ms.strike}"] ?: continue
                 if (votes.size < 2) continue
                 val cons = votes.map { it.overProb }.average()
@@ -103,7 +110,7 @@ object PropLadderFair {
             }
             for (ms in ev.milestones) {
                 if (!(ms.decimal > 1.0) || !ms.decimal.isFinite()) continue
-                val hold = holds[ms.bookKey] ?: DEFAULT_HOLD
+                val hold = if (ms.stat in YES_ONLY_STATS) YES_ONLY_HOLD else holds[ms.bookKey] ?: DEFAULT_HOLD
                 val p = (1.0 / ms.decimal) / hold
                 if (p !in 0.01..0.99) continue
                 groups.getOrPut("${PlayerNames.key(ms.subject)}|${ms.stat}") { HashMap() }.getOrPut(ms.strike) { ArrayList() } += Vote(ms.bookKey, p, true, ms.seenMs)
