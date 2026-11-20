@@ -264,8 +264,8 @@ class PropLineClient(
         val ev = LinkedHashMap<String, RefEvent>()
         val nv = LinkedHashMap<String, RefEvent>()
         for (b in boards) {
-            for (e in b.events) ev[e.id] = ev[e.id]?.let { it.copy(markets = it.markets + e.markets) } ?: e
-            for (e in b.novig) nv[e.id] = nv[e.id]?.let { it.copy(markets = it.markets + e.markets) } ?: e
+            for (e in b.events) ev[e.id] = ev[e.id]?.let { it.copy(markets = it.markets + e.markets, milestones = it.milestones + e.milestones) } ?: e
+            for (e in b.novig) nv[e.id] = nv[e.id]?.let { it.copy(markets = it.markets + e.markets, milestones = it.milestones + e.milestones) } ?: e
         }
         return Board(ev.values.toList(), nv.values.toList())
     }
@@ -653,7 +653,8 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
                         val stats = PropLineProps.marketsFor(sport).filter { it.first in wanted }.mapTo(HashSet()) { it.second }
                         // Only the markets this game was asked for (the slate's union carries others), so a game's board is what its own read would have been.
                         fun keep(e: RefEvent?) = e?.markets.orEmpty().filter { mk -> mk.stat in stats }
-                        bought[m.event.eventId] = Bought(m.event.eventId, ref.copy(markets = keep(ref)), now, ask, novig = novigOf[ref.id]?.let { n -> ref.copy(markets = keep(n)) })
+                        fun keepMilestones(e: RefEvent?) = e?.milestones.orEmpty().filter { it.stat in stats }
+                        bought[m.event.eventId] = Bought(m.event.eventId, ref.copy(markets = keep(ref), milestones = keepMilestones(ref)), now, ask, novig = novigOf[ref.id]?.let { n -> ref.copy(markets = keep(n), milestones = emptyList()) })
                     }
                 }
                 val unread = if (bulk != null) emptyList() else matches
@@ -685,8 +686,8 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
                     val board = r.getOrNull()
                     // The listing's teams and time (the ones matched on) with the odds call's quotes.
                     bought[eventId] = Bought(
-                        eventId, ref.copy(markets = board?.events?.singleOrNull()?.markets.orEmpty()), now, ask,
-                        novig = board?.novig?.singleOrNull()?.let { ref.copy(markets = it.markets) },
+                        eventId, ref.copy(markets = board?.events?.singleOrNull()?.markets.orEmpty(), milestones = board?.events?.singleOrNull()?.milestones.orEmpty()), now, ask,
+                        novig = board?.novig?.singleOrNull()?.let { ref.copy(markets = it.markets, milestones = emptyList()) },
                     )
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
@@ -859,10 +860,11 @@ internal data class PlEvent(
         val tennis = sportKey.startsWith("tennis_")
         if (tennis && PropLineTennis.leagueOf(tour, tournament) != sportKey) return null
         val start = PropLineClient.ms(commence_time) ?: return null
-        val markets = bookmakers.orEmpty().filterNotNull()
-            .filter { b -> b.key?.let(keep) == true }
-            .flatMap { b -> b.markets.orEmpty().filterNotNull().flatMap { it.toDomain(b, home, away, period) } }
-        val event = RefEvent(PropLinePropsSource.PREFIX + id, sportKey, start, home = home, away = away, markets = markets)
+        val books = bookmakers.orEmpty().filterNotNull().filter { b -> b.key?.let(keep) == true }
+        val markets = books.flatMap { b -> b.markets.orEmpty().filterNotNull().flatMap { it.toDomain(b, home, away, period) } }
+        // The books' "N+" ladders (MK22): kept apart from the two-sided markets, for the parlay maker's fair store only.
+        val milestones = if (period != null) emptyList() else books.flatMap { b -> b.markets.orEmpty().filterNotNull().flatMap { it.milestones(b) } }
+        val event = RefEvent(PropLinePropsSource.PREFIX + id, sportKey, start, home = home, away = away, markets = markets, milestones = milestones)
         return if (tennis) PropLineTennis.normalize(event) else event
     }
 }
@@ -879,6 +881,8 @@ internal data class PlBook(
     val book_event_id: String? = null,
 )
 
+private val MILESTONE = Regex("""^(?:To (?:Score|Record|Make|Hit|Have) )?(\d+)\+""", RegexOption.IGNORE_CASE)
+
 @Serializable
 internal data class PlMarket(
     val key: String? = null,
@@ -888,6 +892,25 @@ internal data class PlMarket(
     val suspended_at: String? = null,
     val outcomes: List<PlOutcome?>? = null,
 ) {
+    /**
+     * The "N+" rows of a player-prop market ("20+ Points", "To Score 20+ Points", "100+ Receiving Yards"): a one-sided price with no `point`, the player in `description`. Each is the over line N - 0.5. Full-game
+     * markets only, never a Yes/No market, never one the book pulled. See [RefMilestone].
+     */
+    fun milestones(book: PlBook): List<RefMilestone> {
+        val key = key ?: return emptyList()
+        val stat = PropLineProps.MARKETS[key] ?: return emptyList()
+        if (key in PropLineProps.YES_NO || suspended_at != null || period != null || team != null) return emptyList()
+        val bookKey = PropLineClient.bookKey(book.key ?: return emptyList())
+        return outcomes.orEmpty().filterNotNull().mapNotNull { o ->
+            if (o.point != null) return@mapNotNull null
+            val m = MILESTONE.find(o.name.orEmpty().trim()) ?: return@mapNotNull null
+            val player = o.description?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+            val n = m.groupValues[1].toIntOrNull() ?: return@mapNotNull null
+            if (n < 1) return@mapNotNull null
+            RefMilestone(bookKey, player, stat, n - 0.5, PropLineClient.decimal(o.price) ?: return@mapNotNull null, o.seenAt(bookKey))
+        }
+    }
+
     fun toDomain(book: PlBook, home: String, away: String, wantPeriod: String? = null): List<RefBookMarket> {
         val key = key ?: return emptyList()
         val bookKeyRaw = book.key ?: return emptyList()

@@ -18,7 +18,14 @@ import kotlin.math.sqrt
  */
 object RfqLadder {
     /** One Novig rung we may be asked to price: which player-and-stat [group] it belongs to, its line and which side the outcome is. */
-    data class Target(val group: String, val strike: Double, val over: Boolean, val eventId: String, val marketType: String, val startsMs: Long)
+    data class Target(val group: String, val strike: Double, val over: Boolean, val eventId: String, val marketType: String, val startsMs: Long, val player: String = "")
+
+    /** The player of a Novig prop market, in [com.tjshea.vigilant.data.match.PlayerNames] form: its description with the strike and the stat taken out ("Jalen Brunson 25.5 POINTS" -> "jalen brunson"). */
+    fun playerOf(description: String, marketType: String, strike: Double): String =
+        com.tjshea.vigilant.data.match.PlayerNames.key(description.replaceFirst(strikeText(strike), " ").replace(Regex("\\s+"), " ").trim().removeSuffix(marketType).trim())
+
+    /** Votes of every book at the strike ([PropLadderFair], MK22): the fair of a Novig rung from all the prices the feeds carry for it, or null. */
+    fun interface Consensus { fun at(t: Target): PropLadderFair.Strike? }
 
     /** One posted rung: the books' fair probability of OVER [strike], the companies behind it and its age. */
     data class Rung(val strike: Double, val overProb: Double, val books: Int, val asOfMs: Long)
@@ -76,12 +83,23 @@ object RfqLadder {
      * [direct] first; a leg it does not know is interpolated from [rungs] (group -> posted rungs) when [targets] knows what it is, and with [extrapolate] on priced from the nearest posted rung when it lies outside
      * the posted range ([EXTRAP_MIN_SIDE]..[EXTRAP_MAX_SIDE] only; such a leg's label starts "extrapolated" and its [LegFair.extrapolated] is set).
      */
-    class Fairs(private val direct: LegFairs, private val targets: () -> Map<String, Target>, private val rungs: () -> Map<String, List<Rung>>, private val extrapolate: () -> Boolean = { false }) : LegFairs {
+    class Fairs(
+        private val direct: LegFairs,
+        private val targets: () -> Map<String, Target>,
+        private val rungs: () -> Map<String, List<Rung>>,
+        private val extrapolate: () -> Boolean = { false },
+        private val consensus: () -> Consensus? = { null },
+    ) : LegFairs {
         override fun leg(outcomeId: String): LegFair? {
             direct.leg(outcomeId)?.let { return it }
             val t = targets()[outcomeId] ?: return null
-            val posted = rungs()[t.group] ?: return null
             val side = if (t.over) "Over" else "Under"
+            // Every price the feeds carry at this very strike (two-sided rows and "N+" ladders of all books), before any modelling.
+            consensus()?.at(t)?.let { s ->
+                val p = if (t.over) s.overProb else 1.0 - s.overProb
+                return LegFair(outcomeId, t.eventId, "ladder-votes ${t.group} $side ${strikeText(t.strike)}", p, s.companies, s.asOfMs, t.startsMs, false, t.marketType)
+            }
+            val posted = rungs()[t.group] ?: return null
             interpolate(posted, t.strike)?.let { r ->
                 val p = if (t.over) r.overProb else 1.0 - r.overProb
                 return LegFair(outcomeId, t.eventId, "ladder ${t.group} $side ${strikeText(t.strike)}", p, r.books, r.asOfMs, t.startsMs, false, t.marketType)

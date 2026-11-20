@@ -885,6 +885,73 @@ def selftest():
     print("propline selftest ok")
     return 0
 
+PROP_KEYS = {
+    "basketball_nba": ["player_points", "player_rebounds", "player_assists", "player_threes", "player_points_rebounds_assists", "player_points_assists", "player_points_rebounds", "player_rebounds_assists"],
+    "icehockey_nhl": ["player_shots_on_goal", "player_points", "player_assists", "player_goals"],
+    "americanfootball_nfl": ["player_reception_yds", "player_receptions", "player_rush_yds", "player_pass_yds", "player_anytime_td"],
+}
+
+
+def cmd_propcov(outdir, sports=("basketball_nba", "icehockey_nhl", "americanfootball_nfl")):
+    """MK22 (Tj 2026-11-20: "propline and parlayapi both carry all kinds of props and alternate markets. The engine should carry fair odds on almost everything"): what PropLine REALLY sends for the player props
+    the engine asks (the bulk board of a league, the engine's books + Novig): per market and book, how many outcomes are two-sided Over/Under rungs, how many are anything else (milestone "N+" rows, Yes-only),
+    how many strikes a player has, the `line_type` split, and for Novig's own strikes how many a book posts as a two-sided rung / as another shape. Prints prices-free summaries to the job log and keeps
+    the raw answer (no key in it) gzipped in OUTDIR."""
+    keys = keys_from_env()
+    i, _ = best_key(keys, [plan_of(k) for k in keys])
+    if i is None:
+        print("no usable key")
+        return 0
+    os.makedirs(outdir, exist_ok=True)
+    for sp in sports:
+        for mk in PROP_KEYS.get(sp, []):
+            st, _, data = request("/v1/sports/%s/odds" % sp, keys[i], {"markets": mk, "bookmakers": ",".join(OURS + ["novig"]), "includeBookIds": "true"})
+            events = j(data)
+            events = events if isinstance(events, list) else (events or {}).get("data") or []
+            with gzip.open(os.path.join(outdir, "board-%s-%s.json.gz" % (sp, mk)), "wb") as f:
+                f.write(data or b"")
+            two, other, linetypes, names, per_player = {}, {}, {}, {}, {}
+            novig_rungs, posted = set(), {}
+            for e in events:
+                for b in e.get("bookmakers") or []:
+                    bk = b.get("key")
+                    for m in b.get("markets") or []:
+                        if m.get("key") != mk:
+                            continue
+                        lt = m.get("line_type")
+                        linetypes[(bk, lt)] = linetypes.get((bk, lt), 0) + 1
+                        by = {}
+                        for o in m.get("outcomes") or []:
+                            nm = str(o.get("name"))
+                            if nm in ("Over", "Under") and o.get("point") is not None:
+                                by.setdefault((o.get("description"), float(o["point"])), set()).add(nm)
+                            else:
+                                other[bk] = other.get(bk, 0) + 1
+                                names.setdefault(bk, {})
+                                shape = (nm[:24], o.get("point"))
+                                if len(names[bk]) < 4:
+                                    names[bk][shape] = 1
+                        for (pl, pt), sides in by.items():
+                            if sides == {"Over", "Under"}:
+                                two[bk] = two.get(bk, 0) + 1
+                                per_player.setdefault((e.get("id"), bk, pl), set()).add(pt)
+                                if bk == "novig":
+                                    novig_rungs.add((e.get("id"), pl, pt))
+                                else:
+                                    posted.setdefault((e.get("id"), pl), set()).add(pt)
+            hit_exact = sum(1 for (ev, pl, pt) in novig_rungs if pt in posted.get((ev, pl), ()))
+            both = sum(1 for (ev, pl, pt) in novig_rungs if any(x < pt for x in posted.get((ev, pl), ())) and any(x > pt for x in posted.get((ev, pl), ())) and pt not in posted.get((ev, pl), ()))
+            some = sum(1 for (ev, pl, pt) in novig_rungs if posted.get((ev, pl)) and pt not in posted.get((ev, pl), ()))
+            none = sum(1 for (ev, pl, pt) in novig_rungs if not posted.get((ev, pl)))
+            sizes = sorted(len(v) for (ev, bk, pl), v in per_player.items() if bk != "novig")
+            med = sizes[len(sizes) // 2] if sizes else 0
+            print("== %s %s HTTP %s: %d games; Novig rungs %d: a book posts the SAME strike %d, strictly between two posted %d, outside/one-sided %d, player not posted by any book %d" % (sp, mk, st, len(events), len(novig_rungs), hit_exact, both, some - both, none))
+            print("   two-sided rungs by book: %s" % {k: v for k, v in sorted(two.items(), key=lambda x: -x[1])[:14]})
+            print("   other-shaped outcomes by book (milestones, Yes-only...): %s" % {k: v for k, v in sorted(other.items(), key=lambda x: -x[1])[:14]})
+            print("   examples of other shapes: %s" % {k: list(v) for k, v in list(names.items())[:5]})
+            print("   strikes a non-Novig book posts per player (median %d, max %d); line_type by book: %s" % (med, sizes[-1] if sizes else 0, {"%s/%s" % k: v for k, v in sorted(linetypes.items(), key=lambda x: -x[1])[:16]}))
+    return 0
+
 
 if __name__ == "__main__":
     a = sys.argv[1:] or ["plans"]
@@ -907,6 +974,8 @@ if __name__ == "__main__":
     if a[0] == "altprobe":
         # PX9: the sports are a third argument ("basketball_nba,hockey_nhl"); none = football's two
         sys.exit(cmd_altprobe(a[1] if len(a) > 1 else "out/propline-altprobe", tuple(x for x in a[2].split(",") if x) if len(a) > 2 and a[2] else ("football_nfl", "football_ncaaf")))
+    if a[0] == "propcov":
+        sys.exit(cmd_propcov(a[1] if len(a) > 1 else "out/propline-propcov", tuple(x for x in a[2].split(",") if x) if len(a) > 2 and a[2] else ("basketball_nba", "icehockey_nhl", "americanfootball_nfl")))
     if a[0] == "bookparam":
         sys.exit(cmd_bookparam(a[1] if len(a) > 1 else "out/propline-bookparam", a[2] if len(a) > 2 and a[2] else "basketball_nba"))
     if a[0] == "speed":

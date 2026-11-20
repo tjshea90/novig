@@ -107,9 +107,28 @@ data class RefEvent(
      * an Eastern-time date). Matching then compares dates instead of start times.
      */
     val etDate: String? = null,
+    /**
+     * Player-prop "N+" rows (a book's ladder of Yes-only prices: "20+ Points" at -150): one-sided, so they are NOT in [markets] (every consumer of those expects two sides to devig) and nothing in the scan reads them.
+     * Only the parlay maker's fair store does ([com.tjshea.vigilant.data.rfq.PropLadderFair], MK22): they are where most of a player's alternate strikes live.
+     */
+    val milestones: List<RefMilestone> = emptyList(),
 ) {
     fun flipped(): RefEvent = copy(home = away, away = home, markets = markets.map { it.flipped() })
 }
+
+/**
+ * One "N+" row of a book's player-prop ladder: the book pays at [decimal] when [subject] reaches [strike] + 0.5 or more of [stat] (stat as Novig names it). [strike] is the over line it is equivalent to
+ * ("20+ Points" is Over 19.5), which is how Novig lists it. The implied probability 1 / [decimal] carries the book's margin: the fair store divides it by the book's measured margin first.
+ */
+data class RefMilestone(
+    val bookKey: String,
+    val subject: String,
+    val stat: String,
+    val strike: Double,
+    val decimal: Double,
+    /** When the feed last saw this price at the book, or null when it does not say. */
+    val seenMs: Long?,
+)
 
 /** One reference-feed call's result for one sport. */
 data class RefSnapshot(
