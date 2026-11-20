@@ -73,4 +73,18 @@ class PropPairsTest {
         assertTrue(off.reason.contains("correlation unmodelled"))
         assertEquals("the independent product, as before", 0.2, off.fair!!, 1e-12)
     }
+
+    @Test fun aPropPairQuoteLeavesTheCashReserveToTheClassesThatTrade() {
+        val legs = mapOf("a" to prop("a", "Points", "A One", true, 0.5), "b" to prop("b", "Rebounds", "B Two", true, 0.4))
+        val live = base.copy(propPairsLive = true, propPairsCashReserve = 60.0)
+        // a $10 stake at a ~0.32 price needs about $21 of collateral
+        val tight = RfqPricer.decide(created, now, live, LegFairs { legs[it] }, 0.0, cashRoom = 70.0) as RfqDecision.Decline
+        assertTrue(tight.reason, tight.reason.contains("cash is short"))
+        assertTrue("with no reserve the same cash quotes it", RfqPricer.decide(created, now, live.copy(propPairsCashReserve = 0.0), LegFairs { legs[it] }, 0.0, cashRoom = 70.0) is RfqDecision.Quote)
+        assertTrue("plenty of cash above the reserve quotes it", RfqPricer.decide(created, now, live, LegFairs { legs[it] }, 0.0, cashRoom = 120.0) is RfqDecision.Quote)
+        // a pair of game lines of one game (the copula, not the prop-pair model) is not held to the reserve
+        val gl = mapOf("g1" to LegFair("g1", "e1", "m", 0.6, 5, now - 60_000L, now + 3 * 3_600_000L, false, "MONEY", kind = com.tjshea.vigilant.data.reference.LineKind.MONEYLINE, side = com.tjshea.vigilant.data.reference.Side.HOME, league = "NBA"),
+            "g2" to LegFair("g2", "e1", "t", 0.5, 5, now - 60_000L, now + 3 * 3_600_000L, false, "TOTAL", kind = com.tjshea.vigilant.data.reference.LineKind.TOTAL, side = com.tjshea.vigilant.data.reference.Side.OVER, league = "NBA"))
+        assertTrue("a copula pair keeps the whole cash", RfqPricer.decide(RfqProtocol.Created(now, "rfq", listOf("g1", "g2"), now + 3_000L, 10.0), now, live, LegFairs { gl[it] }, 0.0, cashRoom = 70.0) is RfqDecision.Quote)
+    }
 }
