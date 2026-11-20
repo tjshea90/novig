@@ -83,6 +83,12 @@ data class RfqConfig(
     val propPairs: Boolean = true,
     /** MK20: quote a pair [PropPairs] prices (OFF = shadow: the model's fair is only journaled as the decline's fair, nothing is quoted until paper results say the price beats the market's trades). */
     val propPairsLive: Boolean = false,
+    /**
+     * MK38: dollars of the wallet's free cash a quote priced by [PropPairs] must leave alone. Same-game two-prop RFQs are 22% of all RFQs but only 0.04% of them trade (20 executed of 46,658, $342 of
+     * wager), against 2.6% of in-play same-game game-line pairs (91 of 3,550): quoted without a reserve they would tie up the cash (a quote's collateral is held until it expires) that the pairs that
+     * do trade need. A prop-pair quote may only use the free cash ABOVE this; 0 = no reserve.
+     */
+    val propPairsCashReserve: Double = 60.0,
     /** MK21: price a player-prop rung outside the posted range from the posted rung nearest even ([RfqLadder.extrapolate]); such a leg is a prop leg like any (premium, at most two). OFF = only posted and interpolated rungs. */
     val ladderExtrapolate: Boolean = true,
     /** MK22: price a player-prop rung from every book's price at that very strike, two-sided rows and "N+" ladders alike ([PropLadderFair]); OFF = only the scan's own fair lines, interpolation and extrapolation. */
