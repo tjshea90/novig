@@ -1,13 +1,13 @@
-# CHECKPOINT 4798 — read me first, then TASKS.md
+# CHECKPOINT 4799 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T21:29:16Z · **tests:** all 11 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `ea566f781` (this checkpoint is the commit after it)
+**Written:** 2026-11-20T21:38:01Z · **tests:** all 11 fast checks green
+**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `2fb1aa3c5` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: NT1: your NCAAB tab bets tracked: bets, money bet, profit/loss, record and percent won, all time and by day, in the NCAAB tab and on the Tracker (new NCAAB filter) (versionCode 487, v1.0.147)
+NT1 SHIPPED: v1.0.147 (release.yml green, recorded in BUILDLOG): NCAAB tab bet record in the NCAAB tab and the Tracker, Tracker NCAAB chip
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.147), then run: bash tools/record-release.sh v1.0.147 487 "NT1: your NCAAB tab bets tracked: bets, money bet, profit/loss, record and percent won, all time and by day, in the NCAAB tab and on the Tracker (new NCAAB filter)"
+nothing pending for NT1; the parlay engine is OFF (Tj's switch), profile on cloud-config; the PARLAY MANDATE LOOP wake is 10:50 UTC 11-21 (read the daily rfq-pnl-study STUDY.md/SHAPES.txt)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  2dd3aab57 ckpt 4798: pre-release: NT1: your NCAAB tab bets tracked: bets, money bet, profit/loss
   3ed97d792 ckpt 4797: NT1: the NCAAB tab's own bet record (origin tag, NcaabBetStats, card in the
   51170169b ckpt 4796: PW1: wallet-adaptive parlay maker (prop reserve shares, outcome count per $
   d62480947 ckpt 4795: PS1: second parlay study (21,425 graded requests, 4 slates), settings audit
@@ -25,8 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   69a013492 ckpt 4791: PF1: CLAUDE.md standing rule for the profile file; waiting for CI on d92a8f
   d92a8f21d ckpt 4790: PF1: profile written to cloud-config rfq-maker-engine.json (81ac24d85) and 
   cd41e97d7 ckpt 4789: PF1: engine profit profile file + precedence over the phone's rfq-maker.jso
-  124c900f8 ckpt 4788: MK57: maxLegFair .8 -> .7 (Tj: sucker bets, not sharp heavy-favourite actio
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
