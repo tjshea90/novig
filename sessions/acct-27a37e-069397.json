@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "805dc24a377ebd7f7be8c910b8745c0bcbbcecd0",
  "since": 1795129305,
- "beat": 1795140291,
- "beatIso": "2026-11-20T02:04:51Z",
+ "beat": 1795140614,
+ "beatIso": "2026-11-20T02:10:14Z",
  "done": "MK28: quote markup was 3.9 pts over fair vs the market's +0.3: liveMinReturn back to 0.004",
  "next": "watch quotes won/filled over the next hour; if still none, lower the safe-edge floor (fairErrorRel) toward 0.01 and read QUOTE_SENT vs EXECUTED; protected mapping deploys at next reset; same-game correlation shadow"
 }
