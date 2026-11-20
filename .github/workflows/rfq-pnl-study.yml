@@ -41,8 +41,8 @@ jobs:
           python3 -I tools/rfq_shape_study.py out/graded.csv.gz > out/SHAPES.txt
           # PS1: the calibration study over EVERY priced request (not only the executed ones), the tiers and the settings audit (tools/rfq_calibration_study.py)
           python3 -I tools/rfq_calibration_study.py selftest
-          python3 -I tools/rfq_calibration_study.py run journals out/study > out/study.log
-          cp out/study/STUDY.md out/STUDY.md
+          # the earlier files are published even when this heavier study fails
+          (python3 -I tools/rfq_calibration_study.py run journals out/study > out/study.log 2>&1 && cp out/study/STUDY.md out/STUDY.md) || { echo "the calibration study failed: see the run log"; tail -20 out/study.log; echo "calibration study failed in this run" > out/STUDY.md; }
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
