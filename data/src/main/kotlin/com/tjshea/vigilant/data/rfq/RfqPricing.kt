@@ -85,6 +85,8 @@ data class RfqConfig(
     val propPairsLive: Boolean = false,
     /** MK21: price a player-prop rung outside the posted range from the posted rung nearest even ([RfqLadder.extrapolate]); such a leg is a prop leg like any (premium, at most two). OFF = only posted and interpolated rungs. */
     val ladderExtrapolate: Boolean = true,
+    /** MK22: price a player-prop rung from every book's price at that very strike, two-sided rows and "N+" ladders alike ([PropLadderFair]); OFF = only the scan's own fair lines, interpolation and extrapolation. */
+    val ladderVotes: Boolean = true,
     /**
      * MK17 (Tj 2026-11-19: "only accepts parlays that will finish today (the latest leg is a game on todays slate)"): quote only a parlay whose LAST leg starts before today's slate ends (the sports day
      * runs 5 am to 5 am Eastern, like the Tracker's). Off = any game within [maxDaysAhead].

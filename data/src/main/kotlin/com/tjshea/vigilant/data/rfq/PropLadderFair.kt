@@ -84,7 +84,7 @@ object PropLadderFair {
             val over = m.quotes.singleOrNull { it.side == Side.OVER } ?: continue
             val under = m.quotes.singleOrNull { it.side == Side.UNDER } ?: continue
             val point = over.point ?: continue
-            val p = devig(over.decimal, under.decimal) ?: continue
+            val p = devig(over.decimalOdds, under.decimalOdds) ?: continue
             out.getOrPut("${PlayerNames.key(subject)}|$stat|$point") { ArrayList() } += Vote(m.bookKey, p, false, m.lastUpdateMs)
         }
         return out
@@ -140,5 +140,15 @@ object PropLadderFair {
     private fun median(v: List<Double>): Double {
         val s = v.sorted()
         return if (s.size % 2 == 1) s[s.size / 2] else (s[s.size / 2 - 1] + s[s.size / 2]) / 2.0
+    }
+
+    /** The store with the Novig event -> reference event pairing, as the ladder's [RfqLadder.Consensus]. */
+    class Index(private val store: Store, private val refByNovigEvent: Map<String, String>) : RfqLadder.Consensus {
+        override fun at(t: RfqLadder.Target): Strike? {
+            val ref = refByNovigEvent[t.eventId] ?: return null
+            val table = store.table(ref, t.player, t.marketType) ?: return null
+            return atStrike(table, t.strike, t.over)
+        }
+        fun summary(): String = "${refByNovigEvent.size} games paired, ${store.byRefEvent.values.sumOf { it.size }} player stats, ${store.votes} votes (${store.milestoneVotes} from N+ ladders), margins ${store.holds.entries.sortedBy { it.key }.joinToString(" ") { "${it.key} %.3f".format(it.value) }.ifEmpty { "default" }}"
     }
 }
