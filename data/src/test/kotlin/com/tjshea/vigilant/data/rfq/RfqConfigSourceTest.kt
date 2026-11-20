@@ -52,16 +52,20 @@ class RfqProfitProfileTest {
         assertEquals(RfqConfig.Mode.LIVE, c.mode); assertEquals(2, c.maxLegs); assertEquals(0.8, c.maxLegFair, 1e-12); assertEquals(0.65, c.maxFair, 1e-12)
         assertEquals(false, c.longshotsOnly); assertEquals(false, c.onlyToday); assertEquals(2, c.maxDaysAhead); assertEquals(0.3, c.dayLossStopPct, 1e-12)
         assertEquals(1, c.maxSameParlay); assertEquals(2, c.maxParlaysPerOutcome); assertEquals(RfqConfig.Mode.SHADOW, c.liveParlays)
+        // PF2: the shape is the lever, not the margin: a parlay our fair puts under 25% ties up $30+ per $10 stake for about nothing, and no premium sits on top of a same-game fair (the floors stay: fair + ~0.1 point)
+        assertEquals(0.25, c.minFair, 1e-12); assertEquals(0.0, c.sameGamePremium, 1e-12)
+        assertTrue("margin floors stay at the minimum", c.margin <= 0.002 && c.minPoints <= 0.001 && c.fairErrorRel <= 0.002 && c.minReturn <= 0.002)
     }
 
     @Test fun theProfileQuotesTwoModerateFavouritesTomorrowAndDeclinesTheShapesItLeavesOut() {
         val c = RfqConfig.parse(text)!!
-        val legs = mapOf("a" to leg("a", "e1", 0.7), "b" to leg("b", "e2", 0.65), "c" to leg("c", "e3", 0.6), "heavy" to leg("heavy", "e4", 0.85), "next" to leg("next", "e5", 0.6, startsInH = 30L))
+        val legs = mapOf("a" to leg("a", "e1", 0.7), "b" to leg("b", "e2", 0.65), "c" to leg("c", "e3", 0.6), "heavy" to leg("heavy", "e4", 0.85), "next" to leg("next", "e5", 0.6, startsInH = 30L), "u1" to leg("u1", "e6", 0.3), "u2" to leg("u2", "e7", 0.3))
         fun decide(vararg ids: String) = RfqPricer.decide(created(*ids), now, c, LegFairs { legs[it] }, 0.0)
         val q = decide("a", "b") as RfqDecision.Quote
         assertTrue("two favourites of .70 and .65 (about .46 after the leg calibration) are quoted, over a longshots-only limit of .40: ${q.fair}", q.fair in 0.44..0.50)
         assertTrue("priced just above its fair (the floors), not at a margin that would lose the auction", q.price in q.fair..(q.fair + 0.01))
         assertTrue("a game tomorrow is quoted (no today-only filter)", decide("c", "next") is RfqDecision.Quote)
+        assertTrue("two longshot legs (fair .09) tie up too much collateral for what they earn", (decide("u1", "u2") as RfqDecision.Decline).reason.contains("too unlikely"))
         assertTrue("a leg at 85% is the sharp heavy-favourite pocket", (decide("a", "heavy") as RfqDecision.Decline).reason.contains("too likely"))
         val three = decide("a", "b", "c") as RfqDecision.Decline
         assertTrue(three.reason, three.reason.contains("3 legs")); assertNotNull("priced for the journal", three.fair)
