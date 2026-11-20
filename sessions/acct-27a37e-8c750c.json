@@ -3,13 +3,13 @@
  "label": "acct-27a37e",
  "name": "tj Gmail",
  "nonce": "8c750c",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/wizardly-meitner-ja7vy6",
- "head": "6b65df2ba02b898134fb4207e67efa5ea95c0b27",
+ "branch": "claude/wizardly-meitner-b1f05t",
+ "head": "465ad0a3a89a5bc1f35fefd1b3938c106d57e789",
  "since": 1795112536,
- "beat": 1795112536,
- "beatIso": "2026-11-19T18:22:16Z",
+ "beat": 1795177261,
+ "beatIso": "2026-11-20T12:21:01Z",
  "done": "WATCH 2026-11-19: engine healthy, no action",
  "next": "continue MK13 concentration cap / SHADOW read"
 }
