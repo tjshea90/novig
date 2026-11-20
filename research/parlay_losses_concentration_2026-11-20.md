@@ -29,3 +29,14 @@ The cost is volume on popular legs only: the declines name themselves ("the same
 ## 5. Watch
 - After the MK56 deploy: count the declines with the two new reasons per hour against quotes sent; if over 30% of quotable RFQs are declined by them, raise `maxParlaysPerOutcome` to 3.
 - Today's 7 open fills (4 of them NBA/NCAAB same-game pairs at a +0.1 point margin) are the first sample under the new rules; the NBA totals pair settles about 04:00 UTC 11-21.
+
+## 6. "Take the sucker bets" (Tj 17:50 UTC): what the data says a sucker bet is
+Same graded table as section 4 (Release rfq-pnl-study, 6,471 pregame executed game-line parlays), maker P&L per $ of pot at the clearing price. Our own losses were the market's loss pockets: parlays with a leg over 80% (-13.2% all prices, -8.9% at price <= .40), 3+ legs all >= .5 (-13.9%), parlays priced over .40 (-4% to -20%): every one declined since MK16/MK36, and Tj's 17:42 app change put the win chance at <= 40%. What is left is the sucker flow:
+| shape (pregame, price <= .40, no leg >= .8, no 3+ legs all >= .5) | n | maker ROI | by day |
+|---|---|---|---|
+| everything left | 3,528 | +3.3% | 11-18 +4.8, 11-19 +2.5 |
+| 2 legs, price .15-.40 | 2,098 | +4.7% | 11-18 +12.2, 11-19 +3.4 |
+| 2 legs, both >= .5, price <= .40 | 718 | +11.6% | 11-18 +11.1, 11-19 +12.1 |
+| 3 legs all >= .65 | 362 | -9.8% | 11-19 -12.5 |
+| a leg .70-.80 | 153 | -2.4% | thin |
+Not found: any behaviour that tells sharp from casual buyers. Accept delay (6-29 s after the auction), requested stake and the RFQ's size show no ROI difference beyond noise, and no row carries a buyer id, so the shape of the parlay is the only detector. Declining legs over 70% (MK57) is Tj's preference at a cost of ~4% volume. The unreachable sucker classes: parlays priced under .10 (+2.4%, collateral 20x the stake: needs a wallet of thousands) and props (nothing grades a player-prop leg yet; props are ~1% of what trades). Where the profit is: 2-leg parlays of two moderate favourites or an underdog and a favourite at .15-.40, same-game spread + total pairs (+10.8% on one slate, quoted through the copula with a 2% premium), and volume of independent fills. A fill's value is about +3% of its pot (a $9.5 stake at P .3 is a $32 pot: about $1) against a standard deviation near $10: judge on 20+ independent settled fills, not on parlays.
