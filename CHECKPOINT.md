@@ -1,21 +1,23 @@
-# CHECKPOINT 4735 — read me first, then TASKS.md
+# CHECKPOINT 4736 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T01:27:11Z · **tests:** all 11 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `c842683e4` (this checkpoint is the commit after it)
+**Written:** 2026-11-20T01:45:02Z · **tests:** all 11 fast checks green
+**Branch:** `claude/optimistic-curie-aoglz9` · **builds on:** `d4dc7a7d7` (this checkpoint is the commit after it)
 
 ## Just done
-MK25: rfq_set maxLegs guard 10 -> 100; maxLegs=100 written
+MK26: warm-job decline breakdown; minLeadMs 10 min
 
 ## Do this next
-watch the new job's priceable count and halts
+cold-start: partial-result publish (MK23); tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  d4dc7a7d7 ckpt 4735: MK25: rfq_set maxLegs guard 10 -> 100; maxLegs=100 written
   5e7d3ae94 ckpt 4734: MK25: no limit on prop legs (maxPropLegs) and total legs; full suite green
   ac4cb4da1 ckpt 4733: MK24: 3-6 prop-leg parlays priced at the plain product in shadow (propLegsS
   e95787339 ckpt 4732: MK14 follow-up check ok; ladder legs now carry name/desc/market id for hub 
@@ -25,8 +27,4 @@ watch the new job's priceable count and halts
   7fa234079 ckpt 4728: MK22: PropLadderFair: the maker's prop fair from every book's price at a st
   0b0247ecf ckpt 4727: MK22: propcov task (what PropLine really sends for player props: two-sided 
   51f0f638c ckpt 4726: ANALYST 2026-11-19: no change, watch note logged
-  d8c6c2271 ckpt 4725: MK21: ladder extrapolation of unposted NBA/NHL/NFL prop rungs (RfqLadder.ex
 ```
-
-(2 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
