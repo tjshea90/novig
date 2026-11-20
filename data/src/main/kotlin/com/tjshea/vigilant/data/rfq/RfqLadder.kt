@@ -70,6 +70,41 @@ object RfqLadder {
         return Rung(strike, cdf(z), minOf(lo.books, hi.books), minOf(lo.asOfMs, hi.asOfMs))
     }
 
+    /** The farthest an extrapolated game-line number may sit from the nearest posted one, in probit units (about one standard deviation of the margin or the total). */
+    const val GAME_LINE_MAX_SHIFT = 1.0
+    /** A game's own slope (probit per point) is believed only inside this range (a margin or total with a standard deviation of 2 to 50 points) and from two rungs at least [GAME_LINE_MIN_SPAN] apart. */
+    const val GAME_LINE_MIN_SPAN = 1.5
+    const val GAME_LINE_SLOPE_MIN = -0.5
+    const val GAME_LINE_SLOPE_MAX = -0.02
+
+    /** The slope of probit(over probability) per point of a game line's ladder from its two posted rungs nearest [near], or null: fewer than two, closer than [GAME_LINE_MIN_SPAN], or not a believable slope. */
+    fun gameLineSlope(rungs: List<Rung>, near: Double): Double? {
+        val posted = rungs.filter { it.overProb in 0.03..0.97 }.distinctBy { it.strike }
+        if (posted.size < 2) return null
+        val two = posted.sortedBy { abs(it.strike - near) }.take(2).sortedBy { it.strike }
+        val dx = two[1].strike - two[0].strike
+        if (dx < GAME_LINE_MIN_SPAN) return null
+        val slope = (probit(two[1].overProb) - probit(two[0].overProb)) / dx
+        return slope.takeIf { it in GAME_LINE_SLOPE_MIN..GAME_LINE_SLOPE_MAX }
+    }
+
+    /**
+     * An alternate game-line number OUTSIDE the game's posted ones (MK46): from the nearest posted rung along the game's own slope ([gameLineSlope]) or, with one rung or none believable, its league's
+     * ([leagueSlope], the median of the games' own). At most [GAME_LINE_MAX_SHIFT] probit units from the base (about one standard deviation of the margin), never across the posted range (that is [interpolate]'s).
+     */
+    fun extrapolateGameLine(rungs: List<Rung>, strike: Double, leagueSlope: Double?): Rung? {
+        val posted = rungs.filter { it.overProb in 0.03..0.97 }.distinctBy { it.strike }
+        if (posted.isEmpty()) return null
+        if (posted.any { it.strike < strike } && posted.any { it.strike > strike }) return null
+        val base = posted.minByOrNull { abs(it.strike - strike) } ?: return null
+        val slope = gameLineSlope(posted, strike) ?: leagueSlope?.takeIf { it in GAME_LINE_SLOPE_MIN..GAME_LINE_SLOPE_MAX } ?: return null
+        val shift = slope * (strike - base.strike)
+        if (abs(shift) > GAME_LINE_MAX_SHIFT) return null
+        val over = cdf(probit(base.overProb) + shift)
+        if ((strike < base.strike && over < base.overProb - 1e-9) || (strike > base.strike && over > base.overProb + 1e-9)) return null
+        return Rung(strike, over, base.books, base.asOfMs)
+    }
+
     /**
      * The slope of probit(over probability) per unit of (L - K) / sqrt(L), by Novig market type, fitted on the closing ladders of 2026-11-15..18 (`tools/ladder_extrap.py`; held-out error in the research note).
      * A stat not in the table is never extrapolated.
@@ -112,6 +147,8 @@ object RfqLadder {
         private val rungs: () -> Map<String, List<Rung>>,
         private val extrapolate: () -> Boolean = { false },
         private val consensus: () -> Consensus? = { null },
+        /** "<league>|<kind>" -> the median probit-per-point slope of that league's posted game-line ladders (MK46); empty = a game's own slope only. */
+        private val gameLineSlopes: () -> Map<String, Double> = { emptyMap() },
     ) : LegFairs {
         override fun leg(outcomeId: String): LegFair? {
             direct.leg(outcomeId)?.let { return it }
@@ -125,10 +162,12 @@ object RfqLadder {
             val posted = rungs()[t.group] ?: return null
             t.line?.let { gl ->
                 // an alternate game line: interpolated between the posted numbers of its game, never extrapolated
-                val r = interpolate(posted, t.strike) ?: return null
+                val inside = interpolate(posted, t.strike)
+                val r = inside ?: (if (extrapolate()) extrapolateGameLine(posted, t.strike, gameLineSlopes()["${gl.league}|${gl.kind}"]) else null) ?: return null
                 val p = if (t.over) r.overProb else 1.0 - r.overProb
-                return LegFair(outcomeId, t.eventId, "ladder ${t.group} ${if (t.over) "over" else "under"} ${strikeText(t.strike)}", p, r.books, r.asOfMs, t.startsMs, false, t.marketType,
-                    kind = gl.kind, side = gl.side, period = 0, homeLine = gl.homeLine, awayTeam = gl.awayTeam, league = gl.league,
+                if (inside == null && (p < EXTRAP_MIN_SIDE || p > EXTRAP_MAX_SIDE)) return null
+                return LegFair(outcomeId, t.eventId, "${if (inside == null) "extrapolated" else "ladder"} ${t.group} ${if (t.over) "over" else "under"} ${strikeText(t.strike)}", p, r.books, r.asOfMs, t.startsMs, false, t.marketType,
+                    kind = gl.kind, side = gl.side, period = 0, homeLine = gl.homeLine, awayTeam = gl.awayTeam, league = gl.league, extrapolated = inside == null,
                     outcomeName = t.outcomeName, eventDesc = t.eventDesc, marketId = t.marketId)
             }
             interpolate(posted, t.strike)?.let { r ->
