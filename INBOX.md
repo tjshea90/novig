@@ -1987,3 +1987,10 @@ PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 mi
 ```
 Earlier the engine was pricing and quoting a lot, and getting fills. Something happened where now it seems like it can't price any parlays
 ```
+
+## 2026-11-20T05:41:32Z
+```
+22% for two player props of one game (modelled but not quoted yet), and 30% for two legs in one game that the engine couldn't price
+
+See if you can fix these to get this coverage 
+```
