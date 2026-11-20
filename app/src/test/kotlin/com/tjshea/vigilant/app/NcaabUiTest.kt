@@ -114,6 +114,8 @@ class NcaabUiTest {
     private val instantQuote: suspend (List<String>) -> com.tjshea.vigilant.data.novig.NovigParlay.Result = { ids -> quotedFor += ids; priced() }
 
     private var boardLocal = false
+    private var myBets: com.tjshea.vigilant.data.ncaab.NcaabBetStats.Summary? = null
+    private var trackerOpened = 0
 
     private fun show(v: List<com.tjshea.vigilant.data.ncaab.NcaabGameView>, bet: Boolean = true, model: NcaabModel = this.model, quote: suspend (List<String>) -> com.tjshea.vigilant.data.novig.NovigParlay.Result = instantQuote) {
         compose.setContent {
@@ -125,7 +127,7 @@ class NcaabUiTest {
                         com.tjshea.vigilant.app.ui.LocalParlayQuote provides quote,
                     ) {
                         NcaabContent(v, ratingsAsOf = now - 3_600_000L, boardAt = now - 20_000L, boardReadAt = now, note = "", model = model, boardLocal = boardLocal, ratedTeams = 2, hasSlate = true, hasToken = true,
-                            settings = ScanSettings(), now = now, onTrack = { _, _ -> }, onRecheck = {})
+                            settings = ScanSettings(), now = now, onTrack = { _, _ -> }, onRecheck = {}, myBets = myBets, onOpenTracker = { trackerOpened++ })
                     }
                 }
             }
@@ -304,5 +306,29 @@ class NcaabUiTest {
         show(views(withRatings = false))
         compose.onNodeWithText("Davidson (no averages yet)").assertIsDisplayed()
         compose.onNodeWithText("Rider (no averages yet)").assertIsDisplayed()
+    }
+
+    // ---- NT1: the record of the bets placed from this tab -------------------------------------------------------------------------------------------
+
+    @Test
+    fun `the tab shows the record of its own bets as one line, opens it on a tap and opens the Tracker from it`() {
+        val bet = com.tjshea.vigilant.data.tracker.TrackedBet("w", now - 3_600_000L, "NCAAB", "Rider @ Davidson", start, "Moneyline", "Davidson", "m", "o", 0.5, 0.5, 0.52, 0.04, 10.0, com.tjshea.vigilant.data.tracker.BetStatus.WON,
+            settledAtMs = start + 3_600_000L, origin = com.tjshea.vigilant.data.tracker.BetTracker.ORIGIN_NCAAB)
+        myBets = com.tjshea.vigilant.data.ncaab.NcaabBetStats.summarize(listOf(bet), now)
+        show(views())
+        compose.onNodeWithTag("ncaabBets").assertIsDisplayed()
+        compose.onNodeWithTag("ncaabBetsLine").assertTextContains("1 bets", substring = true)
+        compose.onNodeWithTag("ncaabBetsLine").assertTextContains("+$10.00", substring = true)
+        compose.onNodeWithTag("ncaabBetsToggle").performClick()
+        compose.onNodeWithTag("ncaabBets-bets-all").assertTextContains("1")
+        compose.onNodeWithTag("ncaabBetsTracker").performClick()
+        assertEquals(1, trackerOpened)
+    }
+
+    @Test
+    fun `a tab with no bets says what it will count and a tab without the record draws no card`() {
+        myBets = com.tjshea.vigilant.data.ncaab.NcaabBetStats.summarize(emptyList(), now)
+        show(views())
+        compose.onNodeWithTag("ncaabBetsEmpty").assertIsDisplayed()
     }
 }
