@@ -347,6 +347,7 @@ object RfqPricer {
             } else {
                 if (premiumProps) joint *= Math.pow(1.0 + cfg.propPremium, propLegs.toDouble())
                 p = minOf(0.999, joint)
+                pairModelUsed = byPairModel
                 if (byPairModel && !cfg.propPairsLive) return RfqDecision.Decline("two player props of one game (modelled, shadow: not quoted)", p, legs)
             }
         }
