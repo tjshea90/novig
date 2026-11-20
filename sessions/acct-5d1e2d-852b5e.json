@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "a73e68eaade3b34d3310f10eeeb743c12269405a",
+ "head": "d8c6c2271b5c2a9d2f9f169ff8b9f3f31c71935b",
  "since": 1795047736,
- "beat": 1795133467,
- "beatIso": "2026-11-20T00:11:07Z",
+ "beat": 1795134076,
+ "beatIso": "2026-11-20T00:21:16Z",
  "done": "MK10 23:51: loss stop set to 0 from the app by Tj; quoting again",
  "next": "watch settlements; calibrate favourite legs at 10+ settled"
 }
