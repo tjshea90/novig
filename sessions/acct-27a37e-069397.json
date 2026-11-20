@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "1240d5302bd25a6cf2e8dcf7a1f75bda5542dd41",
+ "head": "6ab5b5f5c3449771a989dcbdffd75f832b10a5f0",
  "since": 1795129305,
- "beat": 1795139966,
- "beatIso": "2026-11-20T01:59:26Z",
- "done": "MK27: longshotsOnly off (Tj's filter), protected markets use the unprotected ladder; trade-level analysis logged",
- "next": "full suite then land the protected mapping; deploy with the next reset; same-game correlation shadow pricing (market pays +4.1 pts over independent for those trades); more cash is the real limit"
+ "beat": 1795140161,
+ "beatIso": "2026-11-20T02:02:41Z",
+ "done": "MK27: full suite green, protected mapping lands",
+ "next": "deploy protected mapping at the next reset; same-game correlation shadow; Tj: more cash is the real limit"
 }
