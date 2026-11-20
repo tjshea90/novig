@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "ac2832689ba522ecca9f2d394ee33387d5f90729",
+ "head": "2ec9b535288b6898347babe7584d21dd7b222660",
  "since": 1795129305,
- "beat": 1795142142,
- "beatIso": "2026-11-20T02:35:42Z",
- "done": "MK28: quote markup was 3.9 pts over fair vs the market's +0.3: liveMinReturn back to 0.004",
- "next": "watch quotes won/filled over the next hour; if still none, lower the safe-edge floor (fairErrorRel) toward 0.01 and read QUOTE_SENT vs EXECUTED; protected mapping deploys at next reset; same-game correlation shadow"
+ "beat": 1795142187,
+ "beatIso": "2026-11-20T02:36:27Z",
+ "done": "MK29b: price floors lowered to the market's level (margin .006, minPoints .002, fairErrorRel .006); fill expectation logged",
+ "next": "check fills at 02:46 (scheduled); read QUOTE_SENT vs EXECUTED of the warm job; same-game correlation shadow; mirage carries fairKept job to job (do not touch CloudMain fairKept)"
 }
