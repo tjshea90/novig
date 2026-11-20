@@ -1936,3 +1936,8 @@ PARLAY CHECK (Tj, chat 06:56 UTC 2026-11-19: check the parlay system every 30 mi
 ```
 Its pricing is still pathetic. Haven't got one parlay filled this whole time 
 ```
+
+## 2026-11-20T02:40:44Z
+```
+You keep telling me over and over you found the fix, but not one parlay has filled in hours 
+```
