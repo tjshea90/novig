@@ -92,6 +92,22 @@ data class RfqConfig(
     /** The most player-prop legs a quoted parlay may carry (Tj 2026-11-20: "Put no limit on the amount of prop legs and the amount of legs total"): no limit by default; each prop leg still carries [propPremium]. Beyond it the parlay is priced in shadow up to [propLegsShadowMax]. */
     val maxPropLegs: Int = Int.MAX_VALUE,
     /**
+     * MK31 (Tj 2026-11-20: "price and fill live, in game parlay orders ... not too risky and nothing over a 50% or so chance of winning"): parlays with a leg in play, each such leg priced from Novig's live book
+     * ([LiveFair]). OFF = declined ("a leg is in play"); SHADOW = priced and declined with our fair in the journal (what the market pays against it is the evidence); LIVE = quoted.
+     */
+    val liveParlays: Mode = Mode.SHADOW,
+    /** A parlay with a leg in play is not quoted above this win chance (Tj: "nothing over a 50% or so"). */
+    val liveMaxFair: Double = 0.50,
+    /** An in-play leg's price must be younger than this at the decision (a buyer accepts 6-29 s after the auction; the game moves meanwhile). */
+    val liveMaxAgeMs: Long = 4_000L,
+    /** The widest best-bid to buy-price gap of a live market that is priced at all ([LiveFair.DEFAULT_MAX_SPREAD]). */
+    val liveMaxSpread: Double = 0.04,
+    /** In-play quote floors on top of the usual ones: the fair x (1 + this), and the fair + this per leg (game moves between the auction and the accept). */
+    val livePremium: Double = 0.05,
+    val livePointsPerLeg: Double = 0.01,
+    /** The most collateral one in-play parlay may tie up, dollars (0 = the usual caps only). */
+    val liveMaxCollateral: Double = 30.0,
+    /**
      * MK17 (Tj 2026-11-19: "only accepts parlays that will finish today (the latest leg is a game on todays slate)"): quote only a parlay whose LAST leg starts before today's slate ends (the sports day
      * runs 5 am to 5 am Eastern, like the Tracker's). Off = any game within [maxDaysAhead].
      */
@@ -192,6 +208,8 @@ data class LegFair(
     val marketId: String = "",
     /** The fair was extrapolated beyond the posted rungs of the player's stat ([RfqLadder.extrapolate], MK21), not posted or interpolated. */
     val extrapolated: Boolean = false,
+    /** Where the fair came from when it is not the scan's: [LiveFair.SOURCE] for a leg in play priced from Novig's live book (MK31). */
+    val source: String = "",
 )
 
 fun interface LegFairs { fun leg(outcomeId: String): LegFair? }
