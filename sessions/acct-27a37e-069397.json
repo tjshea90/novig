@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "77a529f46cd88d30fa7836bb72d10506cdb5c11e",
+ "head": "3ecd556b4ed2485da73d8670ba9d844e8accea68",
  "since": 1795129305,
- "beat": 1795134858,
- "beatIso": "2026-11-20T00:34:18Z",
+ "beat": 1795134988,
+ "beatIso": "2026-11-20T00:36:28Z",
  "done": "MK22: propcov task (what PropLine really sends for player props: two-sided rungs vs milestone rows, strikes per player, Novig rungs vs books) in propline.py + workflow",
  "next": "dispatch propline.yml task=propcov on main, read the log; then decide: milestone ladders (N+ Yes-only), alt rungs; build a fair store independent of the Novig-book scan"
 }
