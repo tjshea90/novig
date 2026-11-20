@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "35fe59d17e10a67c808b30e35f0757b6c932092f",
+ "head": "e93e1ba3a6300e8d996954de297ad98d220fb70a",
  "since": 1795129305,
- "beat": 1795154272,
- "beatIso": "2026-11-20T05:57:52Z",
- "done": "MK38: propPairsCashReserve (a prop-pair quote leaves $60 of free cash to the classes that trade); full suite 4491 green; analysis: which declined classes actually trade",
- "next": "06:03 wake: ONE reset deploys MK37+MK38; then rfq_set propPairsLive=true; watch live pairs quote + won/filled"
+ "beat": 1795154319,
+ "beatIso": "2026-11-20T05:58:39Z",
+ "done": "MK39: maxStake 12 (a code default, not Tj's) -> 100, walletShare .75, liveMaxCollateral 45, fair age 15 min; engine restarted 05:57 with MK37+MK38; propPairsLive on",
+ "next": "monitor job 44684215924: live same-game pairs quoted? prop pairs vs the $60 reserve; won/filled; no reset before 07:00"
 }
