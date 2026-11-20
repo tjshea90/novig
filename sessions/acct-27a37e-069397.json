@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "78b027e8505aa901ee367c6dd689bbc6ba650813",
+ "head": "e974a4fc47a6f776e3a68997da33b8fef1243ba1",
  "since": 1795129305,
- "beat": 1795148955,
- "beatIso": "2026-11-20T04:29:15Z",
- "done": "MK32: settled maker parlays show adverse selection (31 of 32 legs won vs 23.2 expected, maker won 1 of 16): logged; open decision for Tj on fills vs edge",
- "next": "watch live fills; decide with Tj whether to keep thin floors; collect results of live fills"
+ "beat": 1795149007,
+ "beatIso": "2026-11-20T04:30:07Z",
+ "done": "MK33b: rfq_pnl_study tool + daily workflow + research note: maker P&L at the clearing price by segment (first read: favourite-heavy parlays -20.6%, longshot-leg parlays +2.1%)",
+ "next": "land, dispatch rfq-pnl-study.yml once to verify, then keep the live maker monitored: send_later chain every 30 min (fills, won/lost, P&L, halts), re-run the study daily and tune segments on it"
 }
