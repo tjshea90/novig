@@ -1,13 +1,13 @@
-# CHECKPOINT 4771 — read me first, then TASKS.md
+# CHECKPOINT 4772 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T06:45:13Z · **tests:** all 11 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `b62013148` (this checkpoint is the commit after it)
+**Written:** 2026-11-20T06:54:12Z · **tests:** all 11 fast checks green
+**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `0fafb5165` (this checkpoint is the commit after it)
 
 ## Just done
-MK42: floors halved (margin .003, fairErrorRel .003, minPoints .001, minReturn .002); engine restarted 06:44 (job 44689559689) with MK40/MK41 coverage fixes
+MK41 fix: Novig answered 400 INVALID_QUERY to the combined protected-type list and the ladder catalog read failed (targets empty): plain and protected twins are read apart, the twin names that exist are learned one request each
 
 ## Do this next
-read 'RFQ ladder' + 'RFQ prop coverage' log lines, then quotes/won/filled; judge the thinner margin after 20 fills; no reset before 07:45
+reset the engine once to deploy the fix (job 44689559689 has an empty ladder target list until then); confirm 'RFQ ladder: N outcomes' + 'RFQ prop coverage' in the log
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ read 'RFQ ladder' + 'RFQ prop coverage' log lines, then quotes/won/filled; judge
 
 ## Last ten checkpoints
 ```
+  cdd39e1bd ckpt 4771: MK42: floors halved (margin .003, fairErrorRel .003, minPoints .001, minRet
   be280dcae ckpt 4770: MK40/MK41: coverage fixes (protected prop targets, Yes-only anytime-TD list
   e93e1ba3a ckpt 4769: MK39: maxStake 12 (a code default, not Tj's) -> 100, walletShare .75, liveM
   3d1d963bc ckpt 4768: MK38: propPairsCashReserve (a prop-pair quote leaves $60 of free cash to th
@@ -25,8 +26,7 @@ read 'RFQ ladder' + 'RFQ prop coverage' log lines, then quotes/won/filled; judge
   ed905ede7 ckpt 4764: MK31e: live fair current-as-of-now for stream-held books, watch up to 600 m
   2b82c5518 ckpt 4763: MK35: pregame 3+ leg parlays need a longshot leg (manyLegsNeedLongshot); ba
   93e4e8541 ckpt 4762: MK33c: study adds same-game segments; same-game 2-leg parlays +8% on the 11
-  e974a4fc4 ckpt 4761: MK33b: rfq_pnl_study tool + daily workflow + research note: maker P&L at th
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
