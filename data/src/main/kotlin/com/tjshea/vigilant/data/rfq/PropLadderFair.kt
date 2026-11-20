@@ -157,6 +157,14 @@ object PropLadderFair {
             val table = store.table(ref, t.player, t.marketType.removeSuffix("_PROTECTED")) ?: return null
             return atStrike(table, t.strike, t.over)
         }
+        /** Why [at] has no price for [t], in words (MK40: the engine logs the counts by stat so a coverage gap names its cause). */
+        fun explain(t: RfqLadder.Target): String {
+            val ref = refByNovigEvent[t.eventId] ?: return "game not paired with a PropLine game"
+            val table = store.table(ref, t.player, t.marketType.removeSuffix("_PROTECTED")) ?: return "player not posted by any book"
+            val s = table.strikes[t.strike] ?: return "strike not posted"
+            val side = if (t.over) s.overProb else 1.0 - s.overProb
+            return if (side < MIN_SIDE || side > MAX_SIDE) "side outside ${(MIN_SIDE * 100).toInt()}-${(MAX_SIDE * 100).toInt()}%" else "priced by votes"
+        }
         fun summary(): String = "${refByNovigEvent.size} games paired, ${store.byRefEvent.values.sumOf { it.size }} player stats, ${store.votes} votes (${store.milestoneVotes} from N+ ladders), margins ${store.holds.entries.sortedBy { it.key }.joinToString(" ") { "${it.key} %.3f".format(it.value) }.ifEmpty { "default" }}"
     }
 }

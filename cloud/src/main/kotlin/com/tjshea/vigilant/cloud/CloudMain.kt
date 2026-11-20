@@ -628,7 +628,9 @@ fun main(args: Array<String>) = runBlocking {
             val now = System.currentTimeMillis()
             if (s != null && rfqCfg.get().mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF && novigKeyed?.addressRefused(now) != true) {
                 runCatching {
-                    val ms = novig.markets(s.leagues.toList(), com.tjshea.vigilant.data.reference.PropLineProps.STATS.toList(), listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME), now + 5 * 86_400_000L)
+                    // Novig lists every prop twice, as itself and as `<TYPE>_PROTECTED` (void if the player does not play); parlays hold either, and the books' lines price both the same (MK40: the protected ones had no target, so no fair)
+                    val propTypes = com.tjshea.vigilant.data.reference.PropLineProps.STATS.flatMap { listOf(it, it + "_PROTECTED") }
+                    val ms = novig.markets(s.leagues.toList(), propTypes, listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME), now + 5 * 86_400_000L)
                     runCatching { novigEventsForVotes.set(novig.events(s.leagues.toList(), listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME), now + 5 * 86_400_000L)) }
                     val eventDescs = novigEventsForVotes.get().associate { it.eventId to it.description }
                     val m = HashMap<String, com.tjshea.vigilant.data.rfq.RfqLadder.Target>(ms.size * 2)
@@ -640,6 +642,17 @@ fun main(args: Array<String>) = runBlocking {
                     }
                     ladderTargets.set(m)
                     log("RFQ ladder: ${m.size} prop outcomes known to price from the posted rungs")
+                    // What is still missing, and why (MK40): every Novig prop outcome run through the fair store, the reasons counted by stat.
+                    runCatching {
+                        val idx = propVotes.get() as? com.tjshea.vigilant.data.rfq.PropLadderFair.Index
+                        val missing = HashMap<String, Int>(); var covered = 0
+                        for ((id, t) in m) {
+                            if (rfqLegFairs.leg(id) != null) { covered++; continue }
+                            val why = idx?.explain(t) ?: "no vote store yet"
+                            missing.merge("${t.marketType.removeSuffix("_PROTECTED")}: $why", 1, Int::plus)
+                        }
+                        log("RFQ prop coverage: $covered of ${m.size} prop outcomes have a fair; missing: " + missing.entries.sortedByDescending { it.value }.take(10).joinToString("; ") { "${it.key} x${it.value}" })
+                    }
                 }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("RFQ ladder catalog not read: ${e.message?.take(120)}") }
             }
             delay(10 * 60_000L)
