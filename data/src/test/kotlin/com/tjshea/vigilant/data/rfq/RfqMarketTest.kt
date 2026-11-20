@@ -16,7 +16,7 @@ import java.util.Collections
 
 /** MK12: what the other makers charge, learned from Novig's own keyless parlay price (research/novig_parlay_maker_2026-11-19.md). */
 class RfqMarketTest {
-    private val cfg = RfqConfig(legCalibration = false, mode = RfqConfig.Mode.SHADOW, minReturn = 0.004, minPoints = 0.007, probeMinSamples = 40)
+    private val cfg = RfqConfig(manyLegsNeedLongshot = 0.0, legCalibration = false, mode = RfqConfig.Mode.SHADOW, minReturn = 0.004, minPoints = 0.007, probeMinSamples = 40)
 
     private fun leg(event: String, type: String = "MONEY", league: String = "NBA") = LegFair("o$event$type", event, "l", 0.5, 5, 0L, 0L, false, type, league = league)
 
