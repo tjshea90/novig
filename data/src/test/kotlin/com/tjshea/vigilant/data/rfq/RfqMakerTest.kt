@@ -331,7 +331,7 @@ class RfqMakerTest {
 
     @Test fun aWonQuoteIsConfirmedOnlyIfItIsTheOneWeQuotedAndTheLastLookNeverSecondGuessesTheMarket() {
         val r = rig(RfqConfig.Mode.LIVE)
-        r.cfg = r.cfg.copy(maxOpenCollateral = 500.0)       // many quotes out at once: the open-collateral cap is not what this test is about
+        r.cfg = r.cfg.copy(maxOpenCollateral = 500.0, maxSameParlay = 0, maxParlaysPerOutcome = 0)       // many quotes out at once on the same legs: neither the open-collateral cap nor the repeat guard is what this test is about
         r.maker.onEvent(created("a", "b"))
         r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-7"))
         r.sent.clear()
@@ -613,5 +613,33 @@ class RfqMakerTest {
         assertEquals("0.6 ^ 6 x 1.2 ^ 5", Math.pow(0.6, 6.0) * Math.pow(1.2, 5.0), q.fair, 1e-9)
         assertTrue("a 7th prop leg is quoted too", RfqPricer.decide(created(*(ids + "x").toTypedArray()), now, big, fairs(*(ids.dropLast(1).mapIndexed { i, id -> leg(id, "e$i", 0.6, type = "POINTS") } + leg("m", "g", 0.6) + leg("x", "ex", 0.6, type = "ASSISTS")).toTypedArray()), 0.0) is RfqDecision.Quote)
         assertTrue("the default is no limit", RfqConfig().maxPropLegs == Int.MAX_VALUE)
+    }
+
+    // ---- MK56: identical parlays and one outcome in many ----
+    @Test fun anIdenticalParlayIsNotQuotedTwiceAndOneOutcomeIsInAtMostTwoParlays() {
+        val r = rig(RfqConfig.Mode.LIVE)
+        r.cfg = r.cfg.copy(maxOpenCollateral = 500.0, maxCollateral = 80.0, maxLegCollateral = 500.0)
+        r.legs = listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4), leg("c", "e3", 0.5), leg("d", "e4", 0.5))
+        r.maker.onEvent(created("a", "b")); assertEquals(1, r.sent.size)
+        r.maker.onEvent(created("b", "a").copy(rfqId = "rfq-2"))
+        assertEquals("the same legs (in any order) while the first is out: not quoted", 1, r.sent.size)
+        assertTrue(r.rows.last { it.kind == "CREATED" }.data.contains("the same parlay is already held or quoted"))
+        r.maker.onEvent(created("a", "c").copy(rfqId = "rfq-3")); assertEquals("a is in one parlay: a second is fine", 2, r.sent.size)
+        r.maker.onEvent(created("a", "d").copy(rfqId = "rfq-4"))
+        assertEquals("a would be in a third", 2, r.sent.size)
+        assertTrue(r.rows.last { it.kind == "CREATED" }.data.contains("a leg is already in 2 open parlays or quotes"))
+        r.maker.onEvent(created("c", "d").copy(rfqId = "rfq-5")); assertEquals("c and d are in one parlay at most", 3, r.sent.size)
+        // the switches: 0 = no limit
+        val loose = Rig(r.cfg.copy(maxSameParlay = 0, maxParlaysPerOutcome = 0), r.legs)
+        loose.maker.onEvent(created("a", "b")); loose.maker.onEvent(created("a", "b").copy(rfqId = "rfq-2")); assertEquals(2, loose.sent.size)
+    }
+
+    @Test fun theOpenParlaysNovigReportsCountLikeTheQuotesStillOut() {
+        val c = cfg.copy(maxOpenCollateral = 500.0, maxCollateral = 80.0, maxLegCollateral = 500.0)
+        val sent = ArrayList<String>(); val rows = ArrayList<RfqRow>()
+        val m = RfqMaker({ c }, { id -> listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4), leg("c", "e3", 0.5)).firstOrNull { it.outcomeId == id } }, { 0.0 }, { sent += it; true }, { rows += it }, { _, _ -> }, { 1_790_500_000_000L }, cash = { 1_000.0},
+            openSets = { listOf(listOf("a", "b")) })
+        m.onEvent(created("a", "b")); assertTrue("the parlay Novig reports open is the same bet again", sent.isEmpty())
+        m.onEvent(created("a", "c").copy(rfqId = "rfq-2")); assertEquals("a different set is quoted", 1, sent.size)
     }
 }
