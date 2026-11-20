@@ -7,6 +7,7 @@ import java.time.LocalDate
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import com.tjshea.vigilant.data.rfq.ParlayBook
 import org.junit.Test
 
 class ParlayLegScoresTest {
@@ -34,5 +35,14 @@ class ParlayLegScoresTest {
         assertNull(ParlayLegScores.grade(leg("SPREAD", "Spread Phoenix Suns +12.5"), source(game(final = false)), now))
         assertNull(ParlayLegScores.grade(leg("SPREAD", "Spread Phoenix Suns +12.5"), source(game()), start + 3_600_000L))
         assertNull(ParlayLegScores.grade(leg("RECEIVING_YARDS", "Receiving Yards George Kittle Over 49.5"), source(game()), now))
+    }
+
+    @Test fun legsToScoreTakesFinishedLegsWithNoResultEvenWithoutAMarketId() {
+        val old = BookLeg("a", "Spread Phoenix Suns +5.5", "Phoenix Suns @ Sacramento Kings", "NBA", "SPREAD", start, 0.7, null)
+        val done = old.copy(outcomeId = "b", result = "WIN")
+        val fresh = old.copy(outcomeId = "c", startsMs = now - 3_600_000L)
+        val parlay = BookParlay(rfqId = "r1", legs = listOf(old, done, fresh))
+        val got = ParlayBook.legsToScore(ParlayBook(parlays = listOf(parlay)), now)
+        assertEquals(listOf("a"), got.map { it.outcomeId })
     }
 }

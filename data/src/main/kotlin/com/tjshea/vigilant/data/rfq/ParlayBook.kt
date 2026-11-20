@@ -143,6 +143,16 @@ data class ParlayBook(
             return ParlayBook(atMs = now, mode = mode, ledgerAtMs = now, parlays = out.values.sortedByDescending { it.filledMs })
         }
 
+        /**
+         * Legs of ANY parlay in [book] (settled ones too: a settled parlay's legs still show their marks) that have no result and whose game began over 3 hours ago: what the score feeds can grade. Unlike [legsToGrade] this does
+         * not need the leg's market id (a leg whose fair is gone has none), only its description, league and label (MK29b, Tj 2026-11-20: "It still is doing a poor job at grading parlay legs when the games are final").
+         */
+        fun legsToScore(book: ParlayBook?, now: Long): List<FillLeg> =
+            book?.parlays.orEmpty().flatMap { p -> p.legs }
+                .filter { it.result == null && it.startsMs > 0L && now - it.startsMs >= 3 * 3_600_000L && it.desc.isNotBlank() }
+                .distinctBy { it.outcomeId }
+                .map { FillLeg(outcomeId = it.outcomeId, label = it.label, desc = it.desc, league = it.league, type = it.type, startsMs = it.startsMs, p = it.p) }
+
         /** The open parlays' outcome ids whose result is still wanted and whose game has begun: what the engine asks Novig's catalog about. */
         fun legsToGrade(book: ParlayBook?, fills: Map<String, FillRecord>, now: Long): List<FillLeg> {
             val out = ArrayList<FillLeg>()

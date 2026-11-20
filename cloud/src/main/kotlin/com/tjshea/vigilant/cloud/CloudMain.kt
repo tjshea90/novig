@@ -733,6 +733,10 @@ fun main(args: Array<String>) = runBlocking {
                                 // A graded market leaves Novig's catalog, so a finished leg often stays ungraded: read the game's final score (MK29).
                                 if (rfqLegResults[leg.outcomeId] == null) runCatching { com.tjshea.vigilant.data.rfq.ParlayLegScores.grade(leg, rfqScores, nowMs) }.getOrNull()?.let { rfqLegResults[leg.outcomeId] = it }
                             }
+                            // Legs with no market id (their fair is gone) never reached the loop above: grade every finished leg without a result from the final score (MK29b).
+                            for (leg in com.tjshea.vigilant.data.rfq.ParlayBook.legsToScore(draft, nowMs).filter { rfqLegResults[it.outcomeId] == null }.take(40)) {
+                                runCatching { com.tjshea.vigilant.data.rfq.ParlayLegScores.grade(leg, rfqScores, nowMs) }.getOrNull()?.let { rfqLegResults[leg.outcomeId] = it }
+                            }
                             val book = com.tjshea.vigilant.data.rfq.ParlayBook.build(execs, fillsMap, { rfqLegResults[it] }, before, nowMs, mode)
                             val unchanged = before != null && before.parlays == book.parlays && before.mode == book.mode && nowMs - before.ledgerAtMs < 10 * 60_000L
                             if (!unchanged) { rfqBook.set(book); publisher.stageExtra("parlays.json", com.tjshea.vigilant.data.rfq.ParlayBook.encode(book)) }
