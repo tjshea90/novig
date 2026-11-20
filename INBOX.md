@@ -2002,3 +2002,8 @@ $12 stake limit cap what it can back.
 I didn't set this and i don't understand it. Change it if it isn't needed 
 Do as many fixes as you can such as the ones you explained earlier which would increase parlay fills and implement them then restart the engine with them running 
 ```
+
+## 2026-11-20T06:10:37Z
+```
+No fair line at 35% is concerning. The apis should offer lines on almost everything, including alternate ladders 
+```
