@@ -89,6 +89,8 @@ data class RfqConfig(
     val ladderVotes: Boolean = true,
     /** MK24: a parlay of 3 up to this many player-prop legs is priced at the plain product of the legs' fair and declined as shadow (journal evidence), never quoted; 0 = declined unpriced. */
     val propLegsShadowMax: Int = 6,
+    /** The most player-prop legs a quoted parlay may carry (Tj 2026-11-20: "Put no limit on the amount of prop legs and the amount of legs total"): no limit by default; each prop leg still carries [propPremium]. Beyond it the parlay is priced in shadow up to [propLegsShadowMax]. */
+    val maxPropLegs: Int = Int.MAX_VALUE,
     /**
      * MK17 (Tj 2026-11-19: "only accepts parlays that will finish today (the latest leg is a game on todays slate)"): quote only a parlay whose LAST leg starts before today's slate ends (the sports day
      * runs 5 am to 5 am Eastern, like the Tracker's). Off = any game within [maxDaysAhead].
@@ -272,10 +274,10 @@ object RfqPricer {
         val propLegs = legs.count { it.marketType !in GAME_LINES }
         // More than two prop legs (MK24, Tj 2026-11-20: 24% of RFQs): never quoted, but PRICED at the plain product (no premium) so the journal carries our fair and the market's executed prices show what such a parlay is worth;
         // `propLegsShadowMax` is the most prop legs priced that way (0 = they decline unpriced, as before).
-        val manyProps = !cfg.allowProps && cfg.propPremium > 0.0 && propLegs > 2 && propLegs <= cfg.propLegsShadowMax && legs.none { it.marketType.isBlank() }
+        val manyProps = !cfg.allowProps && cfg.propPremium > 0.0 && propLegs > cfg.maxPropLegs && propLegs <= cfg.propLegsShadowMax && legs.none { it.marketType.isBlank() }
         val premiumProps = !cfg.allowProps && propLegs > 0 && !manyProps
-        if (!manyProps && premiumProps && (cfg.propPremium <= 0.0 || propLegs > 2 || legs.any { it.marketType.isBlank() })) return RfqDecision.Decline("a leg is not a game line (our prop fair runs high)")
-        if (!manyProps && !cfg.allowProps && propLegs > 2 && !premiumProps) return RfqDecision.Decline("a leg is not a game line (our prop fair runs high)")
+        if (!manyProps && premiumProps && (cfg.propPremium <= 0.0 || propLegs > cfg.maxPropLegs || legs.any { it.marketType.isBlank() })) return RfqDecision.Decline("a leg is not a game line (our prop fair runs high)")
+        if (!manyProps && !cfg.allowProps && propLegs > cfg.maxPropLegs && !premiumProps) return RfqDecision.Decline("a leg is not a game line (our prop fair runs high)")
         var p = 1.0
         for (l in legs) p *= l.probability
         if (premiumProps) p = minOf(0.999, p * Math.pow(1.0 + cfg.propPremium, propLegs.toDouble()))
