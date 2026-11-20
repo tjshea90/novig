@@ -114,7 +114,20 @@ class RfqMakerTest {
         val off = RfqPricer.decide(created("a", "b"), now, cfg.copy(propPremium = 0.0), f, 0.0) as RfqDecision.Decline
         assertTrue(off.reason.contains("not a game line"))
         val three = fairs(leg("a", "e1", 0.6, type = "POINTS"), leg("b", "e2", 0.6, type = "ASSISTS"), leg("c", "e3", 0.6, type = "REBOUNDS"))
-        assertTrue((RfqPricer.decide(created("a", "b", "c"), now, cfg, three, 0.0) as RfqDecision.Decline).reason.contains("not a game line"))
+        assertTrue("with the shadow pricing off, three props decline unpriced as before", (RfqPricer.decide(created("a", "b", "c"), now, cfg.copy(propLegsShadowMax = 0), three, 0.0) as RfqDecision.Decline).let { it.reason.contains("not a game line") && it.fair == null })
+    }
+
+    @Test fun threeToSixPropLegsArePricedAtThePlainProductAndNeverQuoted() {
+        val three = fairs(leg("a", "e1", 0.6, type = "POINTS"), leg("b", "e2", 0.6, type = "ASSISTS"), leg("c", "e3", 0.5, type = "REBOUNDS"))
+        val d = RfqPricer.decide(created("a", "b", "c"), now, cfg, three, 0.0) as RfqDecision.Decline
+        assertTrue(d.reason, d.reason.contains("3 prop legs") && d.reason.contains("shadow"))
+        assertEquals("the plain product, no 20% per leg: the evidence of what the market pays over our fair", 0.18, d.fair!!, 1e-12)
+        val seven = fairs(*Array(7) { leg("l$it", "e$it", 0.9, type = "POINTS") })
+        assertNull("beyond the limit: declined unpriced", (RfqPricer.decide(created(*Array(7) { "l$it" }), now, cfg.copy(maxLegs = 7), seven, 0.0) as RfqDecision.Decline).fair)
+        val mixed = fairs(leg("a", "e1", 0.6, type = "POINTS"), leg("b", "e2", 0.6, type = "ASSISTS"), leg("c", "e3", 0.5, type = ""))
+        assertNull("a leg whose type is unknown is never priced this way", (RfqPricer.decide(created("a", "b", "c"), now, cfg, mixed, 0.0) as RfqDecision.Decline).fair)
+        val two = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.5, type = "RECEIVING_YARDS"))
+        assertEquals("one or two prop legs are quoted at the premium as before", 0.25 * 1.2, (RfqPricer.decide(created("a", "b"), now, cfg, two, 0.0) as RfqDecision.Quote).fair, 1e-9)
     }
 
     @Test fun everythingItCannotPriceIsDeclinedWithAReason() {
