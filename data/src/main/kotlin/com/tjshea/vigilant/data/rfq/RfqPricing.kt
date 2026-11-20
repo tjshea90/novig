@@ -96,6 +96,12 @@ data class RfqConfig(
      * prop parlay is cash the in-play game lines cannot use. A prop-involving quote may only use the free cash ABOVE this; 0 = no reserve.
      */
     val propCashReserve: Double = 90.0,
+    /**
+     * MK47: companies a GAME-LINE leg's fair must rest on (a prop leg keeps [minBooks]). After the coverage work 12.6% of RFQs were declined because a leg's fair rests on 2 companies (15,633 of 135k RFQs in the
+     * last two jobs; 1,410 on 1). The market's executed price minus our fair on the executed RFQs: game lines on 2 companies (n=138) median +0.18 pt, p25 -0.26, p75 +0.35, p10 -0.48: as tight as the 3+ company ones
+     * (n=3,274: +0.27, -0.03, +0.71), so a 2-company game-line fair is as good; props on 2 companies (n=112) p10 -6.9, p25 -2.5: too noisy, they keep [minBooks]; one company never passes.
+     */
+    val minBooksGameLines: Int = 2,
     /** MK45: how long a quote's collateral stays reserved after its 3 s auction closes: buyers accepted 6 to 29 s after the quote (16 fills, 9 more measured 2026-11-20: 6.6-25.3 s); 45 s was 1.5x the slowest, 36 s is 1.25x. */
     val reserveAfterCloseMs: Long = 36_000L,
     /** MK21: price a player-prop rung outside the posted range from the posted rung nearest even ([RfqLadder.extrapolate]); such a leg is a prop leg like any (premium, at most two). OFF = only posted and interpolated rungs. */
@@ -373,7 +379,8 @@ object RfqPricer {
             }
             if (l.startsMs - now < cfg.minLeadMs) return no("a leg starts within ${cfg.minLeadMs / 60_000L} min")
             if (l.startsMs - now > cfg.maxDaysAhead * 86_400_000L) return no("a leg is more than ${cfg.maxDaysAhead} days away")
-            if (l.books < cfg.minBooks) return no("a leg's fair rests on ${l.books} companies (need ${cfg.minBooks})")
+            val needBooks = if (l.marketType in GAME_LINES) minOf(cfg.minBooks, cfg.minBooksGameLines) else cfg.minBooks
+            if (l.books < needBooks) return no("a leg's fair rests on ${l.books} companies (need $needBooks)")
             val asOf = l.asOfMs ?: return no("a leg's fair has no age")
             if (now - asOf > cfg.maxFairAgeMs) return no("a leg's fair is ${(now - asOf) / 60_000L} min old")
             if (l.probability > cfg.maxLegFair) return no("a leg is too likely to win (${"%.0f".format(l.probability * 100)}% against the ${"%.0f".format(cfg.maxLegFair * 100)}% cap)")
