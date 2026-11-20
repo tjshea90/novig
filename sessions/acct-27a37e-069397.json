@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "6c00a987d55b17ccb3e23b28d93e154fd15c188f",
+ "head": "cefdacac1947a889221924a07bf10c08264dd545",
  "since": 1795129305,
- "beat": 1795162149,
- "beatIso": "2026-11-20T08:09:09Z",
- "done": "MK45: propCashReserve ($90 of free cash kept from any prop-involving quote: props are 53% of RFQs and trade 100x less per collateral-minute than in-play game lines) + reserveAfterCloseMs 36 s; census label for alternate lines; full suite 4496 green",
- "next": "08:00+: ONE graceful reset to deploy MK45 + the census label (board note first), then rfq_set propCashReserve is already the default 90; watch quotes/min and cash-short share; no reset before 08:00"
+ "beat": 1795162185,
+ "beatIso": "2026-11-20T08:09:45Z",
+ "done": "MK46: bounded extrapolation of alternate game-line numbers outside the posted ones (game's own slope, league fallback, <=1 probit), held-out-rung validation log; full suite 4499 green",
+ "next": "next engine reset >= 08:50 UTC (the 07:47 job was someone's reset): deploys MK46; then read 'RFQ alt-line check' (held-out rung error) and 'RFQ prop coverage'; judge fills"
 }
