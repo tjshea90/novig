@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "5e7d3ae94b35c79761ba12c17a87a9335c3d8c9d",
+ "head": "d4dc7a7d7fa5afb61a3640d92dbc6fb859806206",
  "since": 1795129305,
- "beat": 1795137734,
- "beatIso": "2026-11-20T01:22:14Z",
- "done": "MK25: no limit on prop legs (maxPropLegs) and total legs; full suite green",
- "next": "set maxLegs=100 in rfq-maker.json, reset the engine once (confirm startedAtMs), watch priceable count and halts; app stepper 'No limit' in the next app release"
+ "beat": 1795138031,
+ "beatIso": "2026-11-20T01:27:11Z",
+ "done": "MK25: rfq_set maxLegs guard 10 -> 100; maxLegs=100 written",
+ "next": "watch the new job's priceable count and halts"
 }
