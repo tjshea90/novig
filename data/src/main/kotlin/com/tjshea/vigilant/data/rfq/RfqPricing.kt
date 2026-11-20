@@ -83,6 +83,8 @@ data class RfqConfig(
     val propPairs: Boolean = true,
     /** MK20: quote a pair [PropPairs] prices (OFF = shadow: the model's fair is only journaled as the decline's fair, nothing is quoted until paper results say the price beats the market's trades). */
     val propPairsLive: Boolean = false,
+    /** MK21: price a player-prop rung outside the posted range from the posted rung nearest even ([RfqLadder.extrapolate]); such a leg is a prop leg like any (premium, at most two). OFF = only posted and interpolated rungs. */
+    val ladderExtrapolate: Boolean = true,
     /**
      * MK17 (Tj 2026-11-19: "only accepts parlays that will finish today (the latest leg is a game on todays slate)"): quote only a parlay whose LAST leg starts before today's slate ends (the sports day
      * runs 5 am to 5 am Eastern, like the Tracker's). Off = any game within [maxDaysAhead].
@@ -182,6 +184,8 @@ data class LegFair(
     val eventDesc: String = "",
     /** The market the outcome belongs to: the parlay hub reads the leg's result from it once the game is over (MK15). */
     val marketId: String = "",
+    /** The fair was extrapolated beyond the posted rungs of the player's stat ([RfqLadder.extrapolate], MK21), not posted or interpolated. */
+    val extrapolated: Boolean = false,
 )
 
 fun interface LegFairs { fun leg(outcomeId: String): LegFair? }

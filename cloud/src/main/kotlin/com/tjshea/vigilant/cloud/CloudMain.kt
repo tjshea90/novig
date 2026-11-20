@@ -592,7 +592,7 @@ fun main(args: Array<String>) = runBlocking {
             return map
         }
     }
-    val rfqLegFairs = com.tjshea.vigilant.data.rfq.RfqLadder.Fairs(rfqDirectFairs, { ladderTargets.get() }, { ladderRungs.get() })
+    val rfqLegFairs = com.tjshea.vigilant.data.rfq.RfqLadder.Fairs(rfqDirectFairs, { ladderTargets.get() }, { ladderRungs.get() }, { rfqCfg.get().ladderExtrapolate })
     scope.launch {
         delay(90_000L)
         while (isActive) {
