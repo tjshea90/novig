@@ -1994,3 +1994,11 @@ Earlier the engine was pricing and quoting a lot, and getting fills. Something h
 
 See if you can fix these to get this coverage 
 ```
+
+## 2026-11-20T05:49:27Z
+```
+$12 stake limit cap what it can back.
+
+I didn't set this and i don't understand it. Change it if it isn't needed 
+Do as many fixes as you can such as the ones you explained earlier which would increase parlay fills and implement them then restart the engine with them running 
+```
