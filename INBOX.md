@@ -2012,3 +2012,8 @@ No fair line at 35% is concerning. The apis should offer lines on almost everyth
 ```
 Still not getting any fills. Maybe we are asking for too high a margin. Add whatever fixes you had then restart the engine 
 ```
+
+## 2026-11-20T07:11:28Z
+```
+So far 48 quotes but 0 won. That is missed opportunity 
+```
