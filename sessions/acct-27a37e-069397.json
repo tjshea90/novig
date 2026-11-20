@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "03264fefb298b1d89249ca826cc3dcb97c16fe26",
+ "head": "380c09355628d799c42e77cabe1bdb7f1e020440",
  "since": 1795129305,
- "beat": 1795148465,
- "beatIso": "2026-11-20T04:21:05Z",
- "done": "MK31d: live legs up to 99% (liveMaxLegFair): 1,500 of 1,938 priced in-play RFQs were declined by the 90% leg cap",
- "next": "land, one graceful reset, watch live quotes/fills; judge EV after 20 fills; thin edge (market pays ~fair)"
+ "beat": 1795148538,
+ "beatIso": "2026-11-20T04:22:18Z",
+ "done": "MK32: settled maker parlays show adverse selection (31 of 32 legs won vs 23.2 expected, maker won 1 of 16): logged; open decision for Tj on fills vs edge",
+ "next": "watch live fills; decide with Tj whether to keep thin floors; collect results of live fills"
 }
