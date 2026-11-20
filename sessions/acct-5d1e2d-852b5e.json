@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "e49cc94e0a395568b56f543c478b78c8315ab5f5",
  "since": 1795134161,
- "beat": 1795145873,
- "beatIso": "2026-11-20T03:37:53Z",
+ "beat": 1795146735,
+ "beatIso": "2026-11-20T03:52:15Z",
  "done": "MK33: leg calibration from 49k resolved outcomes; whole wallet to parlays",
  "next": "land, one engine reset, then watch quotes won and settle P&L"
 }
