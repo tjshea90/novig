@@ -2026,3 +2026,8 @@ Claude has full permission to use the entire wallet and change all settings and 
 
 The goal is to have as much fair odds coverage as possible and provide as many quotes as possible for the parlay engine. The goal is filled parlays with maximum profit potential but not to fill parlays that are too easy to win such as the 15 I already lost money on.
 ```
+
+## 2026-11-20T07:22:36Z
+```
+Almost 200 quotes and 0 won. This needs to be fixed 
+```
