@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "878d5a8518d645e0e7f94a4586f0ccd58457ca3d",
+ "head": "80228c0796d4f7aa4bbd4300ea99c1b5752680ee",
  "since": 1795129305,
- "beat": 1795165495,
- "beatIso": "2026-11-20T09:04:55Z",
- "done": "MK37-MK46 shipped (live same-game pairs, prop-pair lane + cash reserve, stake cap lifted, coverage fixes, floors ~fair, alt-line extrapolation); engine job 44697283631 runs through MK45; MK46 on main not deployed; 0 wins so far at 8 quotes/min (cash-time bound)",
- "next": "PARLAY MANDATE LOOP trigger_017JPpLnJ23Y8NAFcMRFnmph fires 08:52 UTC: board, status, ONE reset >= 08:50 to deploy MK46, read 'RFQ alt-line check' + 'RFQ prop coverage', log any fill; US evening in-play is the real test; no 2 resets within an hour; revert lines for every change are in research/review/CHANGES.md (MK37-MK46)"
+ "beat": 1795165518,
+ "beatIso": "2026-11-20T09:05:18Z",
+ "done": "MK47: game-line legs need 2 companies (props 3): 2-company game-line fairs measured as tight as 3+ (n=138 vs 3,274); MK46 deployed 08:57",
+ "next": "reset >= 10:00 UTC deploys MK47; read 'RFQ alt-line check'; fills; the wallet is the volume lever (tell Tj once)"
 }
