@@ -179,8 +179,11 @@ object BetGrader {
      * The game [bet] was on among [games]: both teams agree (either order written), nearest start wins. A
      * tennis match's two players are in no fixed home/away order, so either order counts there.
      */
-    fun gameOf(bet: TrackedBet, games: List<GameScore>): GameScore? {
-        val m = NovigText.parseMatchup(bet.eventName) ?: return null
+    fun gameOf(bet: TrackedBet, games: List<GameScore>): GameScore? = gameOf(bet.eventName, bet.startsTs, games)
+
+    /** [gameOf] for anything that is an "Away @ Home" description and a start (the parlay hub's legs have no TrackedBet). */
+    fun gameOf(eventName: String, startsTs: Long, games: List<GameScore>): GameScore? {
+        val m = NovigText.parseMatchup(eventName) ?: return null
         val scored = games.mapNotNull { g ->
             val awayAway = TeamMatcher.similarity(m.away, g.away)
             val homeHome = TeamMatcher.similarity(m.home, g.home)
@@ -190,12 +193,12 @@ object BetGrader {
             val swapped = awayHome + homeAway
             val ok = if (swapped > straight) teamsFit(awayHome, homeAway) else teamsFit(awayAway, homeHome)
             val gap = if (g.tennis) TENNIS_START_GAP_MS else MAX_START_GAP_MS
-            if (!ok || kotlin.math.abs(g.startMs - bet.startsTs) > gap) null else g to maxOf(straight, swapped)
+            if (!ok || kotlin.math.abs(g.startMs - startsTs) > gap) null else g to maxOf(straight, swapped)
         }
         if (scored.isEmpty()) return null
         val best = scored.maxOf { it.second }
         // Two games of the same pairing (a doubleheader): the one nearest the bet's start.
-        return scored.filter { it.second == best }.minByOrNull { kotlin.math.abs(it.first.startMs - bet.startsTs) }?.first
+        return scored.filter { it.second == best }.minByOrNull { kotlin.math.abs(it.first.startMs - startsTs) }?.first
     }
 
     /**
