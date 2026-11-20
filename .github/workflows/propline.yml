@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | trial | speed | archive | backfill | multibook | clv | grade | timing | evbets | accuracy | coverage | altprobe | shape | bookstudy | bookparam"
+        description: "plans | probe | propcov | trial | speed | archive | backfill | multibook | clv | grade | timing | evbets | accuracy | coverage | altprobe | shape | bookstudy | bookparam"
         default: "plans"
       sports:
         description: "altprobe, bookstudy: comma-separated PropLine sport keys (football_nfl,football_ncaaf when empty), e.g. basketball_nba,hockey_nhl"
@@ -119,6 +119,11 @@ jobs:
               python3 -I tools/propline.py altprobe out/altprobe "${{ github.event.inputs.sports }}"
               gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine samples (keyless)" --notes "Real answers of PropLine endpoints, keyless."
               gh release upload propline-samples out/altprobe/* --clobber ;;
+            propcov)
+              # MK22 (2026-11-20): what PropLine really sends for the player props (two-sided rungs vs milestone rows, strikes per player, Novig's rungs against the books'), printed in the log; raw boards kept keyless.
+              python3 -I tools/propline.py propcov out/propcov "${{ github.event.inputs.sports }}"
+              gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine samples (keyless)" --notes "Real answers of PropLine endpoints, keyless."
+              gh release upload propline-samples out/propcov/* --clobber ;;
             bookparam)
               # PX9e (2026-10-25): which bookmakers list PropLine refuses with HTTP 400 (the engine's whole list, the old one, the new books, growing counts); printed in the log.
               python3 -I tools/propline.py bookparam out/bookparam "$(echo "${{ github.event.inputs.sports }}" | cut -d, -f1)" ;;
