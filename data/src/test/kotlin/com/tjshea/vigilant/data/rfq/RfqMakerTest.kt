@@ -138,7 +138,7 @@ class RfqMakerTest {
         assertTrue(why(created("a", "b"), leg("a", "e1", 0.5, live = true), leg("b", "e2", 0.4)).contains("in play"))
         assertTrue(why(created("a", "b"), leg("a", "e1", 0.5, startsInMs = 5 * 60_000L), leg("b", "e2", 0.4)).contains("starts within"))
         assertTrue(why(created("a", "b"), leg("a", "e1", 0.5, startsInMs = 9 * 86_400_000L), leg("b", "e2", 0.4)).contains("days away"))
-        assertTrue(why(created("a", "b"), leg("a", "e1", 0.5, books = 2), leg("b", "e2", 0.4)).contains("2 companies"))
+        assertTrue("a game line on 1 company never passes (MK47: 2 does)", why(created("a", "b"), leg("a", "e1", 0.5, books = 1), leg("b", "e2", 0.4)).contains("1 companies"))
         assertTrue(why(created("a", "b"), leg("a", "e1", 0.5, ageMs = 20 * 60_000L), leg("b", "e2", 0.4)).contains("old"))
         assertTrue(why(created("a", "b"), leg("a", "e1", 0.1), leg("b", "e2", 0.1)).contains("too unlikely to win"))
         assertTrue(why(created("a"), leg("a", "e1", 0.5)).contains("1 legs"))
