@@ -129,8 +129,9 @@ object LiveFair {
             val bidA = b.bidsByOutcome[a.outcomeId]?.firstOrNull()?.price
             val bidC = b.bidsByOutcome[c.outcomeId]?.firstOrNull()?.price
             val (pA, spread) = mid(bidA, bidC, maxSpread) ?: continue
-            out[a.outcomeId] = Leg(a.outcomeId, m.marketId, m.eventId, ev.description, ev.league, m.marketType, a.name, m.strike, ev.startsTs, pA, spread, asOf)
-            out[c.outcomeId] = Leg(c.outcomeId, m.marketId, m.eventId, ev.description, ev.league, m.marketType, c.name, m.strike, ev.startsTs, 1.0 - pA, spread, asOf)
+            val st = structure(m, ev)
+            out[a.outcomeId] = Leg(a.outcomeId, m.marketId, m.eventId, ev.description, ev.league, m.marketType, a.name, m.strike, ev.startsTs, pA, spread, asOf, st?.kind, st?.sideA, st?.homeLine, st?.awayTeam ?: false)
+            out[c.outcomeId] = Leg(c.outcomeId, m.marketId, m.eventId, ev.description, ev.league, m.marketType, c.name, m.strike, ev.startsTs, 1.0 - pA, spread, asOf, st?.kind, st?.sideB, st?.homeLine, st?.awayTeam ?: false)
         }
         return out
     }
