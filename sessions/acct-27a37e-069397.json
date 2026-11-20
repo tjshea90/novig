@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "be280dcae8c6ef6e75fbd6134dcb41d597fa87df",
  "since": 1795129305,
- "beat": 1795156105,
- "beatIso": "2026-11-20T06:28:25Z",
+ "beat": 1795156241,
+ "beatIso": "2026-11-20T06:30:41Z",
  "done": "MK40/MK41: coverage fixes (protected prop targets, Yes-only anytime-TD lists, alternate game-line ladders by interpolation, main live lines pre-watched, coverage census log); full suite 4495 green; attribution of the 35% no-fair",
  "next": "07:00+: board note, ONE graceful reset to deploy MK40/MK41, then read 'RFQ prop coverage' + status declines; no reset before 07:00"
 }
