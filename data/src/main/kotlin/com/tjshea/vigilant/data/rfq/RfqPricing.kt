@@ -326,8 +326,17 @@ object RfqPricer {
                 if (byPairModel && !cfg.propPairsLive) return RfqDecision.Decline("two player props of one game (modelled, shadow: not quoted)", p, legs)
             }
         }
+        val anyLive = legs.any { it.live }
         for (l in legs) {
-            if (l.live) return no("a leg is in play")
+            if (l.live) {
+                // A leg in play is priced only from Novig's live book ([LiveFair], MK31), only when the switch is on, only for a game line, and only while its price is fresh.
+                if (cfg.liveParlays == RfqConfig.Mode.OFF || l.source != LiveFair.SOURCE) return no("a leg is in play")
+                if (l.marketType !in GAME_LINES) return no("a prop leg is in play")
+                val liveAsOf = l.asOfMs ?: return no("a live leg's price has no age")
+                if (now - liveAsOf > cfg.liveMaxAgeMs) return no("a live leg's price is ${(now - liveAsOf) / 1000L} s old")
+                if (l.probability > cfg.maxLegFair) return no("a leg is too likely to win (${"%.0f".format(l.probability * 100)}% against the ${"%.0f".format(cfg.maxLegFair * 100)}% cap)")
+                continue
+            }
             if (l.startsMs - now < cfg.minLeadMs) return no("a leg starts within ${cfg.minLeadMs / 60_000L} min")
             if (l.startsMs - now > cfg.maxDaysAhead * 86_400_000L) return no("a leg is more than ${cfg.maxDaysAhead} days away")
             if (l.books < cfg.minBooks) return no("a leg's fair rests on ${l.books} companies (need ${cfg.minBooks})")
@@ -336,6 +345,10 @@ object RfqPricer {
             if (l.probability > cfg.maxLegFair) return no("a leg is too likely to win (${"%.0f".format(l.probability * 100)}% against the ${"%.0f".format(cfg.maxLegFair * 100)}% cap)")
         }
         if (manyProps) return no("$propLegs prop legs (priced at the plain product, shadow: not quoted)")
+        if (anyLive) {
+            if (p > cfg.liveMaxFair) return no("an in-play parlay: wins ${"%.0f".format(p * 100)}% of the time, over the ${"%.0f".format(cfg.liveMaxFair * 100)}% live cap")
+            if (cfg.liveParlays == RfqConfig.Mode.SHADOW || cfg.mode != RfqConfig.Mode.LIVE) return no("an in-play parlay (priced from Novig's live book, shadow: not quoted)")
+        }
         if (cfg.longshotsOnly && p > cfg.longshotMaxChance) return no("longshots only: the parlay wins ${"%.0f".format(p * 100)}% of the time, over the ${"%.0f".format(cfg.longshotMaxChance * 100)}% limit")
         if (p > cfg.maxFair) return no("the parlay is too likely to win (${"%.0f".format(p * 100)}% against the ${"%.0f".format(cfg.maxFair * 100)}% cap)")
         if (cfg.onlyToday) {
@@ -361,7 +374,9 @@ object RfqPricer {
         val modelPrice = market?.best(RfqMarketModel.classOf(legs, p), p, ids.size, leadMs.coerceAtLeast(0L) / 86_400_000.0, errFloor, 0.5 * errFloor, effCfg)
             ?.let { up(p + it) }
         // With `marketPricing` the model's price is the quote (it never goes under its own floor: relative error x sqrt(legs)); without, the rule's.
-        val price = if (cfg.marketPricing && modelPrice != null) modelPrice else rulePrice
+        val basePrice = if (cfg.marketPricing && modelPrice != null) modelPrice else rulePrice
+        // An in-play parlay asks more than the usual floors: the game moves between the auction and the buyer's accept (6-29 s), and the buyer sees the score.
+        val price = if (anyLive) maxOf(basePrice, up(p * (1.0 + cfg.livePremium)), up(p + cfg.livePointsPerLeg * ids.size)) else basePrice
         if (price > 0.999 || price < 0.001) return no("price ${"%.4f".format(price)} is outside Novig's 0.001-0.999")
         // The RFQ's minimum is the stake the user asked for (96% are the default $10; executed stakes sit just under it, the taker fee). The quote covers exactly that: more collateral than the trade needs
         // would only be tied up. The maker's collateral for a stake w is w (1 - P) / P.
@@ -371,7 +386,8 @@ object RfqPricer {
         val byParlay = (if (wallet != null) cfg.walletShare * wallet else cfg.maxCollateral) / perStake
         val byOpen = if (wallet != null) Double.MAX_VALUE else (cfg.maxOpenCollateral - openCollateral) / perStake      // the wallet's cash (byCash) is the open limit then
         val byCash = cashRoom?.let { it.coerceAtLeast(0.0) / perStake } ?: Double.MAX_VALUE
-        val room = floor(minOf(cfg.maxStake, byParlay, byOpen, byCash) * 100.0) / 100.0
+        val byLive = if (anyLive && cfg.liveMaxCollateral > 0.0) cfg.liveMaxCollateral / perStake else Double.MAX_VALUE
+        val room = floor(minOf(cfg.maxStake, byParlay, byOpen, byCash, byLive) * 100.0) / 100.0
         if (room < want) return no(if (byCash < minOf(cfg.maxStake, byParlay, byOpen) && byCash < want) "the balance covers a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked (cash is short)" else "the caps allow a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked")
         val stake = ceil(want * 100.0 - 1e-7) / 100.0
         return RfqDecision.Quote(price, stake, p, legs, rulePrice, modelPrice, via, livePrice)
