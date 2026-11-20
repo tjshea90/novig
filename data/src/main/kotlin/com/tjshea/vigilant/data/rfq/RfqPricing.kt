@@ -89,6 +89,15 @@ data class RfqConfig(
      * do trade need. A prop-pair quote may only use the free cash ABOVE this; 0 = no reserve.
      */
     val propPairsCashReserve: Double = 60.0,
+    /**
+     * MK45: dollars of free cash ANY quote that has a player-prop leg must leave alone. Measured on the journals of five jobs (125k fair-bearing RFQs): trades per $1,000 of collateral held for a minute run 4.1 for
+     * in-play two-leg game-line parlays (4.5% of those RFQs trade, $13 of collateral a $10 quote), 2.0 pregame two-leg game lines, 1.5 in-play same-game pairs, down to 0.04-0.05 for parlays with a prop (0.08% of the
+     * two-prop RFQs trade, 0.42% of three-prop ones; props are 53% of all RFQs). A quote's collateral is held about 48 s, so with ~$118 free the maker holds ~8 quotes a minute whatever it quotes: cash spent on a
+     * prop parlay is cash the in-play game lines cannot use. A prop-involving quote may only use the free cash ABOVE this; 0 = no reserve.
+     */
+    val propCashReserve: Double = 90.0,
+    /** MK45: how long a quote's collateral stays reserved after its 3 s auction closes: buyers accepted 6 to 29 s after the quote (16 fills, 9 more measured 2026-11-20: 6.6-25.3 s); 45 s was 1.5x the slowest, 36 s is 1.25x. */
+    val reserveAfterCloseMs: Long = 36_000L,
     /** MK21: price a player-prop rung outside the posted range from the posted rung nearest even ([RfqLadder.extrapolate]); such a leg is a prop leg like any (premium, at most two). OFF = only posted and interpolated rungs. */
     val ladderExtrapolate: Boolean = true,
     /** MK22: price a player-prop rung from every book's price at that very strike, two-sided rows and "N+" ladders alike ([PropLadderFair]); OFF = only the scan's own fair lines, interpolation and extrapolation. */
@@ -412,7 +421,7 @@ object RfqPricer {
         val byParlay = (if (wallet != null) cfg.walletShare * wallet else cfg.maxCollateral) / perStake
         val byOpen = if (wallet != null) Double.MAX_VALUE else (cfg.maxOpenCollateral - openCollateral) / perStake      // the wallet's cash (byCash) is the open limit then
         // A prop-pair quote (a class that almost never trades) leaves [RfqConfig.propPairsCashReserve] of the free cash to the classes that do (MK38).
-        val reserve = if (pairModelUsed) cfg.propPairsCashReserve.coerceAtLeast(0.0) else 0.0
+        val reserve = maxOf(if (pairModelUsed) cfg.propPairsCashReserve else 0.0, if (propLegs > 0) cfg.propCashReserve else 0.0).coerceAtLeast(0.0)
         val byCash = cashRoom?.let { (it - reserve).coerceAtLeast(0.0) / perStake } ?: Double.MAX_VALUE
         val byLive = if (anyLive && cfg.liveMaxCollateral > 0.0) cfg.liveMaxCollateral / perStake else Double.MAX_VALUE
         val room = floor(minOf(cfg.maxStake, byParlay, byOpen, byCash, byLive) * 100.0) / 100.0

@@ -255,7 +255,7 @@ class RfqMaker(
             if (send(RfqProtocol.quote(nonce.incrementAndGet(), e.rfqId, d.price, d.maxWager, e.rfqId))) {
                 quotesSent++; lastQuoteAtMs = now
                 p.quotePrice = d.price; p.quoteMax = d.maxWager
-                p.reserved = d.maxWager * perStake; p.reservedUntilMs = e.expiresTs + RESERVE_AFTER_CLOSE_MS
+                p.reserved = d.maxWager * perStake; p.reservedUntilMs = e.expiresTs + config().reserveAfterCloseMs
                 row("QUOTE_SENT", e.rfqId) { put("price", d.price); put("maxWager", d.maxWager); put("fair", d.fair); put("collateral", p.reserved) }
             }
         }
