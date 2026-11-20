@@ -87,4 +87,19 @@ class PropPairsTest {
             "g2" to LegFair("g2", "e1", "t", 0.5, 5, now - 60_000L, now + 3 * 3_600_000L, false, "TOTAL", kind = com.tjshea.vigilant.data.reference.LineKind.TOTAL, side = com.tjshea.vigilant.data.reference.Side.OVER, league = "NBA"))
         assertTrue("a copula pair keeps the whole cash", RfqPricer.decide(RfqProtocol.Created(now, "rfq", listOf("g1", "g2"), now + 3_000L, 10.0), now, live, LegFairs { gl[it] }, 0.0, cashRoom = 70.0) is RfqDecision.Quote)
     }
+
+    @Test fun anyQuoteWithAPropLegLeavesTheCashReserveToTheGameLinesThatTradeMore() {
+        // MK45: a prop leg in another game from a game line: not the pair model, still a prop-involving quote
+        val legs = mapOf("a" to prop("a", "Points", "A One", true, 0.6, event = "e1"),
+            "g" to LegFair("g", "e2", "m", 0.6, 5, now - 60_000L, now + 3 * 3_600_000L, false, "MONEY", league = "NBA"))
+        val c = RfqProtocol.Created(now, "r", listOf("a", "g"), now + 3_000L, 10.0)
+        val withReserve = base.copy(propCashReserve = 90.0)
+        // a $10 stake at a ~0.36 price needs ~$17.8 of collateral: 100 free minus the 90 reserve leaves $10
+        assertTrue((RfqPricer.decide(c, now, withReserve, LegFairs { legs[it] }, 0.0, cashRoom = 100.0) as RfqDecision.Decline).reason.contains("cash is short"))
+        assertTrue("no reserve: the same cash quotes it", RfqPricer.decide(c, now, base.copy(propCashReserve = 0.0), LegFairs { legs[it] }, 0.0, cashRoom = 100.0) is RfqDecision.Quote)
+        assertTrue("plenty of cash above the reserve quotes it", RfqPricer.decide(c, now, withReserve, LegFairs { legs[it] }, 0.0, cashRoom = 130.0) is RfqDecision.Quote)
+        // two game lines of different games have no prop leg: the whole cash is theirs
+        val gl = mapOf("g1" to legs.getValue("g"), "g2" to LegFair("g2", "e3", "t", 0.6, 5, now - 60_000L, now + 3 * 3_600_000L, false, "SPREAD", league = "NBA"))
+        assertTrue(RfqPricer.decide(RfqProtocol.Created(now, "r", listOf("g1", "g2"), now + 3_000L, 10.0), now, withReserve, LegFairs { gl[it] }, 0.0, cashRoom = 100.0) is RfqDecision.Quote)
+    }
 }
