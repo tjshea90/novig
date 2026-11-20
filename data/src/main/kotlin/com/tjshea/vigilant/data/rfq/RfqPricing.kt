@@ -291,6 +291,9 @@ object RfqSlate {
 }
 
 object RfqPricer {
+    /** PF1: the most legs of a declined (over the limit) parlay that are still priced for the journal; longer ones decline unpriced. */
+    const val SHADOW_LEGS = 12
+
     /** The market types whose fair the maker trusts (the Novig types the first shadow day measured at 0.94 points over our fair: moneyline, spread, total, team total, first-half versions, three-way moneyline). */
     val GAME_LINES = setOf("MONEY", "SPREAD", "TOTAL", "TEAM_TOTAL", "MONEY_1H", "SPREAD_1H", "TOTAL_1H", "MONEYLINE_3_WAY_WIN")
     /**
