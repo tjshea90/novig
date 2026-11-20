@@ -1903,3 +1903,8 @@ You said it was paper only earlier. Wrong. I had over 15 parlay orders filled wi
 ```
 Put no limit on the amount of prop legs and the amount of legs total
 ```
+
+## 2026-11-20T01:49:31Z
+```
+It was definitely able to price way more rfqs earlier 
+```
