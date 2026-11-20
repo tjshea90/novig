@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "45db9d8735582f8746c86905bfde3cd4b0002bb1",
+ "head": "5e7d3ae94b35c79761ba12c17a87a9335c3d8c9d",
  "since": 1795129305,
- "beat": 1795137706,
- "beatIso": "2026-11-20T01:21:46Z",
- "done": "MK24: 3-6 prop-leg parlays priced at the plain product in shadow (propLegsShadowMax); wallet-window finding logged; full suite green",
- "next": "reset the engine once (confirm startedAtMs) to deploy hub names + prop shadow; read journal 'prop legs ... shadow' rows vs market executed prices; Tj's win-chance decision"
+ "beat": 1795137734,
+ "beatIso": "2026-11-20T01:22:14Z",
+ "done": "MK25: no limit on prop legs (maxPropLegs) and total legs; full suite green",
+ "next": "set maxLegs=100 in rfq-maker.json, reset the engine once (confirm startedAtMs), watch priceable count and halts; app stepper 'No limit' in the next app release"
 }
