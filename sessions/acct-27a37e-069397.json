@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "e88e2d1a56b673023695360af4a39e2a52f2221a",
+ "head": "1486dec0befdc18b8abf12a9c5b6d4acd2b0a8b7",
  "since": 1795129305,
- "beat": 1795185163,
- "beatIso": "2026-11-20T14:32:43Z",
- "done": "MK53: MK16 coverage follow-up answered from this session's work (no new build): next fair source candidates ranked by trades per collateral-minute; Novig-mid fair rejected",
- "next": "16:20 wake: confirm the 16:09 job handover; evening summary to Tj (one message); rfq-pnl-study after 05:00 UTC 11-21"
+ "beat": 1795185223,
+ "beatIso": "2026-11-20T14:33:43Z",
+ "done": "MK54: walletLegShare 0.25 (same two legs filled twice in 7 minutes; per-leg cap was the whole wallet); 7 fills today, cash $44, 6 open ($78)",
+ "next": "16:20 wake: confirm job handover; evening summary to Tj; rfq-pnl-study after 05:00 UTC 11-21"
 }
