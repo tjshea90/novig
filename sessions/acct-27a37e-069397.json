@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "d624809479081d4bb5f08d7e220cb45af9a5831b",
+ "head": "3fc3b001038b8928442995bb7b6f3f48ebe3815d",
  "since": 1795129305,
- "beat": 1795203919,
- "beatIso": "2026-11-20T19:45:19Z",
+ "beat": 1795204101,
+ "beatIso": "2026-11-20T19:48:21Z",
  "done": "PS1: second parlay study (21,425 graded requests, 4 slates), settings audit, minLead 1 h + minFair .35 + new maxLeadMs 12 h in the profile (cloud-config 763581dab), tools/rfq_calibration_study.py + daily STUDY.md; full suite green (4514 passed)",
  "next": "land on main (push.sh); the engine is OFF; when Tj turns it on confirm status rfq.config shows minFair .35 / minLeadMs 3600000 / maxLeadMs 43200000 and configLock; read STUDY.md in the rfq-pnl-study Release after the 10:37 UTC run; no app release needed"
 }
