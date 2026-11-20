@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-11kmla",
  "head": "b259ddc7d7a6d6c128d32a54cb6557d59d99fa8d",
  "since": 1795134161,
- "beat": 1795203626,
- "beatIso": "2026-11-20T19:40:26Z",
+ "beat": 1795204989,
+ "beatIso": "2026-11-20T20:03:09Z",
  "done": "Parlay tracker: phone grades finished legs from final scores itself (engine stopped = no grading); leg grading wait 3h->2h; data parlay tests green",
  "next": "app compile unverified (0 tests ran); ship in next release; engine is stopped (Tj STOP)"
 }
