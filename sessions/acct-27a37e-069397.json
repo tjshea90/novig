@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "22e2372f5410d7f378a9bbe3a94c518628dcde44",
+ "head": "91c290010a31a7eb230648c5ceba166520bf829a",
  "since": 1795129305,
- "beat": 1795208379,
- "beatIso": "2026-11-20T20:59:39Z",
+ "beat": 1795208550,
+ "beatIso": "2026-11-20T21:02:30Z",
  "done": "PW1: wallet-adaptive parlay maker (prop reserve shares, outcome count per $200 of wallet, cash-aware gate built and off), replay at $145/$300/$600/$1200, profile f322a1d06 pinned by tests; full suite green (4519 passed)",
  "next": "land on main (push.sh); the engine is OFF; when it runs confirm status rfq.config shows outcomeCountWalletStep 200 / propCashReserveShare .6; read STUDY.md in the rfq-pnl-study Release daily; scale maxStake and guards again past ~$1000"
 }
