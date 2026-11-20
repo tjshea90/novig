@@ -1,22 +1,23 @@
-# CHECKPOINT 4730 — read me first, then TASKS.md
+# CHECKPOINT 4731 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T00:54:06Z · **tests:** all 11 fast checks green
-**Branch:** `claude/optimistic-curie-aoglz9` · **builds on:** `1cf774173` (this checkpoint is the commit after it)
+**Written:** 2026-11-20T01:01:08Z · **tests:** all 11 fast checks green
+**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `c91545876` (this checkpoint is the commit after it)
 
 ## Just done
-MK23 refined: carry-over alone is not enough (fair age); partial-result publish is the fix
+MK23: live-morning vs today's rules replay: the drop is the win-chance filters (0 of 16 fills pass 20%), not the pricing; logged
 
 ## Do this next
-look at CloudEngine first-pass flow before building
+wait for Tj's decision on the win-chance limit; meanwhile read the new job's journal for ladder-votes legs (01:42 UTC check), then price 3+ prop legs / 8+ legs in shadow
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  52afcfd55 ckpt 4730: MK23 refined: carry-over alone is not enough (fair age); partial-result pub
   1cf774173 ckpt 4729: MK23 logged: cold-start fair index explains 'engine priced more earlier'
   7fa234079 ckpt 4728: MK22: PropLadderFair: the maker's prop fair from every book's price at a st
   0b0247ecf ckpt 4727: MK22: propcov task (what PropLine really sends for player props: two-sided 
@@ -26,5 +27,7 @@ look at CloudEngine first-pass flow before building
   a73e68eaa ckpt 4723: MK10 23:51: loss stop set to 0 from the app by Tj; quoting again
   152f10ec6 ckpt 4722: MK10 23:21: loss stop tripped (-26.23), maker halted by design
   a16930efa ckpt 4721: MK19/MK17d: app tests green; landing the engine fixes
-  6dc92d160 ckpt 4720: MK19: ParlayAPI Business key no longer held back (usage-meter slack scales 
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
