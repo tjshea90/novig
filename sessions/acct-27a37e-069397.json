@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "a52b564451f71c2ab6ec85939dbb874593389fc8",
+ "head": "d8c6c2271b5c2a9d2f9f169ff8b9f3f31c71935b",
  "since": 1795129305,
- "beat": 1795133400,
- "beatIso": "2026-11-20T00:10:00Z",
- "done": "MK20: same-game prop-pair model (PropPairs, upper-bound ratios from PropLine resolved props), SHADOW only (propPairsLive off); tests + research note + tools/prop_pairs.py; full suite green",
- "next": "MK20 1b: after the engine's next natural handover, compare the model's shadow fair with the market's executed price for the same pairs in two journals (rfq_summary, OUTCOMES.md) then propPairsLive; next class: game line + prop pairs (14.5k), 3+ prop legs, 8+ legs; keep watching the live maker (halt, fills, confirm rate)"
+ "beat": 1795133433,
+ "beatIso": "2026-11-20T00:10:33Z",
+ "done": "MK21: ladder extrapolation of unposted NBA/NHL/NFL prop rungs (RfqLadder.extrapolate, ladderExtrapolate), RfqLadderTest, tools/ladder_extrap.py, research note; explained the quote drop (LIVE switch + options) and the constant 38% fair gap; full suite green",
+ "next": "deploy: engine reset (confirm startedAtMs), then read journal rows with an 'extrapolated' leg vs market executed prices; decide the 20% prop premium on that evidence; MK20 shadow comparison; protected prop markets; Kalshi player props"
 }
