@@ -376,10 +376,10 @@ def run(journals, out_dir, sample=6):
     open(os.path.join(out_dir, "STUDY.md"), "w").write("\n".join(lines) + "\n")
     with gzip.open(os.path.join(out_dir, "executed.csv.gz"), "wt", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["rfqId", "atMs", "day", "price", "wager", "fair", "n", "buyer", "lead_h", "same", "types", "league", "books_min", "legs_p"])
+        w.writerow(["rfqId", "atMs", "day", "price", "wager", "fair", "n", "buyer", "lead_h", "same", "types", "league", "books_min", "legs_p", "last_h"])
         for r in rows:
             if r["price"] is not None:
-                w.writerow([r["id"], r["at"], r["day"], r["price"], r["wager"], "%.4f" % r["fair"], r["n"], r["buyer"], "%.2f" % r["lead_h"], int(r["same"]), r["types"], r["league"], min(r["books"]), "|".join("%.3f" % p for p in r["ps"])])
+                w.writerow([r["id"], r["at"], r["day"], r["price"], r["wager"], "%.4f" % r["fair"], r["n"], r["buyer"], "%.2f" % r["lead_h"], int(r["same"]), r["types"], r["league"], min(r["books"]), "|".join("%.3f" % p for p in r["ps"]), "%.2f" % r["last_h"]])
     print("\n".join(lines))
     return 0
 
