@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-dxgkit",
  "head": "d5d578a96cd433448518a17c63baf115e1f13731",
  "since": 1795134161,
- "beat": 1795214862,
- "beatIso": "2026-11-20T22:47:42Z",
+ "beat": 1795216582,
+ "beatIso": "2026-11-20T23:16:22Z",
  "done": "WalletBetMoney: graded win with no Novig payout yet no longer shows as a full loss (Tj chat: 2-0 but -$2.00); test added",
  "next": "ship in next release; keep chat watch"
 }
