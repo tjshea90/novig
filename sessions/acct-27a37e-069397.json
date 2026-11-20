@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "9c900f1d987fd9f0388005a22e8e872143c2fc46",
+ "head": "0934ea2dc654514cc07254f894e10ec1d2f23161",
  "since": 1795129305,
- "beat": 1795139458,
- "beatIso": "2026-11-20T01:50:58Z",
- "done": "MK26: exact replay: engine quotes what Tj's caps allow (25% of the morning's quotes pass today's settings); evening flow 63% in-play",
- "next": "wait for Tj: restore the morning's caps (longshotsOnly off, maxFair 0.85, maxLegFair 0.99) or relax one; then same-game correlation shadow pricing"
+ "beat": 1795139531,
+ "beatIso": "2026-11-20T01:52:11Z",
+ "done": "MK21 evidence check: extrapolated legs mostly in same-game combos (none quoted); pair shadow fair at the market median (-0.20 pts)",
+ "next": "wait for Tj's restore decision; same-game correlation shadow pricing; lower pair ratios toward measured values before propPairsLive"
 }
