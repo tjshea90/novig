@@ -1,8 +1,13 @@
 package com.tjshea.vigilant.data.rfq
 
+import com.tjshea.vigilant.data.match.TeamMatcher
 import com.tjshea.vigilant.data.novig.NovigBook
 import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.novig.NovigMarket
+import com.tjshea.vigilant.data.novig.NovigText
+import com.tjshea.vigilant.data.reference.LineKind
+import com.tjshea.vigilant.data.reference.Side
+import kotlin.math.abs
 
 /**
  * The fair of a leg in a game that is IN PLAY, from Novig's own live book (MK31, Tj 2026-11-20: "Figure out how to price and fill live, in game parlay orders. I want fills but also not too risky and nothing over
