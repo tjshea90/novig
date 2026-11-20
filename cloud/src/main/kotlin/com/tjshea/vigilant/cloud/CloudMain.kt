@@ -1328,7 +1328,11 @@ private class ConfigReader(private val git: Git, private val dir: File) {
         if (head == sha && cached != null) return cached
         if (git.run(dir, "fetch", "-q", "--depth=1", "origin", "cloud-config") != 0) return cached
         val text = git.out(dir, "show", "FETCH_HEAD:settings.json") ?: return cached
-        rfqText = git.out(dir, "show", "FETCH_HEAD:rfq-maker.json")
+        val choice = com.tjshea.vigilant.data.rfq.RfqConfigSource.choose(
+            git.out(dir, "show", "FETCH_HEAD:${com.tjshea.vigilant.data.rfq.RfqConfigSource.ENGINE_FILE}"),
+            git.out(dir, "show", "FETCH_HEAD:${com.tjshea.vigilant.data.rfq.RfqConfigSource.APP_FILE}"),
+        )
+        rfqText = choice.text; rfqLock = choice.lock
         return CloudConfig.parse(text)?.also { cached = it; sha = head } ?: cached
     }
 }
