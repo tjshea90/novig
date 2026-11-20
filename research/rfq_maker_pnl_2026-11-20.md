@@ -1,0 +1,14 @@
+# What does a parlay maker earn at the clearing price? (MK33, 2026-11-20)
+
+**Why.** Tj left (2026-11-20 04:20 UTC) with: "a parlay system that runs, has fills and is expected to be profitable ... use the entire wallet ... parlays have priority over bids and bets". Our own fills are too few to say anything (16 settled: the buyer won 15, 31 of 32 legs won against 23.2 expected). The market itself gives a much larger sample: every parlay that EXECUTED (4,000 an hour in the evening) has a price and, once its games end, an outcome. A maker that had quoted that price earned price - 1[buyer won] per $1 of pot.
+
+**Method.** `tools/rfq_pnl_study.py` (daily on Actions: `.github/workflows/rfq-pnl-study.yml`, Release `rfq-pnl-study`): the engine's rfq journals (`cloud-archive-*`), EXECUTED rows joined to their priced RFQ row (legs), game lines graded from ESPN's public scoreboard (moneyline, spread, total; NBA, NHL, NCAAB, NFL, NCAAF). A parlay with an ungradable leg (prop, unmatched game) is left out.
+
+**First result (3 sports days, 5,951 graded executed game-line parlays, mostly the 11-19 slate).**
+- All: buyers won 29.4% against a price of 26.8%: the maker's P&L at the clearing price **-2.6%** of pot (se 0.5%, stake-weighted +0.1%): makers as a group earn about nothing; this market has no free lunch.
+- By legs: 2 legs **+3.2%** (se 0.8), 3 legs -9.8%, 4 legs -8.6%, 5+ -5.2%.
+- Favourite-heavy parlays are where makers lose: **3+ legs with every leg >= 50%: -20.6%** (buyers won 52.8% against a price of 32.2%; -24.5% on the 11-19 slate, -1% on 11-18, +7.7% on 11-17 with 13 parlays); every parlay with a leg under 50%: +2.1% (buyers won 7.6% against 9.7%); price under 0.10: +1.6% (not reachable: a $10 stake needs about $220 of collateral).
+- Our fair against what happened (executed parlays): fair 0.00-0.10 -> buyers won 3.1% against 4.4%; 0.10-0.20 17.7% against 14.0%; 0.30-0.45 43.8% against 38.1%: the fair runs low for the likelier parlays (favourite-longshot bias, the adverse selection of whoever quotes cheapest), high for the long shots.
+- Caveat: only three slates, one of them 80% of the sample, so the day columns disagree for several segments; a segment is trusted only when it holds across days. The daily run adds a slate a day.
+
+**What it means for the maker.** (1) Do not quote favourite-heavy parlays (mirage's MK34: `maxLegFair` 0.5 on pregame legs does exactly that); (2) the positive segments are small (+2-3% of pot) and need volume and a wallet bigger than $112 to show up above the noise; (3) fills at thin margins are the market's average business, which earns zero: profit has to come from segments (parlays with a longshot leg; 2-leg parlays), calibrated legs (mirage's `RfqLegCalibration`) and risk control, not from price cuts. (4) In play: 312 graded trades, -1.0% (se 2.1%), no conclusion yet.

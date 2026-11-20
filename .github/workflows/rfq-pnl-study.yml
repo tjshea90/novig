@@ -1,0 +1,44 @@
+# Maker P&L at the clearing price (MK33, Tj 2026-11-20: "a parlay system that runs, has fills and is expected to be profitable").
+# Daily: every parlay that executed on Novig (the engine's rfq journals in the cloud-archive-* Releases) graded by the final scores (ESPN's public scoreboard, no key) -> what a maker earns per $1 of pot at the clearing price,
+# by segment and by day (tools/rfq_pnl_study.py). Output: Release `rfq-pnl-study` (SUMMARY.md + graded.csv.gz, replaced each run). Reads Releases and public data only; sends nothing out, places nothing, pushes no branch.
+name: RFQ maker P&L study
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "how many of the newest cloud-archive-* Releases to read"
+        default: "10"
+  schedule:
+    - cron: "37 10 * * *"
+permissions:
+  contents: write
+concurrency:
+  group: rfq-pnl-study
+  cancel-in-progress: false
+jobs:
+  study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Download the journals and grade
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DAYS: ${{ github.event.inputs.days || '10' }}
+        run: |
+          set -eu
+          python3 -I tools/rfq_pnl_study.py selftest
+          mkdir -p journals out
+          for tag in $(gh release list --limit 60 --json tagName --jq '.[].tagName' | grep '^cloud-archive-' | sort | tail -"$DAYS"); do
+            gh release download "$tag" --pattern 'rfq-*.jsonl.gz' --dir journals --clobber || true
+          done
+          ls journals | wc -l
+          python3 -I tools/rfq_pnl_study.py run journals out
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view rfq-pnl-study >/dev/null 2>&1 || gh release create rfq-pnl-study --title "RFQ maker P&L at the clearing price" --notes "tools/rfq_pnl_study.py; replaced each run by .github/workflows/rfq-pnl-study.yml"
+          gh release upload rfq-pnl-study out/SUMMARY.md out/graded.csv.gz --clobber
