@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "3fbfafb7b723709e9770bc4a6e461c71706b61e5",
  "since": 1795129305,
- "beat": 1795143306,
- "beatIso": "2026-11-20T02:55:06Z",
+ "beat": 1795143577,
+ "beatIso": "2026-11-20T02:59:37Z",
  "done": "MK31: live in-play parlay pricing from Novig's live book (LiveFair), shadow by default, tests + full suite green",
  "next": "land, ONE graceful engine reset (board note first), read journals 20-30 min later: in-play shadow rows vs market executed price, then liveParlays=LIVE with the evidence-based premium"
 }
