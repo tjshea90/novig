@@ -1941,3 +1941,8 @@ Its pricing is still pathetic. Haven't got one parlay filled this whole time
 ```
 You keep telling me over and over you found the fix, but not one parlay has filled in hours 
 ```
+
+## 2026-11-20T02:46:03Z
+```
+Figure out how to price and fill live, in game parlay orders. I want fills but also not too risky and nothing over a 50% or so chance of winning 
+```
