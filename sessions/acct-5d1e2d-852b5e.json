@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-11kmla",
- "head": "63a30feedec5c93302be4395a7052e70dd03e730",
+ "head": "b259ddc7d7a6d6c128d32a54cb6557d59d99fa8d",
  "since": 1795134161,
- "beat": 1795203592,
- "beatIso": "2026-11-20T19:39:52Z",
- "done": "MK36: decline 3+ leg parlays whose legs are all favourites (study: -20.6% of pot)",
- "next": "land, one reset, tell Tj, watch settled"
+ "beat": 1795203626,
+ "beatIso": "2026-11-20T19:40:26Z",
+ "done": "Parlay tracker: phone grades finished legs from final scores itself (engine stopped = no grading); leg grading wait 3h->2h; data parlay tests green",
+ "next": "app compile unverified (0 tests ran); ship in next release; engine is stopped (Tj STOP)"
 }
