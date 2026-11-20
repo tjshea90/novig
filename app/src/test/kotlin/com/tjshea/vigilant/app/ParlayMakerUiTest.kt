@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -98,5 +99,20 @@ class ParlayMakerUiTest {
         show(shadow.copy(config = RfqConfig(mode = RfqConfig.Mode.LIVE), halted = "Novig locked the maker out of quoting for 5 minutes"))
         compose.onNodeWithTag("parlayWarning").assertIsDisplayed()
         compose.onNodeWithText("Live: stopped").assertIsDisplayed()
+    }
+
+    @Test fun theProfitProfileLocksTheControlsAndSaysSo() {
+        show(shadow.copy(config = RfqConfig(mode = RfqConfig.Mode.LIVE), configLock = "Claude's profit profile runs the parlay maker (chosen from graded results). Settings changed on this phone do not apply to it."))
+        compose.onNodeWithTag("parlayLocked").assertIsDisplayed()
+        compose.onNodeWithTag("parlayModes").assertDoesNotExist()
+        compose.onNodeWithTag("parlayMaxLegFair-plus").assertDoesNotExist()
+        compose.onNodeWithTag("parlayHeadline").assertIsDisplayed()
+        assertTrue(sent.isEmpty())
+    }
+
+    @Test fun withoutAProfileTheControlsStayAndNothingIsSaidAboutALock() {
+        show(shadow)
+        compose.onNodeWithTag("parlayLocked").assertDoesNotExist()
+        compose.onNodeWithTag("parlayModes").assertIsDisplayed()
     }
 }
