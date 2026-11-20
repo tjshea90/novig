@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-11kmla",
- "head": "a3b5093b18da64e780adffce79a6ab76cad228ce",
+ "head": "63a30feedec5c93302be4395a7052e70dd03e730",
  "since": 1795134161,
- "beat": 1795203378,
- "beatIso": "2026-11-20T19:36:18Z",
+ "beat": 1795203592,
+ "beatIso": "2026-11-20T19:39:52Z",
  "done": "MK36: decline 3+ leg parlays whose legs are all favourites (study: -20.6% of pot)",
  "next": "land, one reset, tell Tj, watch settled"
 }
