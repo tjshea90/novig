@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "d8c6c2271b5c2a9d2f9f169ff8b9f3f31c71935b",
+ "head": "0b0247ecf2db4c5421dff737e9baf562e7adfe91",
  "since": 1795129305,
- "beat": 1795134338,
- "beatIso": "2026-11-20T00:25:38Z",
- "done": "MK21: ladder extrapolation of unposted NBA/NHL/NFL prop rungs (RfqLadder.extrapolate, ladderExtrapolate), RfqLadderTest, tools/ladder_extrap.py, research note; explained the quote drop (LIVE switch + options) and the constant 38% fair gap; full suite green",
- "next": "deploy: engine reset (confirm startedAtMs), then read journal rows with an 'extrapolated' leg vs market executed prices; decide the 20% prop premium on that evidence; MK20 shadow comparison; protected prop markets; Kalshi player props"
+ "beat": 1795134483,
+ "beatIso": "2026-11-20T00:28:03Z",
+ "done": "MK22: propcov task (what PropLine really sends for player props: two-sided rungs vs milestone rows, strikes per player, Novig rungs vs books) in propline.py + workflow",
+ "next": "dispatch propline.yml task=propcov on main, read the log; then decide: milestone ladders (N+ Yes-only), alt rungs; build a fair store independent of the Novig-book scan"
 }
