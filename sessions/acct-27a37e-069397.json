@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "80228c0796d4f7aa4bbd4300ea99c1b5752680ee",
+ "head": "4ef88368192b43975a093200c268f686bc2032df",
  "since": 1795129305,
- "beat": 1795165518,
- "beatIso": "2026-11-20T09:05:18Z",
+ "beat": 1795165787,
+ "beatIso": "2026-11-20T09:09:47Z",
  "done": "MK47: game-line legs need 2 companies (props 3): 2-company game-line fairs measured as tight as 3+ (n=138 vs 3,274); MK46 deployed 08:57",
  "next": "reset >= 10:00 UTC deploys MK47; read 'RFQ alt-line check'; fills; the wallet is the volume lever (tell Tj once)"
 }
