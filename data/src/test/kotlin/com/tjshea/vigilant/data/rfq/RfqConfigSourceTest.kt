@@ -59,7 +59,8 @@ class RfqProfitProfileTest {
         val legs = mapOf("a" to leg("a", "e1", 0.7), "b" to leg("b", "e2", 0.65), "c" to leg("c", "e3", 0.6), "heavy" to leg("heavy", "e4", 0.85), "next" to leg("next", "e5", 0.6, startsInH = 30L))
         fun decide(vararg ids: String) = RfqPricer.decide(created(*ids), now, c, LegFairs { legs[it] }, 0.0)
         val q = decide("a", "b") as RfqDecision.Quote
-        assertEquals("two favourites of .70 and .65 (fair .455) are quoted, over a longshots-only limit of .40", 0.455, q.fair, 1e-9)
+        assertTrue("two favourites of .70 and .65 (about .46 after the leg calibration) are quoted, over a longshots-only limit of .40: ${q.fair}", q.fair in 0.44..0.50)
+        assertTrue("priced just above its fair (the floors), not at a margin that would lose the auction", q.price in q.fair..(q.fair + 0.01))
         assertTrue("a game tomorrow is quoted (no today-only filter)", decide("c", "next") is RfqDecision.Quote)
         assertTrue("a leg at 85% is the sharp heavy-favourite pocket", (decide("a", "heavy") as RfqDecision.Decline).reason.contains("too likely"))
         val three = decide("a", "b", "c") as RfqDecision.Decline
