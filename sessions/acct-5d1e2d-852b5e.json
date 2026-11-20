@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "c8413ef4feee103f863bfc5973e2447d74ae5d61",
+ "head": "c63a3bb19cf0e7ee6f9b494b99f582a39eaa0177",
  "since": 1795134161,
- "beat": 1795148534,
- "beatIso": "2026-11-20T04:22:14Z",
- "done": "MK10 03:52: 1 win 8 losses, -25.30; calibration job running, 95 quotes 0 won",
- "next": "settled-leg calibration of our fairs"
+ "beat": 1795148595,
+ "beatIso": "2026-11-20T04:23:15Z",
+ "done": "MK34: maxLegFair .5 after 1 win 15 losses (-58.60)",
+ "next": "monitor; tell Tj; consider paper if the longshot-leg region also loses"
 }
