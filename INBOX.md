@@ -2050,3 +2050,8 @@ Forget my preferences. Tweak the engine for maximum profit based on actual data.
 2) ignore whatever settings are on my phone app 
 3) aim for parlay fills but also profit 
 ```
+
+## 2026-11-20T18:59:09Z
+```
+The other claude session said that the margin is not what makes parlays profitable for the maker, it is the types of parlays made. Verify this and make sure the engine runs on settings designed for profit in line with this data 
+```
