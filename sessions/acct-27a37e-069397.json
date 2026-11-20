@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "b498e37bfbe4192bbc927f10d420bfb1618689bc",
+ "head": "9c900f1d987fd9f0388005a22e8e872143c2fc46",
  "since": 1795129305,
- "beat": 1795139252,
- "beatIso": "2026-11-20T01:47:32Z",
- "done": "MK22-MK25 done and deployed (job 44653302569): prop votes fair, ladder extrapolation, pair model shadow, prop-leg shadow, no limit on legs; evening RFQ flow is 66% live-game parlays",
- "next": "build same-game correlation pricing in SHADOW (game line + prop of one game, 3+ legs of one game): 41% of pregame RFQs; read journal rows 'N prop legs ... shadow' and 'ladder-votes' legs vs market EXECUTED prices; Tj decision pending on win-chance limit; app stepper 'No limit' in next app release; MK21 check fires 01:42 UTC"
+ "beat": 1795139458,
+ "beatIso": "2026-11-20T01:50:58Z",
+ "done": "MK26: exact replay: engine quotes what Tj's caps allow (25% of the morning's quotes pass today's settings); evening flow 63% in-play",
+ "next": "wait for Tj: restore the morning's caps (longshotsOnly off, maxFair 0.85, maxLegFair 0.99) or relax one; then same-game correlation shadow pricing"
 }
