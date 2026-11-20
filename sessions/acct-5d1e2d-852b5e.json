@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "58ffee2b3e3735ad76a25624a63906441ee09d79",
  "since": 1795134161,
- "beat": 1795143883,
- "beatIso": "2026-11-20T03:04:43Z",
+ "beat": 1795144131,
+ "beatIso": "2026-11-20T03:08:51Z",
  "done": "MK29c: leg grading drops tennis round suffix and retries reversed home/away",
  "next": "land, reset once, recheck the 6 stale legs"
 }
