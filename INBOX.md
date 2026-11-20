@@ -1908,3 +1908,8 @@ Put no limit on the amount of prop legs and the amount of legs total
 ```
 It was definitely able to price way more rfqs earlier 
 ```
+
+## 2026-11-20T01:52:29Z
+```
+I've literally been trying to get more parlays filled for over an hour and haven't got one fill. Claude is failing badly 
+```
