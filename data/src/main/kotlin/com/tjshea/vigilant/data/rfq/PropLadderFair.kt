@@ -116,11 +116,11 @@ object PropLadderFair {
                     val byCompany = all.filterNot { ReputableBooks.isBanned(it.bookKey) }.groupBy { BookCompany.of(it.bookKey) }
                     if (byCompany.isEmpty()) continue
                     val companyP = byCompany.values.map { vs -> vs.map { it.overProb }.average() }
-                    // one stale vote must not date the whole strike: the median age of the votes (null when none says)
+                    // one stale vote must not date the whole strike: the median age of the votes, the older of the two middle ones with an even count (null when none says)
                     val ages = byCompany.values.mapNotNull { vs -> vs.mapNotNull { it.seenMs }.minOrNull() }.sorted()
                     votes += all.size
                     milestoneVotes += all.count { it.milestone }
-                    strikes[strike] = Strike(strike, companyP.average(), byCompany.size, if (ages.isEmpty()) null else ages[ages.size / 2])
+                    strikes[strike] = Strike(strike, companyP.average(), byCompany.size, if (ages.isEmpty()) null else ages[(ages.size - 1) / 2])
                 }
                 if (strikes.isNotEmpty()) tables[key] = Table(strikes)
             }

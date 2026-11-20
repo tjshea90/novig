@@ -68,7 +68,7 @@ class PropLadderFairTest {
         val dk = (1.0 / american(-134)) / 1.07
         val fd = (0.5 + (1.0 / american(-134)) / PropLadderFair.DEFAULT_HOLD) / 2.0
         assertEquals((dk + fd) / 2.0, s.overProb, 1e-9)
-        assertEquals("the median age of the votes", now - 30_000L, s.asOfMs)
+        assertEquals("the older of the two middle ages", now - 30_000L, s.asOfMs)
     }
 
     @Test fun aBookIsCalibratedOnTheStrikesWhereItsNPlusRowMeetsTheTwoSidedConsensus() {
@@ -85,11 +85,11 @@ class PropLadderFairTest {
     }
 
     @Test fun aSideOutsideTheTrustedRangeIsNotPriced() {
-        val ev = event(emptyList(), listOf(milestone("draftkings", "A", "POINTS", 10, -4000), milestone("fanduel", "A", "POINTS", 10, -4000), milestone("betmgm", "A", "POINTS", 10, -4000)))
+        val ev = event(emptyList(), listOf(milestone("draftkings", "A", "POINTS", 10, -50000), milestone("fanduel", "A", "POINTS", 10, -50000), milestone("betmgm", "A", "POINTS", 10, -50000)))
         val store = PropLadderFair.build(listOf(ev))
         val t = store.table("pl:1", com.tjshea.vigilant.data.match.PlayerNames.key("A"), "POINTS")!!
-        assertNull("over 9.5 is a 97% side", PropLadderFair.atStrike(t, 9.5, true))
-        assertNull("and its under a 3% one", PropLadderFair.atStrike(t, 9.5, false))
+        assertNull("over 9.5 is a 93%+ side after the margin", PropLadderFair.atStrike(t, 9.5, true))
+        assertNull("and its under a 7% one", PropLadderFair.atStrike(t, 9.5, false))
         assertNull("no vote at another strike", PropLadderFair.atStrike(t, 12.5, true))
     }
 
