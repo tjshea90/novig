@@ -55,7 +55,6 @@ class RfqWalletAdaptTest {
         val legs = mapOf("g" to leg("g", "e1", 0.6), "p" to leg("p", "e2", 0.6, type = "POINTS"))
         val c = cfg.copy(adaptiveCash = false, allowProps = true, propPremium = 0.0, propCashReserve = 90.0)
         // $110 of free cash: a dollar reserve of $90 leaves $20 for a $10 stake at fair 0.36 ($17.8 of collateral); 60% of a $200 wallet is $120 and leaves nothing
-        assertTrue(decide(created("g", "p"), legs, null, c, wallet = 200.0).let { it is RfqDecision.Quote } || true)
         val dollars = RfqPricer.decide(created("g", "p"), now, c, LegFairs { legs[it] }, 0.0, null, 110.0, 200.0, null)
         assertTrue("dollar reserve: ${dollars}", dollars is RfqDecision.Quote)
         val share = RfqPricer.decide(created("g", "p"), now, c.copy(propCashReserveShare = 0.6), LegFairs { legs[it] }, 0.0, null, 110.0, 200.0, null)
@@ -76,6 +75,6 @@ class RfqWalletAdaptTest {
         }
         assertFalse("fixed limit of 2: the fourth parlay on 'a' is not quoted", quotes(0.0))
         assertTrue("a $1,000 wallet at one more per $500 allows 4", quotes(500.0))
-        assertFalse("one more per $1,000 gives a limit of 3 and three are held", quotes(1_000.0).also { assertTrue(it || true) } && false)
+        assertFalse("one more per $1,000 gives a limit of 3 and three are held", quotes(1_000.0))
     }
 }
