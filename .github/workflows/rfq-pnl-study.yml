@@ -36,9 +36,12 @@ jobs:
           done
           ls journals | wc -l
           python3 -I tools/rfq_pnl_study.py run journals out
+          # PF1: the shapes the parlay profit profile quotes or declines, with the shared-leg null (tools/rfq_shape_study.py): the readout every ANALYST/ENGINEER run judges the profile by
+          python3 -I tools/rfq_shape_study.py selftest
+          python3 -I tools/rfq_shape_study.py out/graded.csv.gz > out/SHAPES.txt
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view rfq-pnl-study >/dev/null 2>&1 || gh release create rfq-pnl-study --title "RFQ maker P&L at the clearing price" --notes "tools/rfq_pnl_study.py; replaced each run by .github/workflows/rfq-pnl-study.yml"
-          gh release upload rfq-pnl-study out/SUMMARY.md out/graded.csv.gz --clobber
+          gh release upload rfq-pnl-study out/SUMMARY.md out/graded.csv.gz out/SHAPES.txt --clobber
