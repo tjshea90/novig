@@ -1,13 +1,13 @@
-# CHECKPOINT 4800 — read me first, then TASKS.md
+# CHECKPOINT 4801 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T21:46:24Z · **tests:** all 11 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `405ce1279` (this checkpoint is the commit after it)
+**Written:** 2026-11-20T21:55:52Z · **tests:** all 11 fast checks green
+**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `6e782d76a` (this checkpoint is the commit after it)
 
 ## Just done
-NT2: the NCAAB tab leaves out games with no betting odds (no Novig market, no ESPN line) once Novig's board is read, footnote counts them; full suite green (4543); v1.0.148 (code 488)
+pre-release: NT2: the NCAAB tab no longer lists small college games with no betting odds (versionCode 488, v1.0.148)
 
 ## Do this next
-land on main (push.sh), wait for CI green, ship.sh, release.yml, record-release.sh v1.0.148 488; tell Tj
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.148), then run: bash tools/record-release.sh v1.0.148 488 "NT2: the NCAAB tab no longer lists small college games with no betting odds"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ land on main (push.sh), wait for CI green, ship.sh, release.yml, record-release.
 
 ## Last ten checkpoints
 ```
+  6e782d76a ckpt 4800: NT2: the NCAAB tab leaves out games with no betting odds (no Novig market, 
   2a8959f6f ckpt 4799: NT1 SHIPPED: v1.0.147 (release.yml green, recorded in BUILDLOG): NCAAB tab 
   2dd3aab57 ckpt 4798: pre-release: NT1: your NCAAB tab bets tracked: bets, money bet, profit/loss
   3ed97d792 ckpt 4797: NT1: the NCAAB tab's own bet record (origin tag, NcaabBetStats, card in the
@@ -25,8 +26,4 @@ land on main (push.sh), wait for CI green, ship.sh, release.yml, record-release.
   2a9006344 ckpt 4793: PF1 DONE: parlay profit profile live on cloud-config (rfq-maker-engine.json
   a047ad3ab ckpt 4792: pre-release: PF1: the parlay maker runs on Claude's profit profile; the Par
   69a013492 ckpt 4791: PF1: CLAUDE.md standing rule for the profile file; waiting for CI on d92a8f
-  d92a8f21d ckpt 4790: PF1: profile written to cloud-config rfq-maker-engine.json (81ac24d85) and 
 ```
-
-(6 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
