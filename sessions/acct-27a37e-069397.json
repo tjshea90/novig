@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "3ed97d7924b573da8a6c8450cfcb276f888d8e46",
  "since": 1795129305,
- "beat": 1795209420,
- "beatIso": "2026-11-20T21:17:00Z",
+ "beat": 1795210008,
+ "beatIso": "2026-11-20T21:26:48Z",
  "done": "NT1: the NCAAB tab's own bet record (origin tag, NcaabBetStats, card in the NCAAB tab and the Tracker Stats page, Tracker NCAAB chip), full suite green (4536), v1.0.147 (code 487)",
  "next": "land on main (push.sh), wait for CI, ship.sh, release.yml, record-release.sh v1.0.147 487; tell Tj the release link and what is counted (bets placed from the tab by hand; older tab bets recognised by their fair basis; the game-sheet \u2713 before this release can't be told apart)"
 }
