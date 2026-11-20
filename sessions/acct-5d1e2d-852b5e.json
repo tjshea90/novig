@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "460b5b64afd2c3c94baaba5552e04a1ed182951c",
  "since": 1795134161,
- "beat": 1795142126,
- "beatIso": "2026-11-20T02:35:26Z",
+ "beat": 1795142648,
+ "beatIso": "2026-11-20T02:44:08Z",
  "done": "pre-release: MK29: parlay legs graded from final scores; in-play legs blue not green (versionCode 485, v1.0.145)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.145), then run: bash tools/record-release.sh v1.0.145 485 \"MK29: parlay legs graded from final scores; in-play legs blue not green\""
 }
