@@ -720,6 +720,7 @@ fun main(args: Array<String>) = runBlocking {
         var lastLog = 0L
         var outcomeMarket: Map<String, String> = emptyMap()
         var moneyIds: List<String> = emptyList()
+        var mainIds: List<String> = emptyList()
         var pinnedLive: List<String> = emptyList()
         while (isActive) {
             val s = latestSettings.get()
@@ -735,11 +736,16 @@ fun main(args: Array<String>) = runBlocking {
                         events = ev; markets = ms; catalogAt = now
                         outcomeMarket = HashMap<String, String>(ms.size * 2).also { m -> for (mk in ms) for (o in mk.outcomes) m[o.outcomeId] = mk.marketId }
                         moneyIds = ms.filter { it.marketType == "MONEY" }.map { it.marketId }
+                        // each in-play game's MAIN spread (the smallest handicap) and total (the middle number): watched from the first pass, as the moneylines are, not only after an RFQ has asked (MK41: 31% of the RFQs with no fair line had one in-play NCAAB line the engine had not yet been asked about)
+                        mainIds = ms.filter { it.marketType == "SPREAD" || it.marketType == "TOTAL" }.groupBy { it.eventId to it.marketType }.values.mapNotNull { g ->
+                            val withStrike = g.filter { it.strike != null }
+                            if (withStrike.isEmpty()) null else if (g.first().marketType == "SPREAD") withStrike.minByOrNull { Math.abs(it.strike!!) }?.marketId else withStrike.sortedBy { it.strike }[withStrike.size / 2].marketId
+                        }
                     }
                     // Only what is asked for is watched (a market costs 16 stream tokens, the key's allowance is shared with the scan): every in-play moneyline, and the markets of the legs RFQs asked about in the
                     // last 20 minutes (newest first, 600 in all). A market not yet watched has no price: the parlay is declined the first time and priced once its book arrives.
                     val asked = liveBook.recentDemand(now, 20 * 60_000L).mapNotNull { outcomeMarket[it] }.distinct()
-                    val wanted = (moneyIds + asked).distinct().take(600)
+                    val wanted = (moneyIds + mainIds + asked).distinct().take(600)
                     if (wanted != pinnedLive) { liveView.watchLive(wanted); pinnedLive = wanted }
                     val books = liveView.liveTop(wanted)
                     liveBook.replace(com.tjshea.vigilant.data.rfq.LiveFair.build(markets, books, events, cfg.liveMaxSpread, 10_000L, now, streamCurrent = true), now)
