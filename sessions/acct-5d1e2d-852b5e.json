@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aoglz9",
- "head": "f34f54531ae9ac1786cdde6ee5110d944321bb21",
+ "head": "81a2287de3153da3d97563d4be27a416001ab194",
  "since": 1795134161,
- "beat": 1795145024,
- "beatIso": "2026-11-20T03:23:44Z",
- "done": "MK10 03:22: first maker win (+9.55), realized -16.68",
- "next": "keep watching; calibrate by leg band at 10+ settled"
+ "beat": 1795145076,
+ "beatIso": "2026-11-20T03:24:36Z",
+ "done": "MK32: engine bids off + auto-bet paper: parlays get the wallet (Tj)",
+ "next": "outcome study (MK5) next"
 }
