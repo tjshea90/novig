@@ -1,22 +1,22 @@
-# CHECKPOINT 4786 — read me first, then TASKS.md
+# CHECKPOINT 4787 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T16:23:01Z · **tests:** all 11 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `1486dec0b` (this checkpoint is the commit after it)
+**Written:** 2026-11-20T17:46:03Z · **tests:** all 11 fast checks green
+**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `7b9bed113` (this checkpoint is the commit after it)
 
 ## Just done
-MK55: 16:20 check: job handover ok (44767621550), 8 fills today (15:37 FSU same-game pair), 1 settled (ATP, -$1.09), 7 open $83, cash $38.6
+MK56: identical-parlay guard (maxSameParlay 1, maxParlaysPerOutcome 2) coded + tested (data 3201 + cloud 11 green), losses study written (20 settled -$63.42, 13 in one cluster), CHANGES/TASKS/LEVERS updated; NOT yet landed/deployed
 
 ## Do this next
-wake ~19:30 UTC; evening summary to Tj ~23:00 UTC (quotes/min, in-play pairs, fills, settled P&L); rfq-pnl-study after 05:00 UTC 11-21
+land main (bash tools/push.sh), board note, ONE graceful reset (>=1h since the 15:54 handover; confirm new startedAtMs), tell Tj once; 19:30 check, evening summary 23:00, rfq-pnl-study after 05:00 UTC 11-21
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  bba77e4ab ckpt 4786: MK55: 16:20 check: job handover ok (44767621550), 8 fills today (15:37 FSU 
   1486dec0b ckpt 4785: MK54: walletLegShare 0.25 (same two legs filled twice in 7 minutes; per-leg
   e88e2d1a5 ckpt 4784: MK53: MK16 coverage follow-up answered from this session's work (no new bui
   48446df58 ckpt 4783: MK52: MK14 follow-up 2 report: market outcomes release stale (0 graded), ex
@@ -26,5 +26,7 @@ wake ~19:30 UTC; evening summary to Tj ~23:00 UTC (quotes/min, in-play pairs, fi
   1720bc703 ckpt 4779: MK48: 3% error premium per extrapolated game-line leg (alt-line check: medi
   80228c079 ckpt 4778: MK47: game-line legs need 2 companies (props 3): 2-company game-line fairs 
   25ff5c451 ckpt 4777: MK37-MK46 shipped (live same-game pairs, prop-pair lane + cash reserve, sta
-  cefdacac1 ckpt 4776: MK46: bounded extrapolation of alternate game-line numbers outside the post
 ```
+
+(5 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
