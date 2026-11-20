@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "59d1b7146fd7677c8959fd4b758ad28c75f4e838",
+ "head": "e9578733961f7befd879410846fd422298e571fc",
  "since": 1795129305,
- "beat": 1795136760,
- "beatIso": "2026-11-20T01:06:00Z",
- "done": "MK23: live-morning vs today's rules replay: the drop is the win-chance filters (0 of 16 fills pass 20%), not the pricing; logged",
- "next": "wait for Tj's decision on the win-chance limit; meanwhile read the new job's journal for ladder-votes legs (01:42 UTC check), then price 3+ prop legs / 8+ legs in shadow"
+ "beat": 1795136795,
+ "beatIso": "2026-11-20T01:06:35Z",
+ "done": "MK14 follow-up check ok; ladder legs now carry name/desc/market id for hub grading; full suite green",
+ "next": "reset the engine once to deploy (confirm startedAtMs); then read the journal for ladder-votes legs; price 3+ prop legs / 8+ legs in shadow; Tj's decision on the win-chance limit"
 }
