@@ -928,6 +928,21 @@ class ApiBettingTest {
         assertEquals(1, t.all().size)
     }
 
+    // ---- where a bet was placed (NT1, Tj 2026-11-20: track the bets hand bet on the NCAAB tab) --------------------------------------------------
+
+    @Test
+    fun `a bet placed from the NCAAB tab keeps that origin once it fills, and any other bet has none`() = kotlinx.coroutines.runBlocking {
+        val t = tracker()
+        val fill = listOf(NovigFill("f1", "o1", null, market.marketId, "A", 2_000L, 10.0, true, 0.0, now - 60_000))
+        val tab = t.logApi(target().copy(origin = BetTracker.ORIGIN_NCAAB), "o1", fill)!!
+        assertEquals(BetTracker.ORIGIN_NCAAB, tab.origin)
+        assertTrue(com.tjshea.vigilant.data.ncaab.NcaabBetStats.isNcaabTab(tab))
+        val other = t.logApi(target().copy(market = market.copy(marketId = "other"), outcomeId = "B"), "o2", listOf(NovigFill("f2", "o2", null, "other", "B", 2_000L, 10.0, true, 0.0, now - 60_000)))!!
+        assertNull(other.origin)
+        assertFalse(com.tjshea.vigilant.data.ncaab.NcaabBetStats.isNcaabTab(other))
+        assertEquals("the origin survives a reload from disk", BetTracker.ORIGIN_NCAAB, t.all().first { it.id == tab.id }.origin)
+    }
+
     // ---- the per-game limit (Tj, 2026-10-04: one team at +5, then +6, then +10 is one event) ---------------------------------------------------
 
     private val gameRef = GameRef("ev", "Team B @ Team A", startsTs, "NFL")
