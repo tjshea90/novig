@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "1cf7741735dfe07c48bbf8ba6c0f520d2292fd5f",
  "since": 1795134161,
- "beat": 1795135992,
- "beatIso": "2026-11-20T00:53:12Z",
+ "beat": 1795136007,
+ "beatIso": "2026-11-20T00:53:27Z",
  "done": "MK23 logged: cold-start fair index explains 'engine priced more earlier'",
  "next": "build fair index carry-over; coordinate resets"
 }
