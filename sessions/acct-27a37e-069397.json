@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "2ec9b535288b6898347babe7584d21dd7b222660",
+ "head": "9fa1895012f804a7901e58f493a20ca0b9ce85c7",
  "since": 1795129305,
- "beat": 1795142442,
- "beatIso": "2026-11-20T02:40:42Z",
- "done": "MK29b: price floors lowered to the market's level (margin .006, minPoints .002, fairErrorRel .006); fill expectation logged",
- "next": "check fills at 02:46 (scheduled); read QUOTE_SENT vs EXECUTED of the warm job; same-game correlation shadow; mirage carries fairKept job to job (do not touch CloudMain fairKept)"
+ "beat": 1795142566,
+ "beatIso": "2026-11-20T02:42:46Z",
+ "done": "MK30: 0 of 203 quotes' RFQs ever traded; 95% of evening trades are in-play parlays; trade rates by kind logged",
+ "next": "Tj decision: live (in-play) parlay pricing from Novig live mid in shadow first, or wait for morning pregame flow; 02:46 scheduled check reports counts"
 }
