@@ -326,6 +326,23 @@ class NcaabUiTest {
     }
 
     @Test
+    fun `screenshots of the record card open in the tab`() {
+        fun b(id: String, startsMs: Long, stake: Double, status: com.tjshea.vigilant.data.tracker.BetStatus, label: String = "Moneyline", sel: String = "Davidson") =
+            com.tjshea.vigilant.data.tracker.TrackedBet(id, startsMs - 3_600_000L, "NCAAB", "Rider @ Davidson", startsMs, label, sel, "m$id", "o$id", 0.5, 0.5, 0.52, 0.04, stake, status, settledAtMs = startsMs + 2 * 3_600_000L,
+                origin = com.tjshea.vigilant.data.tracker.BetTracker.ORIGIN_NCAAB)
+        val day = 86_400_000L
+        val bets = listOf(
+            b("a", start - 2 * day, 10.0, com.tjshea.vigilant.data.tracker.BetStatus.WON), b("b", start - 2 * day + 3_600_000L, 20.0, com.tjshea.vigilant.data.tracker.BetStatus.LOST, "Spread", "Rider +4.5"),
+            b("c", start - day, 15.0, com.tjshea.vigilant.data.tracker.BetStatus.WON, "Total Points", "Over 141.5"), b("d", start, 10.0, com.tjshea.vigilant.data.tracker.BetStatus.PENDING),
+        )
+        myBets = com.tjshea.vigilant.data.ncaab.NcaabBetStats.summarize(bets, now)
+        show(views())
+        compose.onNodeWithTag("ncaabBetsToggle").performClick()
+        compose.onNodeWithTag("ncaabBetsDays").performScrollTo().performClick()
+        compose.onRoot().captureRoboImage("screenshots/NT1_ncaab_my_bets.png")
+    }
+
+    @Test
     fun `a tab with no bets says what it will count and a tab without the record draws no card`() {
         myBets = com.tjshea.vigilant.data.ncaab.NcaabBetStats.summarize(emptyList(), now)
         show(views())
