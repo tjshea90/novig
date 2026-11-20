@@ -702,8 +702,15 @@ fun main(args: Array<String>) = runBlocking {
                         val missing = HashMap<String, Int>(); var covered = 0
                         for ((id, t) in m) {
                             if (rfqLegFairs.leg(id) != null) { covered++; continue }
-                            val why = idx?.explain(t) ?: "no vote store yet"
-                            missing.merge("${t.marketType.removeSuffix("_PROTECTED")}: $why", 1, Int::plus)
+                            val gl = t.line
+                            if (gl != null) {
+                                // an alternate game line is priced from the game's posted numbers: either the game has none, or this number lies outside them (never extrapolated)
+                                val posted = ladderRungs.get()[t.group]
+                                missing.merge("${t.marketType} alternate: " + (if (posted.isNullOrEmpty()) "no posted ${gl.kind.name.lowercase()} for this game" else "number outside the ${posted.size} posted ones"), 1, Int::plus)
+                            } else {
+                                val why = idx?.explain(t) ?: "no vote store yet"
+                                missing.merge("${t.marketType.removeSuffix("_PROTECTED")}: $why", 1, Int::plus)
+                            }
                         }
                         log("RFQ prop coverage: $covered of ${m.size} prop outcomes have a fair; missing: " + missing.entries.sortedByDescending { it.value }.take(10).joinToString("; ") { "${it.key} x${it.value}" })
                     }
