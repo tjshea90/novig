@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "ea125d9d9628da263598f41b40c4b4b706268723",
  "since": 1795129305,
- "beat": 1795158283,
- "beatIso": "2026-11-20T07:04:43Z",
+ "beat": 1795158654,
+ "beatIso": "2026-11-20T07:10:54Z",
  "done": "MK41 fix: Novig answered 400 INVALID_QUERY to the combined protected-type list and the ladder catalog read failed (targets empty): plain and protected twins are read apart, the twin names that exist are learned one request each",
  "next": "reset the engine once to deploy the fix (job 44689559689 has an empty ladder target list until then); confirm 'RFQ ladder: N outcomes' + 'RFQ prop coverage' in the log"
 }
