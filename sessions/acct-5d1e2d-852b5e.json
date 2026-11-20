@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aoglz9",
  "head": "c8413ef4feee103f863bfc5973e2447d74ae5d61",
  "since": 1795134161,
- "beat": 1795146778,
- "beatIso": "2026-11-20T03:52:58Z",
+ "beat": 1795148534,
+ "beatIso": "2026-11-20T04:22:14Z",
  "done": "MK10 03:52: 1 win 8 losses, -25.30; calibration job running, 95 quotes 0 won",
  "next": "settled-leg calibration of our fairs"
 }
