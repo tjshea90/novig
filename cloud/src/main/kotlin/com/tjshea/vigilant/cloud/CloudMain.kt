@@ -725,6 +725,20 @@ fun main(args: Array<String>) = runBlocking {
                             }
                         }
                         log("RFQ prop coverage: $covered of ${m.size} prop outcomes have a fair; missing: " + missing.entries.sortedByDescending { it.value }.take(10).joinToString("; ") { "${it.key} x${it.value}" })
+                        // MK46: how good is the alternate-line extrapolation? Every posted game-line ladder of 3+ rungs, its outermost rungs held out one at a time and predicted from the rest (the game's own slope, the league's when the game has too few rungs); the error in points of probability.
+                        runCatching {
+                            val errs = ArrayList<Double>()
+                            for ((g, rungs) in ladderRungs.get()) {
+                                if (!g.contains("|GL_") || rungs.size < 3) continue
+                                val sorted = rungs.sortedBy { it.strike }
+                                for (held in listOf(sorted.first(), sorted.last())) {
+                                    val rest = sorted.filter { it !== held }
+                                    val pred = com.tjshea.vigilant.data.rfq.RfqLadder.extrapolateGameLine(rest, held.strike, null) ?: continue
+                                    errs += Math.abs(pred.overProb - held.overProb) * 100.0
+                                }
+                            }
+                            if (errs.size >= 20) { errs.sort(); log("RFQ alt-line check: ${errs.size} held-out outer rungs predicted from the rest: median error %.1f points, p90 %.1f, worst %.1f".format(errs[errs.size / 2], errs[(errs.size * 9) / 10], errs.last())) }
+                        }
                     }
                 }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("RFQ ladder catalog not read: ${e.message?.take(120)}") }
             }
