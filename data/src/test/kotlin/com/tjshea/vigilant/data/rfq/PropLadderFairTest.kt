@@ -45,9 +45,10 @@ class PropLadderFairTest {
                 {"name":"3+ Rebounds","description":"Brook Lopez","price":-300,"point":2.5}]}]}]}]"""
         val e = PropLineClient.parseEvents(raw, Json { ignoreUnknownKeys = true }, "basketball_nba").single()
         val m = e.milestones
-        assertEquals("three N+ rows: two of DraftKings, one of Bovada; the Yes market, the row with a point are not", 3, m.size)
-        assertEquals(setOf(9.5, 19.5, 14.5), m.map { it.strike }.toSet())
-        assertTrue(m.all { it.stat == "POINTS" && it.subject == "Brook Lopez" })
+        assertEquals("three N+ rows (two of DraftKings, one of Bovada) and DraftKings' Yes-only touchdown price; the row with a point is not", 4, m.size)
+        assertEquals(setOf(9.5, 19.5, 14.5), m.filter { it.stat == "POINTS" }.map { it.strike }.toSet())
+        assertTrue(m.filter { it.stat == "POINTS" }.all { it.subject == "Brook Lopez" })
+        assertEquals("a Yes-only price is the 1+ line", 0.5, m.single { it.stat == "TOUCHDOWNS" }.strike, 0.0)
         assertEquals(american(-217), m.single { it.strike == 9.5 }.decimal, 1e-9)
         assertEquals("Bovada's 'To Score 15+ Points' is Over 14.5", "bovada", m.single { it.strike == 14.5 }.bookKey)
         assertTrue("the milestone rows are not two-sided markets", e.markets.none { it.quotes.size != 2 })
@@ -143,5 +144,38 @@ class PropLadderFairTest {
         assertEquals("jalen brunson", player)
         assertNotNull(index.at(RfqLadder.Target("g", 25.5, true, "n1", "POINTS_PROTECTED", now, player)))
         assertNotNull(index.at(RfqLadder.Target("g", 25.5, true, "n1", "POINTS", now, player)))
+    }
+
+    // ---- MK40: Yes-only anytime touchdown prices and Novig's protected markets ----
+    @Test fun aYesOnlyAnytimeTouchdownListIsMilestonesAndAPlayerWithANoStaysTwoSided() {
+        val raw = """[{"id":"7","home_team":"Houston Texans","away_team":"Indianapolis Colts","commence_time":"2026-11-23T18:00:00Z","bookmakers":[
+            {"key":"betway","title":"Betway","last_update":"2026-11-20T00:26:22Z","markets":[{"key":"player_anytime_td","last_update":"2026-11-20T00:26:22Z","outcomes":[
+              {"name":"Anthony Gould","description":"Anthony Gould","price":675,"point":null},{"name":"C.J. Stroud","description":"C.J. Stroud","price":450,"point":null}]}]},
+            {"key":"hardrock","title":"Hard Rock","last_update":"2026-11-20T00:26:22Z","markets":[{"key":"player_anytime_td","last_update":"2026-11-20T00:26:22Z","outcomes":[
+              {"name":"Yes","description":"C.J. Stroud","price":420,"point":null},{"name":"No","description":"C.J. Stroud","price":-600,"point":null}]}]},
+            {"key":"fliff","title":"Fliff","last_update":"2026-11-20T00:26:22Z","markets":[{"key":"player_anytime_td","last_update":"2026-11-20T00:26:22Z","outcomes":[
+              {"name":"Yes","description":"Anthony Gould","price":600,"point":null}]}]}]}]"""
+        val e = PropLineClient.parseEvents(raw, Json { ignoreUnknownKeys = true }, "americanfootball_nfl").single()
+        assertEquals("Betway's two names and Fliff's lone Yes; Hard Rock's Yes+No is a two-sided market, not a milestone", 3, e.milestones.size)
+        assertTrue(e.milestones.all { it.stat == "TOUCHDOWNS" && it.strike == 0.5 })
+        assertEquals(1, e.markets.count { it.stat == "TOUCHDOWNS" && it.quotes.size == 2 })
+        val store = PropLadderFair.build(listOf(e))
+        val stroud = store.table("pl:7", "cj stroud", "TOUCHDOWNS")!!.strikes.getValue(0.5)
+        // Betway 1/5.5 / 1.09 = 0.1668; Hard Rock devigged 0.1923 / (0.1923 + 0.8571) = 0.1832: one vote per company, mean 0.1750
+        assertEquals(0.1750, stroud.overProb, 0.002)
+        assertEquals(2, stroud.companies)
+        val gould = store.table("pl:7", "anthony gould", "TOUCHDOWNS")!!.strikes.getValue(0.5)
+        assertEquals("two Yes-only prices, one margin: Betway 1/7.75/1.09 = 0.1184, Fliff 1/7/1.09 = 0.1311", 0.1248, gould.overProb, 0.002)
+    }
+
+    @Test fun aProtectedMarketSharesItsTwinsGroupAndAnUnpricedLegSaysWhy() {
+        assertEquals(RfqLadder.group("e1", "POINTS", "Jalen Brunson 25.5 POINTS", 25.5), RfqLadder.group("e1", "POINTS_PROTECTED", "Jalen Brunson 25.5 POINTS_PROTECTED", 25.5))
+        val store = PropLadderFair.build(listOf(event(listOf(twoSided("fanduel", "Brook Lopez", "POINTS", 11.5, -110, -110)), emptyList())))
+        val idx = PropLadderFair.Index(store, mapOf("n1" to "pl:1"))
+        fun t(eventId: String, player: String, strike: Double) = RfqLadder.Target("g", strike, true, eventId, "POINTS_PROTECTED", now, player)
+        assertEquals("priced by votes", idx.explain(t("n1", "brook lopez", 11.5)))
+        assertEquals("strike not posted", idx.explain(t("n1", "brook lopez", 13.5)))
+        assertEquals("player not posted by any book", idx.explain(t("n1", "somebody else", 11.5)))
+        assertEquals("game not paired with a PropLine game", idx.explain(t("n2", "brook lopez", 11.5)))
     }
 }
