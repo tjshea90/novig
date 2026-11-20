@@ -1,13 +1,13 @@
-# CHECKPOINT 4738 — read me first, then TASKS.md
+# CHECKPOINT 4739 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T01:50:58Z · **tests:** all 11 fast checks green
-**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `c49a6208e` (this checkpoint is the commit after it)
+**Written:** 2026-11-20T01:52:11Z · **tests:** all 11 fast checks green
+**Branch:** `claude/parlay-profitability-research-fy3tnz` · **builds on:** `6d8f13083` (this checkpoint is the commit after it)
 
 ## Just done
-MK26: exact replay: engine quotes what Tj's caps allow (25% of the morning's quotes pass today's settings); evening flow 63% in-play
+MK21 evidence check: extrapolated legs mostly in same-game combos (none quoted); pair shadow fair at the market median (-0.20 pts)
 
 ## Do this next
-wait for Tj: restore the morning's caps (longshotsOnly off, maxFair 0.85, maxLegFair 0.99) or relax one; then same-game correlation shadow pricing
+wait for Tj's restore decision; same-game correlation shadow pricing; lower pair ratios toward measured values before propPairsLive
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,8 @@ wait for Tj: restore the morning's caps (longshotsOnly off, maxFair 0.85, maxLeg
 
 ## Last ten checkpoints
 ```
+  9c900f1d9 ckpt 4738: MK26: exact replay: engine quotes what Tj's caps allow (25% of the morning'
+  12d05ce7e ckpt 4738: MK27: minLead 1 min, propPairsLive per Tj; marketPricing held for his yes
   b498e37bf ckpt 4737: MK22-MK25 done and deployed (job 44653302569): prop votes fair, ladder extr
   7bc79a19c ckpt 4736: MK26: warm-job decline breakdown; minLeadMs 10 min
   d4dc7a7d7 ckpt 4735: MK25: rfq_set maxLegs guard 10 -> 100; maxLegs=100 written
@@ -25,9 +27,4 @@ wait for Tj: restore the morning's caps (longshotsOnly off, maxFair 0.85, maxLeg
   e95787339 ckpt 4732: MK14 follow-up check ok; ladder legs now carry name/desc/market id for hub 
   1fc4eb7f0 ckpt 4731: MK23: live-morning vs today's rules replay: the drop is the win-chance filt
   52afcfd55 ckpt 4730: MK23 refined: carry-over alone is not enough (fair age); partial-result pub
-  1cf774173 ckpt 4729: MK23 logged: cold-start fair index explains 'engine priced more earlier'
-  7fa234079 ckpt 4728: MK22: PropLadderFair: the maker's prop fair from every book's price at a st
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
