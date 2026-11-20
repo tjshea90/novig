@@ -41,7 +41,7 @@ class ParlayLegScoresTest {
         val old = BookLeg("a", "Spread Phoenix Suns +5.5", "Phoenix Suns @ Sacramento Kings", "NBA", "SPREAD", start, 0.7, null)
         val done = old.copy(outcomeId = "b", result = "WIN")
         val fresh = old.copy(outcomeId = "c", startsMs = now - 3_600_000L)
-        val parlay = BookParlay(legs = listOf(old, done, fresh))
+        val parlay = BookParlay(rfqId = "r1", legs = listOf(old, done, fresh))
         val got = ParlayBook.legsToScore(ParlayBook(parlays = listOf(parlay)), now)
         assertEquals(listOf("a"), got.map { it.outcomeId })
     }
