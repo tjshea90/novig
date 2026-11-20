@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "85bd5b7de3811c0a580479feb8b187330482ab85",
  "since": 1795129305,
- "beat": 1795169365,
- "beatIso": "2026-11-20T10:09:25Z",
+ "beat": 1795170620,
+ "beatIso": "2026-11-20T10:30:20Z",
  "done": "MK49: first fills since the morning (3 in job 44706378771 + 1 at 07:36): 2-leg game-line parlays at fair+0.1pt; Tj told via Messages",
  "next": "reset >= 10:00 UTC deploys MK47+MK48; settle watch: the NBA totals fills settle tonight (hub parlays.json results); judge P&L per fill after 20 fills"
 }
