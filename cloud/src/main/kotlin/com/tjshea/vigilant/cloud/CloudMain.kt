@@ -689,12 +689,12 @@ fun main(args: Array<String>) = runBlocking {
                         moneyIds = ms.filter { it.marketType == "MONEY" }.map { it.marketId }
                     }
                     // Only what is asked for is watched (a market costs 16 stream tokens, the key's allowance is shared with the scan): every in-play moneyline, and the markets of the legs RFQs asked about in the
-                    // last 10 minutes (newest first, at most 300). A market not yet watched has no price: the parlay is declined the first time and priced once its book arrives.
-                    val asked = liveBook.recentDemand(now, 10 * 60_000L).mapNotNull { outcomeMarket[it] }.distinct()
-                    val wanted = (moneyIds + asked).distinct().take(330)
+                    // last 20 minutes (newest first, 600 in all). A market not yet watched has no price: the parlay is declined the first time and priced once its book arrives.
+                    val asked = liveBook.recentDemand(now, 20 * 60_000L).mapNotNull { outcomeMarket[it] }.distinct()
+                    val wanted = (moneyIds + asked).distinct().take(600)
                     if (wanted != pinnedLive) { liveView.watchLive(wanted); pinnedLive = wanted }
                     val books = liveView.liveTop(wanted)
-                    liveBook.replace(com.tjshea.vigilant.data.rfq.LiveFair.build(markets, books, events, cfg.liveMaxSpread, 10_000L, now), now)
+                    liveBook.replace(com.tjshea.vigilant.data.rfq.LiveFair.build(markets, books, events, cfg.liveMaxSpread, 10_000L, now, streamCurrent = true), now)
                     if (now - lastLog > 5 * 60_000L) { lastLog = now; log("RFQ live fair: ${events.size} games in play, ${markets.size} game-line markets in the catalog, ${pinnedLive.size} watched, ${liveBook.size()} legs priced from Novig's live book (mode ${cfg.liveParlays})") }
                 }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("RFQ live fair not built: ${e.message?.take(120)}") }
             } else if (liveBook.size() > 0 || pinnedLive.isNotEmpty()) { liveBook.replace(emptyMap(), now); liveView.watchLive(emptyList()); pinnedLive = emptyList() }

@@ -57,7 +57,7 @@ object LiveFair {
     }
 
     /** Every priceable outcome of [markets] (two-outcome game lines of in-play [events]) from [books] at [now], keyed by outcome id. */
-    fun build(markets: Collection<NovigMarket>, books: Map<String, NovigBook>, events: Map<String, NovigEvent>, maxSpread: Double = DEFAULT_MAX_SPREAD, maxAgeMs: Long = 10_000L, now: Long): Map<String, Leg> {
+    fun build(markets: Collection<NovigMarket>, books: Map<String, NovigBook>, events: Map<String, NovigEvent>, maxSpread: Double = DEFAULT_MAX_SPREAD, maxAgeMs: Long = 10_000L, now: Long, streamCurrent: Boolean = false): Map<String, Leg> {
         val out = HashMap<String, Leg>(markets.size * 2)
         for (m in markets) {
             if (m.marketType !in TYPES || m.outcomes.size != 2) continue
@@ -65,13 +65,15 @@ object LiveFair {
             val b = books[m.marketId] ?: continue
             val lc = b.lifecycle
             if (lc != null && (lc.closed || lc.live == false)) continue
-            if (now - b.fetchedAtMs > maxAgeMs) continue
+            // A book the stream holds is current as of now (every change since its snapshot has been applied: NovigStream.read): a quiet market's last CHANGE may be a minute old and its price still right.
+            val asOf = if (streamCurrent) now else b.fetchedAtMs
+            if (now - asOf > maxAgeMs) continue
             val a = m.outcomes[0]; val c = m.outcomes[1]
             val bidA = b.bidsByOutcome[a.outcomeId]?.firstOrNull()?.price
             val bidC = b.bidsByOutcome[c.outcomeId]?.firstOrNull()?.price
             val (pA, spread) = mid(bidA, bidC, maxSpread) ?: continue
-            out[a.outcomeId] = Leg(a.outcomeId, m.marketId, m.eventId, ev.description, ev.league, m.marketType, a.name, m.strike, ev.startsTs, pA, spread, b.fetchedAtMs)
-            out[c.outcomeId] = Leg(c.outcomeId, m.marketId, m.eventId, ev.description, ev.league, m.marketType, c.name, m.strike, ev.startsTs, 1.0 - pA, spread, b.fetchedAtMs)
+            out[a.outcomeId] = Leg(a.outcomeId, m.marketId, m.eventId, ev.description, ev.league, m.marketType, a.name, m.strike, ev.startsTs, pA, spread, asOf)
+            out[c.outcomeId] = Leg(c.outcomeId, m.marketId, m.eventId, ev.description, ev.league, m.marketType, c.name, m.strike, ev.startsTs, 1.0 - pA, spread, asOf)
         }
         return out
     }

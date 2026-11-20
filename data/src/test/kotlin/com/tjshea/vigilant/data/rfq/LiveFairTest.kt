@@ -138,4 +138,12 @@ class LiveFairTest {
         assertTrue("two favourites are quoted", RfqPricer.decide(created("a", "b"), now, cfg, fairs(pre("a", "e1", 0.7), pre("b", "e2", 0.7)), 0.0) is RfqDecision.Quote)
         assertTrue("switched off", RfqPricer.decide(created("a", "b", "c"), now, cfg.copy(maxFair = 0.99, manyLegsNeedLongshot = 0.0), allFav, 0.0) is RfqDecision.Quote)
     }
+
+    @Test fun aBookTheStreamHoldsIsCurrentEvenWhenItsLastChangeIsOld() {
+        val markets = listOf(market("m1", "e1"))
+        val quiet = mapOf("m1" to book("m1", 550, 430, at = now - 120_000L))
+        assertTrue("by the book's own stamp it is too old", LiveFair.build(markets, quiet, mapOf("e1" to event("e1")), now = now).isEmpty())
+        val legs = LiveFair.build(markets, quiet, mapOf("e1" to event("e1")), now = now, streamCurrent = true)
+        assertEquals("a stream-held book is current as of now", now, legs.getValue("m1-a").asOfMs)
+    }
 }
