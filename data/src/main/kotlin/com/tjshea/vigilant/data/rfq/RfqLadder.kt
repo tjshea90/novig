@@ -69,7 +69,7 @@ object RfqLadder {
         val over = cdf(probit(base.overProb) + beta * units)
         // the over probability must fall with the line: a rung under the base is at least the base's, one above is at most
         if ((strike < base.strike && over < base.overProb - 1e-9) || (strike > base.strike && over > base.overProb + 1e-9)) return null
-        return Rung(strike, over, posted.minOf { it.books }.coerceAtMost(base.books), posted.minOf { it.asOfMs })
+        return Rung(strike, over, base.books, base.asOfMs)
     }
 
     /**
