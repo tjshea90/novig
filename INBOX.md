@@ -2007,3 +2007,8 @@ Do as many fixes as you can such as the ones you explained earlier which would i
 ```
 No fair line at 35% is concerning. The apis should offer lines on almost everything, including alternate ladders 
 ```
+
+## 2026-11-20T06:38:55Z
+```
+Still not getting any fills. Maybe we are asking for too high a margin. Add whatever fixes you had then restart the engine 
+```
