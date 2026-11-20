@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "3abb655907c9f7031d5b067bdf15361c46c12562",
+ "head": "f07b1432ba5c57311ef154a78175d1e944afe190",
  "since": 1795129305,
- "beat": 1795152865,
- "beatIso": "2026-11-20T05:34:25Z",
+ "beat": 1795153062,
+ "beatIso": "2026-11-20T05:37:42Z",
  "done": "MK37: in-play same-game pairs (moneyline/spread + total) priced through the copula: LiveFair.structure + legs carry kind/side/line; full suite 4490 green",
  "next": "deploy with the next engine reset at/after 06:05 UTC (board note first); then read quotes on live pairs + any won/filled; next: pregame prop+game-line pairs, no-fair 45% (NCAAB live alternates, far pregame)"
 }
