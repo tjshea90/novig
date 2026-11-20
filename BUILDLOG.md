@@ -484,3 +484,4 @@ day that changes.
 | v1.0.143 | code 483 | 2026-11-19T22:36Z | MK17b: Parlays tiles show the whole wallet and the cash free to post when the wallet is the collateral limit; parlay options; parlay hub
 | v1.0.144 | code 484 | 2026-11-19T22:54Z | MK18: parlay controls show your change at once and confirm when the engine has it; faster engine config read; coverage study
 | v1.0.145 | code 485 | 2026-11-20T02:35Z | MK29: parlay legs graded from final scores; in-play legs blue not green
+| v1.0.146 | code 486 | 2026-11-20T18:58Z | PF1: the parlay maker runs on Claude's profit profile; the Parlays tab says so and hides the controls the engine no longer reads
