@@ -5,8 +5,10 @@
   python3 tools/rfq_set.py mode=SHADOW --why "listen and journal, send nothing"
   python3 tools/rfq_set.py mode=LIVE margin=0.08 maxStake=12 maxCollateral=45 maxOpenCollateral=90 --why "evidence: ..."
   python3 tools/rfq_set.py mode=OFF --why "..."
+  python3 tools/rfq_set.py --release --why "hand the maker back to the phone's settings"
 
-Writes `rfq-maker.json` on `cloud-config` as ONE plain commit (the engine reads it with the settings within seconds; no file = OFF). Modes: OFF nothing; SHADOW registers the subaccount as a maker,
+Writes `rfq-maker-engine.json` on `cloud-config` as ONE plain commit (PF1, Tj 2026-11-20: "ignore whatever settings are on my phone app"): the engine's own profit profile, which the phone never writes and which the engine reads
+INSTEAD of the phone's `rfq-maker.json` while it exists (`RfqConfigSource`). `--release` deletes it and hands the maker back to the app's file. The engine reads the file with the settings within seconds; no file at all = OFF. Modes: OFF nothing; SHADOW registers the subaccount as a maker,
 listens, journals and sends NOTHING; LIVE quotes and confirms within the caps (collateral is the maker's own money against the user's stake, taken from the Vigilant subaccount's balance).
 LIVE needs the evidence rule in the research file (200+ priced executed RFQs, the market's median margin over our fair above the margin plus a cushion); log every change in research/review/CHANGES.md.
 Never a key here; STOP ALL stays Tj's.
@@ -14,6 +16,9 @@ Never a key here; STOP ALL stays Tj's.
 import json, os, sys, tempfile, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from tell_tj import git, me, BRANCH  # noqa
+
+ENGINE_FILE = "rfq-maker-engine.json"      # the engine's profit profile; the phone never writes it (RfqConfigSource)
+APP_FILE = "rfq-maker.json"                # what the phone's Parlays tab writes
 
 def _bool(v):
     if v.lower() in ("true", "1", "yes", "on"): return True
@@ -28,13 +33,18 @@ LIMITS = {"longshotMaxChance": (0.03, 0.6), "longshotPremium": (0.0, 0.5), "wall
 
 def main(argv):
     why = argv[argv.index("--why") + 1] if "--why" in argv else "rfq_set"
-    rest = [a for i, a in enumerate(argv) if a not in ("--why", "--show") and not (i and argv[i - 1] == "--why")]
+    rest = [a for i, a in enumerate(argv) if a not in ("--why", "--show", "--release") and not (i and argv[i - 1] == "--why")]
     git("fetch", "-q", "origin", "+refs/heads/%s:refs/vigilant/rfq-set-%s" % (BRANCH, BRANCH))
     parent = git("rev-parse", "refs/vigilant/rfq-set-" + BRANCH).stdout.strip()
-    old = git("show", parent + ":rfq-maker.json", check=False)
+    old = git("show", parent + ":" + ENGINE_FILE, check=False)
+    from_app = False
+    if old.returncode or not old.stdout.strip():      # no profile yet: start from what the phone last wrote (the engine read that file until now)
+        old = git("show", parent + ":" + APP_FILE, check=False); from_app = True
     cfg = json.loads(old.stdout) if old.returncode == 0 and old.stdout.strip() else {"mode": "OFF"}
+    if "--release" in argv:
+        return write(parent, None, why)
     if "--show" in argv or not rest:
-        print(json.dumps(cfg, indent=1)); return 0
+        print("# %s" % (APP_FILE + " (the phone's; no profile yet)" if from_app else ENGINE_FILE + " (the engine's profit profile: the phone's file is not read)")); print(json.dumps(cfg, indent=1)); return 0
     for pr in rest:
         k, v = pr.split("=", 1)
         if k not in FIELDS:
@@ -45,19 +55,26 @@ def main(argv):
         if k in LIMITS and not (LIMITS[k][0] <= val <= LIMITS[k][1]):
             raise SystemExit("refused: %s must be between %s and %s" % (k, *LIMITS[k]))
         print(k, cfg.get(k), "->", val); cfg[k] = val
-    text = json.dumps(cfg, separators=(",", ":"))
+    return write(parent, json.dumps(cfg, separators=(",", ":")), why)
+
+
+def write(parent, text, why):
+    """ONE commit on cloud-config: the profile file set to `text`, or removed when `text` is None (--release)."""
     with tempfile.TemporaryDirectory() as d:
         env = dict(os.environ, GIT_INDEX_FILE=os.path.join(d, "idx"))
         git("read-tree", parent, env=env)
-        blob = git("hash-object", "-w", "--stdin", inp=text).stdout.strip()
-        git("update-index", "--add", "--cacheinfo", "100644,%s,rfq-maker.json" % blob, env=env)
+        if text is None:
+            git("update-index", "--force-remove", ENGINE_FILE, env=env)
+        else:
+            blob = git("hash-object", "-w", "--stdin", inp=text).stdout.strip()
+            git("update-index", "--add", "--cacheinfo", "100644,%s,%s" % (blob, ENGINE_FILE), env=env)
         tree = git("write-tree", env=env).stdout.strip()
         cenv = dict(os.environ, GIT_AUTHOR_NAME="Claude", GIT_AUTHOR_EMAIL="noreply@anthropic.com", GIT_COMMITTER_NAME="Claude", GIT_COMMITTER_EMAIL="noreply@anthropic.com")
         c = git("commit-tree", tree, "-m", "rfq_set (%s): %s" % (me().replace("claude:", "")[:30], why[:100]), "-p", parent, env=cenv).stdout.strip()
     r = git("push", "-q", "origin", "%s:refs/heads/%s" % (c, BRANCH), check=False)
     if r.returncode:
         print("push failed (cloud-config moved meanwhile; run again):", r.stderr.strip()); return 1
-    print("pushed", c[:9], text); return 0
+    print("pushed", c[:9], text if text is not None else "(profile removed: the phone's rfq-maker.json is read again)"); return 0
 
 
 def selftest():
