@@ -21,7 +21,7 @@ def _bool(v):
     raise ValueError("not a boolean: %r" % v)
 
 
-FIELDS = {"onlyToday": _bool, "longshotsOnly": _bool, "longshotMaxChance": float, "longshotPremium": float, "walletCollateral": _bool, "walletShare": float, "walletLegShare": float, "dayLossStopPct": float, "maxLegFair": float, "liveMinReturn": float, "sameGamePremium": float, "propPremium": float, "allowProps": _bool, "probe": _bool, "marketPricing": _bool, "probeMinSamples": int, "propPairsFromMarket": _bool, "propPairs": _bool, "ladderExtrapolate": _bool, "ladderVotes": _bool, "propLegsShadowMax": int, "maxPropLegs": int, "propPairsLive": _bool, "fairErrorRel": float, "cashReserve": float, "maxLegCollateral": float, "mode": str, "margin": float, "maxStake": float, "maxCollateral": float, "maxOpenCollateral": float, "minBooks": int, "maxFairAgeMs": int,
+FIELDS = {"onlyToday": _bool, "longshotsOnly": _bool, "longshotMaxChance": float, "longshotPremium": float, "walletCollateral": _bool, "walletShare": float, "walletLegShare": float, "dayLossStopPct": float, "maxLegFair": float, "liveMinReturn": float, "sameGamePremium": float, "propPremium": float, "allowProps": _bool, "probe": _bool, "marketPricing": _bool, "probeMinSamples": int, "propPairsFromMarket": _bool, "propPairs": _bool, "ladderExtrapolate": _bool, "ladderVotes": _bool, "propLegsShadowMax": int, "maxPropLegs": int, "liveParlays": str, "liveMaxFair": float, "liveMaxAgeMs": int, "liveMaxSpread": float, "livePremium": float, "livePointsPerLeg": float, "liveMaxCollateral": float, "propPairsLive": _bool, "fairErrorRel": float, "cashReserve": float, "maxLegCollateral": float, "mode": str, "margin": float, "maxStake": float, "maxCollateral": float, "maxOpenCollateral": float, "minBooks": int, "maxFairAgeMs": int,
           "maxLegs": int, "minReturn": float, "minPoints": float, "minLeadMs": int, "maxDaysAhead": int, "minFair": float, "maxFair": float, "dayLossStop": float}
 LIMITS = {"longshotMaxChance": (0.03, 0.6), "longshotPremium": (0.0, 0.5), "walletShare": (0.05, 1.0), "walletLegShare": (0.05, 1.0), "dayLossStopPct": (0.0, 1.0), "maxLegFair": (0.5, 1.0), "liveMinReturn": (0.0, 0.5), "cashReserve": (0.0, 100.0), "maxLegCollateral": (0.0, 500.0), "fairErrorRel": (0.0, 0.2), "sameGamePremium": (-1.0, 0.5), "propPremium": (0.0, 1.0), "probeMinSamples": (10, 2000), "margin": (0.0, 0.5), "maxStake": (10.0, 100.0), "maxCollateral": (10.0, 250.0), "maxOpenCollateral": (10.0, 500.0), "maxLegs": (2, 100), "minReturn": (0.0, 0.5), "minPoints": (0.0, 0.1)}
 
@@ -40,8 +40,8 @@ def main(argv):
         if k not in FIELDS:
             raise SystemExit("unknown field %r (known: %s)" % (k, ", ".join(FIELDS)))
         val = FIELDS[k](v)
-        if k == "mode" and val not in ("OFF", "SHADOW", "LIVE"):
-            raise SystemExit("mode is OFF, SHADOW or LIVE")
+        if k in ("mode", "liveParlays") and val not in ("OFF", "SHADOW", "LIVE"):
+            raise SystemExit("%s is OFF, SHADOW or LIVE" % k)
         if k in LIMITS and not (LIMITS[k][0] <= val <= LIMITS[k][1]):
             raise SystemExit("refused: %s must be between %s and %s" % (k, *LIMITS[k]))
         print(k, cfg.get(k), "->", val); cfg[k] = val

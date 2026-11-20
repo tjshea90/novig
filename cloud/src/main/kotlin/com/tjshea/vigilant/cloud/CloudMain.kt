@@ -660,8 +660,41 @@ fun main(args: Array<String>) = runBlocking {
         rfqBook.get()?.let { publisher.stageExtra("parlays.json", com.tjshea.vigilant.data.rfq.ParlayBook.encode(it)) }
         log("RFQ parlay hub: ${rfqFills.size} fills remembered, ${rfqBook.get()?.parlays?.size ?: 0} parlays in the book")
     }
+    // MK31 (Tj 2026-11-20: "price and fill live, in game parlay orders"): the fair of an in-play game line from Novig's own live book, refreshed every 2 s from the shared stream (its own pin owner: the scan's and the
+    // live lane's pins are untouched); the catalog of in-play events and their game lines is re-read every 20 s. Nothing here orders anything: the pricer decides under `liveParlays` (SHADOW by default).
+    val liveBook = com.tjshea.vigilant.data.rfq.LiveFair.Book()
+    val liveView = com.tjshea.vigilant.data.novig.stream.SharedStreamView({ novig.stream as? com.tjshea.vigilant.data.novig.stream.NovigStream }, com.tjshea.vigilant.data.novig.stream.BookListener { _, _, _ -> })
+    scope.launch {
+        delay(75_000L)
+        var events: Map<String, com.tjshea.vigilant.data.novig.NovigEvent> = emptyMap()
+        var markets: List<com.tjshea.vigilant.data.novig.NovigMarket> = emptyList()
+        var catalogAt = 0L
+        var lastLog = 0L
+        while (isActive) {
+            val s = latestSettings.get()
+            val cfg = rfqCfg.get()
+            val now = System.currentTimeMillis()
+            if (s != null && cfg.mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF && cfg.liveParlays != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF && novigKeyed?.addressRefused(now) != true) {
+                runCatching {
+                    if (now - catalogAt > 20_000L) {
+                        val leagues = s.leagues.toList()
+                        val ev = novig.events(leagues, listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_LIVE), null).associateBy { it.eventId }
+                        val ms = if (ev.isEmpty()) emptyList() else novig.markets(leagues, com.tjshea.vigilant.data.rfq.LiveFair.TYPES, listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_LIVE), null)
+                            .filter { it.isOpen && it.outcomes.size == 2 && ev.containsKey(it.eventId) }
+                        events = ev; markets = ms; catalogAt = now
+                        liveView.watchLive(ms.map { it.marketId })
+                    }
+                    val books = liveView.liveTop(markets.map { it.marketId })
+                    liveBook.replace(com.tjshea.vigilant.data.rfq.LiveFair.build(markets, books, events, cfg.liveMaxSpread, 10_000L, now), now)
+                    if (now - lastLog > 5 * 60_000L) { lastLog = now; log("RFQ live fair: ${events.size} games in play, ${markets.size} game-line markets watched, ${liveBook.size()} legs priced from Novig's live book (mode ${cfg.liveParlays})") }
+                }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("RFQ live fair not built: ${e.message?.take(120)}") }
+            } else if (liveBook.size() > 0) { liveBook.replace(emptyMap(), now); liveView.watchLive(emptyList()) }
+            delay(2_000L)
+        }
+    }
+    val rfqLiveFairs = com.tjshea.vigilant.data.rfq.LiveFair.Fairs(rfqLegFairs, { liveBook }, { rfqCfg.get().liveParlays != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF })
     val rfqMaker = com.tjshea.vigilant.data.rfq.RfqMaker(
-        config = { rfqCfg.get() }, fairs = rfqLegFairs, openCollateral = { rfqCollateral.get() }, send = { rfqSocketRef.get()?.send(it) == true },
+        config = { rfqCfg.get() }, fairs = rfqLiveFairs, openCollateral = { rfqCollateral.get() }, send = { rfqSocketRef.get()?.send(it) == true },
         journal = { runCatching { rfqJournal.append(it) } },
         tell = { title, body -> scope.launch { runCatching { postMessage(CloudMessages.Message("rfq-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title.take(90), body.take(400), 1, "CLOUD")) } } },
         log = { log("RFQ maker: $it") },
@@ -720,7 +753,7 @@ fun main(args: Array<String>) = runBlocking {
                         if (execs.isNotEmpty() || rfqBook.get() != null) runCatching {
                             val nowMs = System.currentTimeMillis()
                             for ((id, r) in rfqFills.entries.toList()) if (r.legs.any { it.marketId.isBlank() }) {
-                                val fixed = r.legs.map { l -> if (l.marketId.isBlank()) rfqLegFairs.leg(l.outcomeId)?.marketId?.takeIf { it.isNotBlank() }?.let { m -> l.copy(marketId = m) } ?: l else l }
+                                val fixed = r.legs.map { l -> if (l.marketId.isBlank()) rfqLiveFairs.leg(l.outcomeId)?.marketId?.takeIf { it.isNotBlank() }?.let { m -> l.copy(marketId = m) } ?: l else l }
                                 if (fixed != r.legs) rfqFills[id] = r.copy(legs = fixed)
                             }
                             val fillsMap = rfqFills.toMap()
