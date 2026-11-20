@@ -411,7 +411,9 @@ object RfqPricer {
         val wallet = if (cfg.walletCollateral) walletTotal else null
         val byParlay = (if (wallet != null) cfg.walletShare * wallet else cfg.maxCollateral) / perStake
         val byOpen = if (wallet != null) Double.MAX_VALUE else (cfg.maxOpenCollateral - openCollateral) / perStake      // the wallet's cash (byCash) is the open limit then
-        val byCash = cashRoom?.let { it.coerceAtLeast(0.0) / perStake } ?: Double.MAX_VALUE
+        // A prop-pair quote (a class that almost never trades) leaves [RfqConfig.propPairsCashReserve] of the free cash to the classes that do (MK38).
+        val reserve = if (pairModelUsed) cfg.propPairsCashReserve.coerceAtLeast(0.0) else 0.0
+        val byCash = cashRoom?.let { (it - reserve).coerceAtLeast(0.0) / perStake } ?: Double.MAX_VALUE
         val byLive = if (anyLive && cfg.liveMaxCollateral > 0.0) cfg.liveMaxCollateral / perStake else Double.MAX_VALUE
         val room = floor(minOf(cfg.maxStake, byParlay, byOpen, byCash, byLive) * 100.0) / 100.0
         if (room < want) return no(if (byCash < minOf(cfg.maxStake, byParlay, byOpen) && byCash < want) "the balance covers a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked (cash is short)" else "the caps allow a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked")
