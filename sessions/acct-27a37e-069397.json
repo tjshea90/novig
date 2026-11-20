@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "1fc4eb7f02e80ae13a427c3a2cb0b483cc52ecbd",
+ "head": "59d1b7146fd7677c8959fd4b758ad28c75f4e838",
  "since": 1795129305,
- "beat": 1795136468,
- "beatIso": "2026-11-20T01:01:08Z",
+ "beat": 1795136760,
+ "beatIso": "2026-11-20T01:06:00Z",
  "done": "MK23: live-morning vs today's rules replay: the drop is the win-chance filters (0 of 16 fills pass 20%), not the pricing; logged",
  "next": "wait for Tj's decision on the win-chance limit; meanwhile read the new job's journal for ladder-votes legs (01:42 UTC check), then price 3+ prop legs / 8+ legs in shadow"
 }
