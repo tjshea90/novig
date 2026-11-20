@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "e24afb249f33ed3bb51eed632ae9d7a55e4bb28e",
+ "head": "b95c70d2951fa8088ee0c041c318670731d08a31",
  "since": 1795129305,
- "beat": 1795201307,
- "beatIso": "2026-11-20T19:01:47Z",
+ "beat": 1795201634,
+ "beatIso": "2026-11-20T19:07:14Z",
  "done": "PF1 DONE: parlay profit profile live on cloud-config (rfq-maker-engine.json, 81ac24d85), engine code + app 1.0.146 shipped (release.yml green), research/parlay_profit_profile_2026-11-20.md, SHAPES.txt in the daily study; engine is OFF (Tj's switch) so the first start after he turns it on runs the profile",
  "next": "when Tj turns the engine on: confirm status rfq.configLock is set and rfq.config shows maxLegs 2 / longshotsOnly false (engine-log 'RFQ maker config: LIVE'); after the daily study (10:37 UTC) read SHAPES.txt, judge on 20+ independent settled fills (clusters), tighten before widening; evening summary only if the engine runs"
 }
