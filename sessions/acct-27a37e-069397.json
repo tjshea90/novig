@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "ddd5912745583ff33a247581da49ea9999e62f44",
+ "head": "ac4cb4da128cf26933ee579309f678608ea8d445",
  "since": 1795129305,
- "beat": 1795137148,
- "beatIso": "2026-11-20T01:12:28Z",
- "done": "MK14 follow-up check ok; ladder legs now carry name/desc/market id for hub grading; full suite green",
- "next": "reset the engine once to deploy (confirm startedAtMs); then read the journal for ladder-votes legs; price 3+ prop legs / 8+ legs in shadow; Tj's decision on the win-chance limit"
+ "beat": 1795137176,
+ "beatIso": "2026-11-20T01:12:56Z",
+ "done": "MK24: 3-6 prop-leg parlays priced at the plain product in shadow (propLegsShadowMax); wallet-window finding logged; full suite green",
+ "next": "reset the engine once (confirm startedAtMs) to deploy hub names + prop shadow; read journal 'prop legs ... shadow' rows vs market executed prices; Tj's win-chance decision"
 }
