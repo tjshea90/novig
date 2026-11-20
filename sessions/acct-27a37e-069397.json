@@ -8,8 +8,8 @@
  "branch": "claude/parlay-profitability-research-fy3tnz",
  "head": "ac4cb4da128cf26933ee579309f678608ea8d445",
  "since": 1795129305,
- "beat": 1795137176,
- "beatIso": "2026-11-20T01:12:56Z",
+ "beat": 1795137379,
+ "beatIso": "2026-11-20T01:16:19Z",
  "done": "MK24: 3-6 prop-leg parlays priced at the plain product in shadow (propLegsShadowMax); wallet-window finding logged; full suite green",
  "next": "reset the engine once (confirm startedAtMs) to deploy hub names + prop shadow; read journal 'prop legs ... shadow' rows vs market executed prices; Tj's win-chance decision"
 }
