@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "e76d9993268c9d45187c9bc033fbf7db81387ff0",
+ "head": "d381207528a5cf25219b3be63d3b1805c101df83",
  "since": 1795129305,
- "beat": 1795237800,
- "beatIso": "2026-11-21T05:10:00Z",
- "done": "ON2 monitor check-in #1 (04:22 UTC): healthy; maker connected, not halted, first 12 research-profile quotes (0 taken, 0 fills); desk 489 bids $293 resting, small bid fills; no Novig rate-limit repeat; ParlayAPI advice 6% credits; no change made",
- "next": "check-in #2 due ~05:08 UTC (send_later re-armed, stop ~10:00 UTC); judge the profile only on 20+ of its own settled fills; FL1 flaky NovigOrderSocketTest; ParlayAPI refill is Tj's"
+ "beat": 1795237857,
+ "beatIso": "2026-11-21T05:10:57Z",
+ "done": "ON2 monitor check-in #2 (05:10 UTC): healthy; maker connected, not halted, 80 quotes/0 won/0 filled (overnight, expected), desk 518 bids $327 resting, no errors, cash $66.70; ParlayAPI 601/10000 credits (~5-7/h, dry about 11-25, Tj's refill); no change made",
+ "next": "check-in #3 due ~05:55 UTC (send_later re-armed, stop ~10:00 UTC); first real parlay fills expected with the day slate from ~16:00 UTC: judge by shape on 20+; FL1 flaky NovigOrderSocketTest"
 }
