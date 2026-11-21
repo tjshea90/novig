@@ -2106,3 +2106,8 @@ Figure out how to get more legs fair odds priced from my apis, especially the pr
 ```
 Is there anything you can do to get parlays filled now that aren't terrible negative expected outcomes 
 ```
+
+## 2026-11-21T06:01:01Z
+```
+Turn the parlay in play engine live instead of shadow. Any parlay that you have moderate confidence that my chances of profit are good should be accepted with real money 
+```
