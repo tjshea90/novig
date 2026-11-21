@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "00804cf1bb0bdc2dd36aa2caca7d6fdbda0f9730",
+ "head": "5b930689831668d3870b47b54c30ebc51d3e5c38",
  "since": 1795129305,
- "beat": 1795244764,
- "beatIso": "2026-11-21T07:06:04Z",
- "done": "LP1 follow-up: study fixed and refreshed (16,205 graded, 827 in-play, 223 in my class): in-play 2-leg no-heavy EV at our quote +11.7% (se 7.0) at 3 pt, 15% of traded auctions, stable by day, heavy-leg pocket still -9%: no change (LP1 stays); pregame profile +7.3% (se 1.6, n 4113) at +0.5 pt; Novig still in maintenance (423 SYSTEM_LOCKED), UW1 settings waiting for reopening",
- "next": "CS1c/UW1 follow-up fires ~07:07 UTC (check reopen, maker quoting the 25-43% band, cash locked); re-judge in-play at 300+ graded fills; ON2 monitor re-armed"
+ "beat": 1795244794,
+ "beatIso": "2026-11-21T07:06:34Z",
+ "done": "UW2: parlay loss stop OFF (dayLossStopPct 0), auto-bet daily stop 1.0, scarcityStartShare .7; bids already on, NCAAB game-total Over bids blocked from the engine's own settled results (208, -32.4%, 9 of 11 days; ProfitProfile.ENGINE_BID_LOSERS, EngineBidLoserTest); full floor 4550 green",
+ "next": "land on main, engine_set --reset to carry the bid block while Novig is still paused (423 SYSTEM_LOCKED), then wait for the reopening: verify maker quotes/fills, wallet locked, bids resume; CS1c/UW1 follow-up 07:07 and ON2 monitor 07:44 queued"
 }
