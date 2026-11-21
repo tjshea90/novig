@@ -2124,3 +2124,8 @@ If i add 100 dollars:
 1) will i have more parlay fills 
 2) can they be profitable less risky fills 
 ```
+
+## 2026-11-21T06:55:16Z
+```
+I have 54 dollars in the wallet. Use all of it for as many quotes as possible on profitable quotes. I want it to use the money.
+```
