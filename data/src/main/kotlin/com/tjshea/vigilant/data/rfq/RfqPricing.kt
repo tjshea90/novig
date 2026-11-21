@@ -206,6 +206,12 @@ data class RfqConfig(
     /** The loss over the last 24 hours of SETTLED parlays (dollars, from Novig's executions) at which LIVE quoting stops for six hours ([RfqMaker.onLedger]); 0 = no stop. */
     val dayLossStop: Double = 20.0,
     /**
+     * ON2 (Tj 2026-11-21: "use your settings from the research for maximum profit"): the loss stop counts only parlays FILLED at or after this time (epoch ms; 0 = every fill). A new profit profile starts with a clean
+     * 24-hour slate: without it the old settings' fills, settling days later, tripped the stop before the new profile had quoted once (27 settled, 0 of them under the research profile). The status still shows the
+     * true 24-hour figure; only the stop's own judgement is narrowed.
+     */
+    val lossStopFromMs: Long = 0L,
+    /**
      * Ask Novig what the other makers charge for a sample of the RFQs we price (MK12, [RfqProbe]: `POST /rfq/v2/quote/unauthenticated`, keyless, at most ~0.9 requests a second, each opening a real 3-second auction
      * whose best price is the competition's). Runs in SHADOW and, for RFQs we decline, in LIVE (a probe of an RFQ we would quote would meet our own quote). 100,000 observations a day against about 250 priced
      * trades a day: the demand curve [marketPricing] needs.
