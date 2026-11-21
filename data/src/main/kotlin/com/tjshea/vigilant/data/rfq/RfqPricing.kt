@@ -39,6 +39,14 @@ data class RfqConfig(
     val allowProps: Boolean = false,
     /** Points of pot (price - fair) a quote must offer per leg beyond the first: the fair of N legs carries N legs' errors, so a 3-leg parlay asks twice what a 2-leg one does. */
     val minPoints: Double = 0.01,
+    /**
+     * UW4 (Tj 2026-11-21: "balance good profitable quotes with volume so I actually get fills"): points of pot a PREGAME quote sits UNDER our own fair (0 = off, the floors above decide). Measured: of 3,306 quotes
+     * at fair + 0.1 point 21 RFQs executed and all 21 went to a price 0.2 to 2.1 points under ours (median 1.2), so no quote that asks more than the market's best ever wins; the graded executed flow (4,113 pregame
+     * two-leg parlays, no leg at .8) earned +4.8% on the collateral at fair - 0.5 point and +4.4% at fair - 1.0 against +5.8% at fair + 0.1 but winning 81% / 93% against 44% of the flow (the total is the larger),
+     * with a sign that flips by day. The price is the fair less this, rounded up, in place of the floors; the cash-scarcity ramp still adds its margin on top and in-play parlays keep their own premium.
+     * Journals carry every quote's price beside its fair, so the study grades fills made at this price (research/review/CHANGES.md UW4 has the stop rule).
+     */
+    val quoteBelowFairPoints: Double = 0.0,
     /** Largest stake one quote covers, dollars (Novig needs at least $10 or the user's minimum). */
     val maxStake: Double = 12.0,
     /** Most collateral (the maker's money at risk) in one parlay, dollars. */
@@ -479,6 +487,8 @@ object RfqPricer {
         val basePrice = if (cfg.marketPricing && modelPrice != null) modelPrice else rulePrice
         // An in-play parlay asks more than the usual floors: the game moves between the auction and the buyer's accept (6-29 s), and the buyer sees the score.
         var price = if (anyLive) maxOf(basePrice, up(p * (1.0 + cfg.livePremium)), up(p + cfg.livePointsPerLeg * ids.size)) else basePrice
+        // UW4: a pregame quote below our own fair (the market's best price sits about a point under it), only when the config says so; the scarcity ramp below can still raise it.
+        if (!anyLive && cfg.quoteBelowFairPoints > 0.0) price = up(p - cfg.quoteBelowFairPoints).coerceAtLeast(0.001)
         // PW1: cash-aware selection and price (see [RfqConfig.adaptiveCash]); in play parlays are shadow and keep their own premium.
         if (cfg.adaptiveCash && !anyLive && utilization != null && utilization > cfg.scarcityStartShare && cfg.scarcityStartShare < 1.0) {
             val ramp = ((utilization - cfg.scarcityStartShare) / (1.0 - cfg.scarcityStartShare)).coerceIn(0.0, 1.0)
