@@ -5,11 +5,11 @@
  "nonce": "069397",
  "kind": "interactive",
  "task": "",
- "branch": "claude/parlay-profitability-research-fy3tnz",
- "head": "520f0318fdffad5f42f1016a522d58bdd3013bb4",
+ "branch": "ccr-bc2a800c-fgp2ck",
+ "head": "ba8689716ebfff97d8ffe437901b0792938ecfc2",
  "since": 1795129305,
- "beat": 1795212262,
- "beatIso": "2026-11-20T22:04:22Z",
+ "beat": 1795232091,
+ "beatIso": "2026-11-21T03:34:51Z",
  "done": "NT2 SHIPPED: v1.0.148 (release green, recorded)",
  "next": "nothing pending for NT1/NT2; the parlay engine is OFF; PARLAY MANDATE LOOP wake 10:50 UTC 11-21"
 }
