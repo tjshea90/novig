@@ -2085,3 +2085,9 @@ Also for the ncaab tab, remove and no longer show the very small college games o
 ```
 Turn the engine, scanning, and parlay system back on immediately live with real money no shadow 
 ```
+
+## 2026-11-21T03:43:40Z
+```
+Make sure to use your settings from the research for maximum profit and use the full wallet 
+Monitor it and make sure it is running well 
+```
