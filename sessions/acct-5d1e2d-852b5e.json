@@ -5,11 +5,11 @@
  "nonce": "852b5e",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-dxgkit",
+ "branch": "claude/optimistic-curie-rie8bc",
  "head": "da720cd8b4df52eaa09425d861866e64d9d818ea",
  "since": 1795134161,
- "beat": 1795216605,
- "beatIso": "2026-11-20T23:16:45Z",
+ "beat": 1795220481,
+ "beatIso": "2026-11-21T00:21:21Z",
  "done": "full :data tests run for WalletBetMoney fix",
  "next": "ship in next release"
 }
