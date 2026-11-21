@@ -2096,3 +2096,8 @@ Monitor it and make sure it is running well
 ```
 If i add more money to the vigilant wallet, is it expected to get more parlay fills 
 ```
+
+## 2026-11-21T05:38:53Z
+```
+Figure out how to get more legs fair odds priced from my apis, especially the propline api with paid socket 
+```
