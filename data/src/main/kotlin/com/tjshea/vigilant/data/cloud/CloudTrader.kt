@@ -195,7 +195,7 @@ class CloudTrader(
         if (live && port == null) return Report(mode, stopped = "live trading needs the trading key sent from the phone (Settings › Cloud scan)")
         // A stop (a location refusal, a lost answer) holds ordering for [STOP_HOLD_MS]; then one pass tries again, and the cash read is the first thing it asks.
         if (ledger.stopped.isNotEmpty() && live) {
-            if (now - ledger.stoppedAtMs < STOP_HOLD_MS) return Report(mode, stopped = ledger.stopped)
+            if (now - ledger.stoppedAtMs < stopHoldMs(ledger.stopped)) return Report(mode, stopped = ledger.stopped)
             ledger = ledger.copy(stopped = "", stoppedAtMs = 0L)
         }
         val rules = AutoBet.rules(s)
@@ -393,6 +393,9 @@ class CloudTrader(
 
         /** How long a stop holds live ordering before one pass tries again. */
         const val STOP_HOLD_MS = 30 * 60_000L
+        /** A stop because Novig paused the whole exchange (`SYSTEM_LOCKED`, e.g. maintenance, 2026-11-21) is looked at again after 2 minutes: it ends by itself and the first successful balance read is the answer. */
+        const val SYSTEM_PAUSE_HOLD_MS = 2 * 60_000L
+        fun stopHoldMs(why: String): Long = if ("SYSTEM_LOCKED" in why) SYSTEM_PAUSE_HOLD_MS else STOP_HOLD_MS
 
         private fun money(v: Double) = String.format(java.util.Locale.US, "$%.2f", v)
     }

@@ -419,7 +419,8 @@ class RfqMaker(
         row("REFUSED", null) { put("code", e.code); put("message", e.message ?: ""); put("nonce", e.nonce?.let { JsonPrimitive(it) } ?: JsonNull) }
         when (e.code) {
             "MAKER_LOCKED" -> halt("Novig locked the maker out of quoting for 5 minutes (confirm rate below 99%)", 5 * 60_000L + 5_000L)
-            "MAKER_BARRED" -> halt("Novig says the maker cannot quote right now (MAKER_BARRED): contact Novig", null)
+            // 2026-11-21: Novig answered MAKER_BARRED at 06:37 and then paused the whole exchange for maintenance (SYSTEM_LOCKED): "can't quote RIGHT NOW" was held until the next job (up to 6 h). One refused frame is harmless, so try again in 30 minutes.
+            "MAKER_BARRED" -> halt("Novig says the maker cannot quote right now (MAKER_BARRED): contact Novig; trying again in 30 minutes", 30 * 60_000L)
             "READ_ONLY_KEY" -> halt("the key the RFQ socket uses is read-only (READ_ONLY_KEY): quoting needs the trading key", null)
             "KYC_REQUIRED" -> halt("Novig says the account's identity check is not verified (KYC_REQUIRED)", null)
             "SELF_EXCLUDED" -> halt("The account is self-excluded (SELF_EXCLUDED)", null)

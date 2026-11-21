@@ -37,6 +37,9 @@ object RfqReconnect {
                 cause.status == 429 && cause.code == "TOO_MANY_SOCKETS" -> Plan(min(5 * MIN, 30_000L shl min(consecutive, 3)), false, "the key has 10 sockets open (TOO_MANY_SOCKETS): waiting for stale ones to close")
                 cause.status == 429 -> Plan(maxOf((cause.retryAfterS ?: 30L) * 1_000L, 5_000L), false, "rate limited (${cause.code ?: "429"}): waiting the Retry-After")
                 cause.status == 451 -> Plan(if (consecutive == 0) 10 * MIN else 30 * MIN, false, "Novig refused the location (${cause.code ?: "451"}): not retrying for a while, fix the cause first")
+                // 2026-11-21 (Novig maintenance, 06:37-?): `SYSTEM_LOCKED` ("Trading is paused: Maintenance") is the WHOLE exchange paused, which Novig says to retry when it reopens ("Quote again when it reopens"): not an account lock
+                // that a retry cannot fix. A 30-minute wait would keep the maker idle for up to half an hour after the exchange is back, and every new job would start the clock again. One upgrade costs 32 stream tokens: 90 s is cheap.
+                cause.status == 423 && cause.code == "SYSTEM_LOCKED" -> Plan(90_000L, false, "Novig paused trading on the whole exchange (SYSTEM_LOCKED): trying again every 90 s")
                 cause.status == 423 -> Plan(30 * MIN, false, "the account is locked (423)")
                 cause.status == 401 || cause.status == 403 -> Plan(30 * MIN, false, "the key or the account is refused (${cause.status} ${cause.code ?: ""})".trim())
                 else -> Plan(exp, false, "upgrade answered ${cause.status} ${cause.code ?: ""}".trim())
