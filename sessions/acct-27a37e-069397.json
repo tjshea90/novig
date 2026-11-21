@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "4a1fd76e73955232542739f17a23cefd73bfdaf7",
+ "head": "6480fc59e6fc8658cd73462b86fcc87b6c812716",
  "since": 1795129305,
- "beat": 1795233617,
- "beatIso": "2026-11-21T04:00:17Z",
- "done": "ON2: RfqConfig.lossStopFromMs + RfqLedger.Summary.pnlStop24h: the maker's loss stop counts only fills made since the research profile began (it was tripped by the old settings' fills); full floor green (4545 passed; NovigOrderSocketTest flaked once under load, passes alone and on rerun); CHANGES.md ON2",
- "next": "land on main (check origin/main), engine_set --reset for a runner on the new code, then rfq_set lossStopFromMs=<restart ms>, confirm maker resumes (status rfq.halted empty), then send_later check-ins"
+ "beat": 1795233735,
+ "beatIso": "2026-11-21T04:02:15Z",
+ "done": "ON2 DEPLOYED: loss-stop fix live (run 44863668546: maker connected, not halted, true 24h -$67.18 kept in status); engine LIVE trading + bids; monitoring armed (send_later trig_01FVuZ2aBWyyo6FBzxDoTZWb, re-arm every 45 min)",
+ "next": "at each check-in: status.json (heartbeat, desk, rfq halted/quotes/fills), engine-log errors (Novig RATE_LIMIT/EOF seen once 03:48), ParlayAPI credits 6%; judge the profile only on 20+ of its own settled fills; FL1 flaky test"
 }
