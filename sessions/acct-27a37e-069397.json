@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "8f25112efe92084b5e979ac50da21f9a83547dd1",
+ "head": "016b64744b41b08681da6f0c558133b5e3bc7c6d",
  "since": 1795129305,
- "beat": 1795241090,
- "beatIso": "2026-11-21T06:04:50Z",
- "done": "Handoff saved (.handoff/handoff.md + archive 2026-11-21T06-00); CLAUDE.md/AGENTS.md Session Learnings block refreshed with this session's rules and decisions",
- "next": "ON2 monitor check-ins (next ~05:56 UTC send_later, re-arm 45 min, stop ~10:00 UTC); judge first widened-profile fills by class; FV1a catalog snapshot workflow; FL1 flaky test"
+ "beat": 1795241128,
+ "beatIso": "2026-11-21T06:05:28Z",
+ "done": "LP1: in-play parlays LIVE (liveParlays LIVE, per-leg cap .8, ~3 pt margin) on thin graded evidence (n120, EV rises with margin, 80-90% leg pocket -24% excluded); engine adopted 06:02:44; only 1 game in play so no in-play quote yet; rfq-pnl-study dispatched for a bigger sample",
+ "next": "re-judge in-play margin when the study lands (Release rfq-pnl-study graded.csv.gz: live=1 EV at our quote by margin, need 300+ fills); watch first live in-play fills on the Saturday slate; revert in CHANGES LP1; ON2 monitor continues"
 }
