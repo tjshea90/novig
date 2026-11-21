@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "ebb1c2679e4bfaddd63f29c6e8dbec2246c41c99",
+ "head": "a91955bfecde6c2d0956109712ad1b308f16bbaa",
  "since": 1795129305,
- "beat": 1795241779,
- "beatIso": "2026-11-21T06:16:19Z",
- "done": "ON2 monitor check-in #3 (06:07 UTC): healthy; maker connected, not halted, 437 quotes/1 won/1 filled, desk 516 bids $331, cash $67.13, no engine-log errors, ParlayAPI 594 credits; FV2 widened profile and LP1 in-play LIVE both adopted, no in-play quote yet (dry overnight); no change made",
- "next": "check-in #4 due ~06:52 UTC (send_later re-armed); LP1 follow-up fires 06:36 UTC (rfq-pnl-study in-play margin re-judge); watch adaptiveCash decline text and first in-play fills; stop ~10:00 UTC"
+ "beat": 1795241815,
+ "beatIso": "2026-11-21T06:16:55Z",
+ "done": "CS1: win-rate-weighted quote collateral hold (RfqConfig.reserveByWinRate, RfqMaker.cashHeld, poissonQuantile), test + full floor green 4546; cash-short refused 325 requests vs 36 quotes per 5 min after FV2 (correction to my earlier 'cash not limiting')",
+ "next": "land on main, rfq_set reserveByWinRate=true then engine_set --reset, verify cash-short falls and quotes/min rises, no maker_insolvent halt; revert rfq_set reserveByWinRate=false"
 }
