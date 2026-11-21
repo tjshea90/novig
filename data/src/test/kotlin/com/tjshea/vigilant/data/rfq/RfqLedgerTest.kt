@@ -48,6 +48,28 @@ class RfqLedgerTest {
         assertEquals(10.0 - 15.0 - 15.0, s.pnlTotal, 1e-9); assertEquals("only the settled in the last 24 hours", 10.0 - 15.0, s.pnl24h, 1e-9)
     }
 
+    /** ON2: fills made before the profile began (ts = now - 5 h in [item]) settle later and must not trip a stop that guards the NEW profile; the true 24 h figure stays what the status shows. */
+    @Test fun theLossStopJudgesOnlyFillsMadeUnderTheCurrentProfile() {
+        val execs = RfqLedger.parse(page(
+            item("old1", "0.4", "15", "10", "settled", "win", settledAgoH = 1.0),
+            item("old2", "0.4", "15", "10", "settled", "win", settledAgoH = 2.0),
+        ))
+        val all = RfqLedger.summarize(execs, now)
+        assertEquals("no start time: the stop judges every fill, as before", all.pnl24h, all.pnlStop24h, 0.0)
+        val profileBegan = now - 4 * 3_600_000L          // after the fills (made 5 h ago), before now
+        val s = RfqLedger.summarize(execs, now, profileBegan)
+        assertEquals("the status keeps the true 24 h loss", -30.0, s.pnl24h, 1e-9); assertEquals("the stop sees none of the old fills", 0.0, s.pnlStop24h, 1e-9)
+        val live = RfqConfig(mode = RfqConfig.Mode.LIVE, dayLossStop = 20.0, lossStopFromMs = profileBegan)
+        val maker = RfqMaker({ live }, { null }, { 0.0 }, { true }, { }, { _, _ -> }, { now })
+        maker.onLedger(all, live.copy(lossStopFromMs = 0L))
+        assertNotNull("with every fill counted the 30 lost trips the 20 stop", maker.halted)
+        maker.onLedger(s, live)
+        assertNull("counting only fills since the profile began, the halt the old fills made ends at once", maker.halted)
+        val fresh = RfqLedger.parse(page(item("new1", "0.4", "25", "10", "settled", "win", settledAgoH = 1.0))).map { it.copy(ts = now - 2 * 3_600_000L) }
+        maker.onLedger(RfqLedger.summarize(execs + fresh, now, profileBegan), live)
+        assertNotNull("a loss from a fill made under the profile still stops it", maker.halted); assertTrue(maker.halted!!, maker.halted!!.contains("lost 25.00") && maker.halted!!.contains("since the profile began"))
+    }
+
     @Test fun theLossStopHaltsLiveQuotingAndTellsTjButNeverShadow() {
         val told = ArrayList<String>(); val rows = ArrayList<RfqRow>()
         val live = RfqConfig(mode = RfqConfig.Mode.LIVE, dayLossStop = 20.0)
