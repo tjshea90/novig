@@ -212,6 +212,16 @@ data class RfqConfig(
      */
     val lossStopFromMs: Long = 0L,
     /**
+     * CS1 (Tj 2026-11-21: "I want my wallet tied up in parlay maker fills as soon as possible ... I don't care how you do it"): every quote out held its FULL collateral until 36 s after its auction closed, though a
+     * quote wins about 0.2% of the time, so $67 of cash backed only ~3 quotes in flight and "cash is short" refused 325 otherwise-quotable requests in 5 minutes against 36 quotes sent. With this on, a quote that
+     * has been ACCEPTED (a win) is held in full, and the quotes still out are held only for the number of wins that is almost certain to be enough: the [reserveConfidence] quantile of a Poisson count of wins
+     * (quotes out x the recent win rate, never under [quoteWinFloor]) times the largest collaterals. The win rate rises by itself in a busy hour (wins in the last 2 hours over quotes, smoothed to the floor), and
+     * the chance that more quotes win at once than the cash can fund (`quote_unfilled maker_insolvent` stops the maker for 30 minutes) stays under 1 - [reserveConfidence] a moment. Off = every quote held in full.
+     */
+    val reserveByWinRate: Boolean = false,
+    val quoteWinFloor: Double = 0.03,
+    val reserveConfidence: Double = 0.995,
+    /**
      * Ask Novig what the other makers charge for a sample of the RFQs we price (MK12, [RfqProbe]: `POST /rfq/v2/quote/unauthenticated`, keyless, at most ~0.9 requests a second, each opening a real 3-second auction
      * whose best price is the competition's). Runs in SHADOW and, for RFQs we decline, in LIVE (a probe of an RFQ we would quote would meet our own quote). 100,000 observations a day against about 250 priced
      * trades a day: the demand curve [marketPricing] needs.
