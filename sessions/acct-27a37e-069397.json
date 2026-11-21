@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "f101d012b10b283d496ffac0c117ee87dc1fba99",
+ "head": "0091deef366483c42ca0079b4b746ab769b052a8",
  "since": 1795129305,
- "beat": 1795240638,
- "beatIso": "2026-11-21T05:57:18Z",
- "done": "FV1 analysis: research/parlay_fair_coverage_2026-11-21.md (weighted attribution of no-fair legs: journal samples 1/25, 97% unscanned, overnight only ~7% real pregame league gaps), LEVERS row, TASKS FV1a-d, CHANGES line; no setting/code changed",
- "next": "FV1a catalog snapshot workflow then a day of journals joined (decides FV1b UFC fair-only pass / FV1c NHL goal scorer hold census / FV1d soccer); keep ON2 monitor check-ins (next due ~05:56 UTC)"
+ "beat": 1795240678,
+ "beatIso": "2026-11-21T05:57:58Z",
+ "done": "FV2: rfq profile widened on graded evidence (minFair .35->.25: .25-.35 band +9.0%/fill n1136; maxLeadMs 12h->24h; adaptiveCash on, score 5.7); in-play and <.25 fair NOT enabled (zero/negative); config live (rfq_set 2ce213043), CHANGES.md FV2 with revert",
+ "next": "watch won/filled by class (fair band, lead bucket) over the next hours; revert line in CHANGES FV2; ON2 monitor check-ins continue; FV1a-d open"
 }
