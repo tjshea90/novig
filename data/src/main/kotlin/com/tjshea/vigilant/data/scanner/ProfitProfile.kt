@@ -129,6 +129,19 @@ class ProfitProfile(
         const val STAR_PER_T = 0.5
         const val STAR_MAX = 2.0
 
+        /**
+         * UW2 (Tj 2026-11-21: "Turn on the Auto bid engine for profitable bid types"): bid types that the ENGINE's OWN settled bids proved to lose, beside the phone-history table above (which holds 527 bids of Tj's
+         * and none of these). Evidence gate = class B of research/review/ROUTINE.md: 200 or more settled, the loss clearly outside the noise, and the same sign over several days. Key `league|kind|side`; the value is
+         * the words the Bids tab shows. NCAAB game-total OVER bids: 208 settled, ROI -32.4%, lost on 9 of 11 days (2026-11-07 to 11-17); the Unders of the same market (159, -3.3%) are break-even and stay.
+         * Add a type only with the same evidence, from `trades.json` (the engine's ledger), and say so in research/review/CHANGES.md.
+         */
+        val ENGINE_BID_LOSERS: Map<String, String> = mapOf(
+            "NCAAB|Game totals|over" to "NCAAB game-total Over bids (208 settled engine bids, ROI -32.4%, lost on 9 of 11 days)",
+        )
+
+        /** The reason a bid on this league, kind and selection is not posted because the engine's own results say it loses, or null. */
+        fun engineBidLoser(league: String, kind: String, selection: String): String? = ENGINE_BID_LOSERS["$league|$kind|${sideOf(selection)}"]
+
         private val OVER = Regex("\\bover\\b", RegexOption.IGNORE_CASE)
         private val UNDER = Regex("\\bunder\\b", RegexOption.IGNORE_CASE)
 

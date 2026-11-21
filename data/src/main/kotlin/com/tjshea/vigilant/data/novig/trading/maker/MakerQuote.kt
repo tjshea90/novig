@@ -596,6 +596,8 @@ object MakerQuote {
         val fair = MakerRules.anchorOf(blend, line.sharpFairs, rules.anchorSharp)
         val price = if (fair < blend - 1e-12 || relaxed != null) PriceGrid.floor(fair / (1.0 + margin)) ?: return skip("The sharp book's price is too small to bid under") else blendPrice
         outsideWindow(price, rules)?.let { return skip(it) }
+        // UW2: a type the engine's OWN settled bids proved to lose (same switch as the profit profile: "Profit-proven only").
+        if (rules.profit != null) ProfitProfile.engineBidLoser(line.league, line.kind.label, line.selection)?.let { return skip("Not bid: the engine's own results say $it") }
         rules.profit?.judge(ProfitProfile.Instrument.BID, line.league, line.kind.label, line.selection, blend / price - 1.0, (line.startsTs - now) / 60_000L)?.blocked?.let { return skip("Not bid: $it") }
         if (line.kind in MakerRules.GAME_LINES && line.sharpFairs.isEmpty()) return skip("Game lines need a sharp book (Pinnacle, Circa …) in the fair")
         if (rules.requireSharp && line.sharpFairs.isEmpty()) return skip("No sharp book (Pinnacle, Circa, an exchange) prices this both ways, and a sharp book must agree (your setting)")
