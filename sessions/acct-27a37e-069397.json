@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "a91955bfecde6c2d0956109712ad1b308f16bbaa",
+ "head": "d6599dd83845c00b62270e49bcb08d849bcc8426",
  "since": 1795129305,
- "beat": 1795242818,
- "beatIso": "2026-11-21T06:33:38Z",
+ "beat": 1795243020,
+ "beatIso": "2026-11-21T06:37:00Z",
  "done": "CS1: win-rate-weighted quote collateral hold (RfqConfig.reserveByWinRate, RfqMaker.cashHeld, poissonQuantile), test + full floor green 4546; cash-short refused 325 requests vs 36 quotes per 5 min after FV2 (correction to my earlier 'cash not limiting')",
  "next": "land on main, rfq_set reserveByWinRate=true then engine_set --reset, verify cash-short falls and quotes/min rises, no maker_insolvent halt; revert rfq_set reserveByWinRate=false"
 }
