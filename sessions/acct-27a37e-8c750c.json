@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "8c750c",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-8y8fg4",
+ "head": "d6dee9cdcbaa4e615e994737a884cf6f1d5651a9",
+ "since": 1795263728,
+ "beat": 1795263728,
+ "beatIso": "2026-11-21T12:22:08Z",
+ "done": "ENGINEER 11-21 13:20 slot: watch only, engine healthy, lane owned by UW3",
+ "next": "UW3 monitor #5 as before"
+}
