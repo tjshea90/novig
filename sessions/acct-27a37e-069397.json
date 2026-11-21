@@ -8,8 +8,8 @@
  "branch": "ccr-bc2a800c-fgp2ck",
  "head": "5b930689831668d3870b47b54c30ebc51d3e5c38",
  "since": 1795129305,
- "beat": 1795248946,
- "beatIso": "2026-11-21T08:15:46Z",
+ "beat": 1795249213,
+ "beatIso": "2026-11-21T08:20:13Z",
  "done": "UW2: parlay loss stop OFF (dayLossStopPct 0), auto-bet daily stop 1.0, scarcityStartShare .7; bids already on, NCAAB game-total Over bids blocked from the engine's own settled results (208, -32.4%, 9 of 11 days; ProfitProfile.ENGINE_BID_LOSERS, EngineBidLoserTest); full floor 4550 green",
  "next": "land on main, engine_set --reset to carry the bid block while Novig is still paused (423 SYSTEM_LOCKED), then wait for the reopening: verify maker quotes/fills, wallet locked, bids resume; CS1c/UW1 follow-up 07:07 and ON2 monitor 07:44 queued"
 }
