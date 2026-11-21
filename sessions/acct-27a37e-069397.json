@@ -8,8 +8,8 @@
  "branch": "ccr-bc2a800c-fgp2ck",
  "head": "9b9f9b7d0ed6791eb93ddd9428bc3ea2a8af5235",
  "since": 1795129305,
- "beat": 1795243418,
- "beatIso": "2026-11-21T06:43:38Z",
+ "beat": 1795243695,
+ "beatIso": "2026-11-21T06:48:15Z",
  "done": "CS1b: Novig answered MAKER_BARRED to the maker at 06:37:06 UTC (confirm rate 10/10, no lock, 290 quotes in 17 min), 15 min after reserveByWinRate went live; reverted reserveByWinRate=false (f786b4101), clean runner requested (cebd9bee6); cause unknown, Tj must contact Novig",
  "next": "check whether the new runner is barred again (status rfq.halted/refusals); if still barred tell Tj to contact Novig with the maker id + time; do NOT re-enable reserveByWinRate; LP1 re-judge 06:47 and ON2 monitor ~06:52 continue"
 }
