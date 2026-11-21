@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "0091deef366483c42ca0079b4b746ab769b052a8",
+ "head": "5aa2d1d57aa988e21008973b03e9fbbb4de59090",
  "since": 1795129305,
- "beat": 1795240678,
- "beatIso": "2026-11-21T05:57:58Z",
- "done": "FV2: rfq profile widened on graded evidence (minFair .35->.25: .25-.35 band +9.0%/fill n1136; maxLeadMs 12h->24h; adaptiveCash on, score 5.7); in-play and <.25 fair NOT enabled (zero/negative); config live (rfq_set 2ce213043), CHANGES.md FV2 with revert",
- "next": "watch won/filled by class (fair band, lead bucket) over the next hours; revert line in CHANGES FV2; ON2 monitor check-ins continue; FV1a-d open"
+ "beat": 1795240842,
+ "beatIso": "2026-11-21T06:00:42Z",
+ "done": "Handoff saved (.handoff/handoff.md + archive 2026-11-21T06-00); CLAUDE.md/AGENTS.md Session Learnings block refreshed with this session's rules and decisions",
+ "next": "ON2 monitor check-ins (next ~05:56 UTC send_later, re-arm 45 min, stop ~10:00 UTC); judge first widened-profile fills by class; FV1a catalog snapshot workflow; FL1 flaky test"
 }
