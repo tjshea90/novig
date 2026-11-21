@@ -52,16 +52,17 @@ object RfqLedger {
     /** The outcome ids of every parlay still open, one list each (MK56: the repeat guard counts identical parlays and the parlays one outcome is in). */
     fun openSets(execs: List<Exec>): List<List<String>> = execs.filter { !it.settled }.map { it.outcomeIds }
 
-    data class Summary(val settled: Int, val makerWon: Int, val makerLost: Int, val open: Int, val openCollateral: Double, val pnlTotal: Double, val pnl24h: Double)
+    /** [pnlStop24h] is what the loss stop judges: the last 24 hours of settled parlays that were FILLED at or after [RfqConfig.lossStopFromMs] (equal to [pnl24h] when that is 0). */
+    data class Summary(val settled: Int, val makerWon: Int, val makerLost: Int, val open: Int, val openCollateral: Double, val pnlTotal: Double, val pnl24h: Double, val pnlStop24h: Double = pnl24h)
 
-    fun summarize(execs: List<Exec>, now: Long): Summary {
-        var won = 0; var lost = 0; var open = 0; var openCol = 0.0; var total = 0.0; var day = 0.0
+    fun summarize(execs: List<Exec>, now: Long, stopFromMs: Long = 0L): Summary {
+        var won = 0; var lost = 0; var open = 0; var openCol = 0.0; var total = 0.0; var day = 0.0; var stopDay = 0.0
         for (e in execs) {
             val p = pnl(e)
             if (p == null) { if (!e.settled) { open++; openCol += e.cost }; continue }
             total += p; if (p > 0.005) won++ else if (p < -0.005) lost++
-            if (now - (e.settledTs ?: e.ts) <= 24 * 3_600_000L) day += p
+            if (now - (e.settledTs ?: e.ts) <= 24 * 3_600_000L) { day += p; if (e.ts >= stopFromMs) stopDay += p }
         }
-        return Summary(execs.count { it.settled }, won, lost, open, openCol, total, day)
+        return Summary(execs.count { it.settled }, won, lost, open, openCol, total, day, stopDay)
     }
 }
