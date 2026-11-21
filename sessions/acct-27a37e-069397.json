@@ -8,8 +8,8 @@
  "branch": "ccr-bc2a800c-fgp2ck",
  "head": "697c57c6175543451a09d4a66cebc85c208225b1",
  "since": 1795129305,
- "beat": 1795252676,
- "beatIso": "2026-11-21T09:17:56Z",
+ "beat": 1795256335,
+ "beatIso": "2026-11-21T10:18:55Z",
  "done": "UW3 monitor #2 (09:16 UTC): maker live and quoting ~11/min, 226 quotes this run, 0 won yet (expected 0.5-1.6), no halt; cash-short gone; 3-leg stays excluded (-8.4% graded); runs replaced by a tjshea90-token dispatch at 08:22 and 08:58 (harmless)",
  "next": "monitor #3 send_later 60 min (to ~16:00 UTC): first wins/fills in the US-daytime slate, cash vs collateral, any halt; coverage levers FV1b/FV1c only if fills stay at 0 through the daytime slate"
 }
