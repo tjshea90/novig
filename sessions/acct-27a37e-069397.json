@@ -8,8 +8,8 @@
  "branch": "ccr-bc2a800c-fgp2ck",
  "head": "9bc7774e626817a65799aeba3943c5f27e6ae8d4",
  "since": 1795129305,
- "beat": 1795249277,
- "beatIso": "2026-11-21T08:21:17Z",
+ "beat": 1795249351,
+ "beatIso": "2026-11-21T08:22:31Z",
  "done": "UW3: Novig reopened ~08:13 UTC (1h36 maintenance), maker connected, 72 quotes in 6 min but cash-short refused 658: quoteWinFloor .03 -> .01 (capacity ~11 -> ~33 quotes in flight at 99.5%; measured win rate 0.2-0.7%)",
  "next": "re-check in ~5 min: quotes/min up, cash-short down, first win/fill, any maker_insolvent halt (then quoteWinFloor back to .03 / reserveByWinRate=false); ON2 monitor re-arm 45 min"
 }
