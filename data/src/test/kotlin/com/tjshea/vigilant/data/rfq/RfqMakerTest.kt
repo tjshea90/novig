@@ -374,6 +374,28 @@ class RfqMakerTest {
         return RfqProtocol.Created(r.clock, id, listOf("a", "b"), r.clock + 3_000L, 10.0)
     }
 
+    /** CS1 (Tj 2026-11-21: "tie my wallet up in parlay fills as soon as possible"): quotes win ~0.2% of the time, so holding each one's FULL collateral for its whole window left $67 backing three quotes. */
+    @Test fun reservingByTheWinRateBacksMoreQuotesOnTheSameCashButHoldsAWonQuoteInFull() {
+        fun run(byRate: Boolean): Pair<RfqMaker, List<String>> {
+            val sent = ArrayList<String>(); val rows = ArrayList<RfqRow>()
+            val c = cfg.copy(mode = RfqConfig.Mode.LIVE, cashReserve = 1.0, maxSameParlay = 0, maxParlaysPerOutcome = 0, maxLegCollateral = 0.0, maxOpenCollateral = 10_000.0, reserveByWinRate = byRate)
+            val maker = RfqMaker({ c }, { id -> listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4)).firstOrNull { it.outcomeId == id } }, { 0.0 }, { sent += it; true }, { rows += it }, { _, _ -> }, { now }, cash = { 100.0 })
+            repeat(12) { i -> maker.onEvent(created("a", "b").copy(rfqId = "rfq-$i")) }
+            return maker to sent
+        }
+        val (oldMaker, oldSent) = run(false)
+        assertEquals("$100 less the $1 reserve backs two $36.30 quotes in flight, as before", 2, oldSent.size)
+        val (maker, sent) = run(true)
+        assertTrue("with the win-rate hold more quotes go out on the same cash (${sent.size})", sent.size >= 4)
+        assertTrue("never more than the 99.5% quantile of wins can fund: ${maker.cashHeld()} held of $99, full ${maker.inFlight()}", maker.cashHeld() <= 99.0 && maker.cashHeld() < maker.inFlight())
+        // a quote the user ACCEPTED is a win: its collateral is held in full, whatever the win rate says
+        val before = maker.cashHeld()
+        maker.onEvent(RfqProtocol.QuoteAccepted(now, "rfq-0", "q0", 10.0, json.parseToJsonElement(sent[0]).jsonObject["quote"]!!.jsonObject["price"]!!.jsonPrimitive.content.toDouble(), "rfq-0"))
+        assertTrue("the won quote's $36.30 is held in full on top (was $before, now ${maker.cashHeld()})", maker.cashHeld() >= before - 1e-9 && maker.cashHeld() >= 36.3 - 1e-9)
+        // the quantile itself: 4 quotes at 3% wins -> 1 win covers 99.5%; 40 quotes at 3% -> 3 wins
+        assertEquals(0, RfqMaker.poissonQuantile(0.0, 0.995)); assertEquals(1, RfqMaker.poissonQuantile(0.12, 0.99)); assertTrue(RfqMaker.poissonQuantile(1.2, 0.995) in 4..5)
+    }
+
     @Test fun aQuoteIsSizedToTheCashThatIsThereAndAnUnreadBalanceQuotesNothing() {
         val f = fairs(leg("a", "e1", 0.5), leg("b", "e2", 0.4))                                   // fair 0.20, price 0.216: $10 of stake needs $36.30 of collateral
         val roomy = RfqPricer.decide(created("a", "b"), now, cfg, f, 0.0, null, 100.0)
