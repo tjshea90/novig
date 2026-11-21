@@ -8,8 +8,8 @@
  "branch": "ccr-bc2a800c-fgp2ck",
  "head": "26d29c7ab6aa4a228200c5911d1f0f7a7d9c0d3f",
  "since": 1795129305,
- "beat": 1795249806,
- "beatIso": "2026-11-21T08:30:06Z",
+ "beat": 1795252565,
+ "beatIso": "2026-11-21T09:16:05Z",
  "done": "UW3: quoteWinFloor .01 live; new run 44884601470, 44 quotes in 4 min, cash-short gone from the top declines, 0 won, no halt",
  "next": "monitor #2 send_later 45 min: quotes/won/filled, cash vs collateral, any halt; next lever is leg fair coverage (FV1b UFC fair-only pass, FV1c NHL anytime scorer) since declines are now 'no fair line'"
 }
