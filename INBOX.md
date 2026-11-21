@@ -2129,3 +2129,11 @@ If i add 100 dollars:
 ```
 I have 54 dollars in the wallet. Use all of it for as many quotes as possible on profitable quotes. I want it to use the money.
 ```
+
+## 2026-11-21T06:58:53Z
+```
+When the trading resumes:
+
+Adjust the parlay engine to your settings for a balance between good profitable quotes, but also for volume of quotes so that i actually get fills. Use the entire wallet. Turn on the Auto bid engine for profitable bid types as well. Keep the engine running until money runs out, if there is still money, the parlay engine should continue to run throughout the day when there is a much higher chance of parlay fills. Keep monitoring it 
+I'm not afraid of losing the entire wallet. I just want profitable ev parlay fills 
+```
