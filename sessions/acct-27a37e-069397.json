@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "f8f4896b77a8c77fef5df1eee459b3080fd30486",
+ "head": "66a26e6dd21f856a303941ea2e5b4ac37732e099",
  "since": 1795129305,
- "beat": 1795244076,
- "beatIso": "2026-11-21T06:54:36Z",
- "done": "CS1b: Novig maintenance (423 SYSTEM_LOCKED 'Trading is paused: Maintenance') was the cause of the 06:37 MAKER_BARRED, not CS1; fixed slow recovery: RfqReconnect SYSTEM_LOCKED retry 90s (was 30 min), CloudTrader SYSTEM_LOCKED stop re-checked after 2 min (was 30), MAKER_BARRED held 30 min not until next job; tests + full floor 4547 green; CS1 still off (reserveByWinRate=false)",
- "next": "land on main (check), engine_set --reset so the running job has the faster retries, then watch for Novig reopening: maker connects, quotes; when it has quoted normally for a while re-enable rfq_set reserveByWinRate=true; LP1 re-judge (06:47) + ON2 monitor (06:52) are queued"
+ "beat": 1795244221,
+ "beatIso": "2026-11-21T06:57:01Z",
+ "done": "UW1: rfq_set reserveByWinRate=true walletLegShare=.5 dayLossStopPct=.5 cashReserve=.5 for the $54 wallet (the .25 leg cap = $13.5 refused every parlay under 43% win chance; the 30% stop = $16 trips on one loss); Novig still in maintenance, takes effect on reopening",
+ "next": "CS1c follow-up ~07:07 UTC checks the reopen; then verify the maker quotes the 25-43% band and quote wins rise; LP1 re-judge and ON2 monitor queued; revert line in CHANGES UW1"
 }
