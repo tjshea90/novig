@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "d6dee9cdcbaa4e615e994737a884cf6f1d5651a9",
+ "head": "5cdec71e38ea8f73dde63aff10d3ef1741ed24e3",
  "since": 1795129305,
- "beat": 1795264069,
- "beatIso": "2026-11-21T12:27:49Z",
+ "beat": 1795264165,
+ "beatIso": "2026-11-21T12:29:25Z",
  "done": "UW3 monitor #4 (11:22 UTC): Novig pause ended ~11:00, 1,872 quotes 0 won; funnel: 10 of 2,360 quotes executed and all 10 lost to a price 0.2-1.7 pts under ours (fair+.001): wins need quoting under our own fair = Tj's policy call, class B not met; engine bids filled 10 for $8.10 (cash 40.48)",
  "next": "monitor #5 send_later 60 min: US-daytime funnel re-run (QUOTE_SENT x EXECUTED by rfqId), first wins/fills, cash vs collateral, halts; tell Tj the below-fair option once; FV1b/FV1c only if fills stay 0 through ~16:00 UTC"
 }
