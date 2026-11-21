@@ -2101,3 +2101,8 @@ If i add more money to the vigilant wallet, is it expected to get more parlay fi
 ```
 Figure out how to get more legs fair odds priced from my apis, especially the propline api with paid socket 
 ```
+
+## 2026-11-21T05:50:52Z
+```
+Is there anything you can do to get parlays filled now that aren't terrible negative expected outcomes 
+```
