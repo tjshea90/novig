@@ -476,16 +476,21 @@ class RfqMakerTest {
         assertEquals(0L, r.maker.drainRemainingMs())
     }
 
-    @Test fun makerBarredAndAReadOnlyKeyStopTheQuotingForGood() {
+    /** 2026-11-21: Novig answered MAKER_BARRED and then paused the whole exchange for maintenance; "can't quote right now" is not for ever, so it is held half an hour and tried again (one refused frame costs nothing); a read-only key is for good. */
+    @Test fun makerBarredHoldsHalfAnHourThenTriesAgainAndAReadOnlyKeyStopsTheQuotingForGood() {
         val r = rig(RfqConfig.Mode.LIVE)
         r.maker.onEvent(RfqProtocol.Refused(now, 3, "MAKER_BARRED", "Your maker can't quote right now."))
         assertNotNull(r.maker.halted); assertTrue(r.told.single().contains("stopped quoting"))
-        r.clock += 24 * 3_600_000L
-        r.maker.onEvent(freshCreated(r, "rfq-9"))
-        assertNotNull("no end: Novig says contact them", r.maker.halted); assertTrue(r.sent.isEmpty())
+        r.clock += 10 * 60_000L
+        r.maker.onEvent(freshCreated(r, "rfq-8"))
+        assertNotNull("still inside the half hour", r.maker.halted); assertTrue(r.sent.isEmpty())
         assertTrue(r.maker.status(true).contains("MAKER_BARRED") || r.maker.snapshot(true, r.cfg, "m", 0.0, "").refusals.any { it.startsWith("MAKER_BARRED") })
+        r.clock += 25 * 60_000L
+        r.maker.onEvent(freshCreated(r, "rfq-9"))
+        assertNull("half an hour on it quotes again", r.maker.halted); assertEquals(1, r.sent.size)
         val ro = rig(RfqConfig.Mode.LIVE)
         ro.maker.onEvent(RfqProtocol.Refused(now, 4, "READ_ONLY_KEY", null)); assertNotNull(ro.maker.halted)
+        ro.clock += 24 * 3_600_000L; ro.maker.onEvent(freshCreated(ro, "rfq-10")); assertNotNull("a read-only key has no end", ro.maker.halted)
     }
 
     @Test fun aLockNovigReportsStopsQuotingUntilItsStatedEndAndTheStandingIsPublished() {

@@ -24,6 +24,7 @@ class RfqReconnectTest {
         assertEquals(30 * minute, plan(Cause.Upgrade(451, "GEOLOCATION_EXPIRED", null), 1).delayMs)
         assertEquals(30 * minute, plan(Cause.Closed(1008, "GEOLOCATION_OUT_OF_BOUNDARY", 20 * minute), 0).delayMs)
         assertEquals(30 * minute, plan(Cause.Upgrade(423, "ACCOUNT_LOCKED", null)).delayMs)
+        assertEquals("the whole exchange paused (maintenance, 2026-11-21) is looked at again in 90 s, not 30 minutes", 90_000L, plan(Cause.Upgrade(423, "SYSTEM_LOCKED", null)).delayMs)
         assertEquals(30 * minute, plan(Cause.Upgrade(403, "KYC_REQUIRED", null)).delayMs)
         assertEquals(30 * minute, plan(Cause.Upgrade(401, "SIGNATURE_REJECTED", null)).delayMs)
     }

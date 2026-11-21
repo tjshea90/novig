@@ -158,6 +158,24 @@ class CloudTraderTest {
     }
 
     @Test
+    fun `a stop for an exchange-wide pause is looked at again after two minutes, any other stop after thirty`() = runBlocking {
+        val port = FakePort { CloudOrderPort.Placed.Stop("Novig has halted trading on the whole exchange (Novig code SYSTEM_LOCKED). Nothing can be bet until it reopens") }
+        val t = trader(port)
+        val s = settings(CloudTradeMode.LIVE)
+        t.pass(listOf(row("a")), s, now)
+        assertEquals(1, port.sent.size)
+        t.pass(listOf(row("b", at = now + 60_000L)), s, now + 60_000L)
+        assertEquals("held inside two minutes", 1, port.sent.size)
+        t.pass(listOf(row("c", at = now + 3 * 60_000L)), s, now + 3 * 60_000L)
+        assertEquals("the pause is checked again after two minutes (Novig's maintenance, 2026-11-21, cost half an hour of orders after it ended)", 2, port.sent.size)
+        val other = FakePort { CloudOrderPort.Placed.Stop("GEOLOCATION_NOT_ALLOWED") }
+        val t2 = trader(other)
+        t2.pass(listOf(row("a")), s, now)
+        t2.pass(listOf(row("b", at = now + 3 * 60_000L)), s, now + 3 * 60_000L)
+        assertEquals("a location refusal still holds thirty minutes", 1, other.sent.size)
+    }
+
+    @Test
     fun `a missed order is not recorded and not retried at once, a stop ends ordering and is remembered`() = runBlocking {
         val port = FakePort { CloudOrderPort.Placed.Missed("price moved") }
         val t = trader(port)
