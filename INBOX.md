@@ -2080,3 +2080,8 @@ This session's worker process was restarted. If your previous turn was already c
 ```
 Also for the ncaab tab, remove and no longer show the very small college games on the schedule that have no betting odds and usually aren't bet on because the school is so small 
 ```
+
+## 2026-11-21T03:35:05Z
+```
+Turn the engine, scanning, and parlay system back on immediately live with real money no shadow 
+```
