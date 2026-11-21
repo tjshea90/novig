@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "66a26e6dd21f856a303941ea2e5b4ac37732e099",
+ "head": "60b9ab30af2b0305d22340703fe48a1801f364be",
  "since": 1795129305,
- "beat": 1795244221,
- "beatIso": "2026-11-21T06:57:01Z",
- "done": "UW1: rfq_set reserveByWinRate=true walletLegShare=.5 dayLossStopPct=.5 cashReserve=.5 for the $54 wallet (the .25 leg cap = $13.5 refused every parlay under 43% win chance; the 30% stop = $16 trips on one loss); Novig still in maintenance, takes effect on reopening",
- "next": "CS1c follow-up ~07:07 UTC checks the reopen; then verify the maker quotes the 25-43% band and quote wins rise; LP1 re-judge and ON2 monitor queued; revert line in CHANGES UW1"
+ "beat": 1795244313,
+ "beatIso": "2026-11-21T06:58:33Z",
+ "done": "LP1 follow-up: study fixed and refreshed (16,205 graded, 827 in-play, 223 in my class): in-play 2-leg no-heavy EV at our quote +11.7% (se 7.0) at 3 pt, 15% of traded auctions, stable by day, heavy-leg pocket still -9%: no change (LP1 stays); pregame profile +7.3% (se 1.6, n 4113) at +0.5 pt; Novig still in maintenance (423 SYSTEM_LOCKED), UW1 settings waiting for reopening",
+ "next": "CS1c/UW1 follow-up fires ~07:07 UTC (check reopen, maker quoting the 25-43% band, cash locked); re-judge in-play at 300+ graded fills; ON2 monitor re-armed"
 }
