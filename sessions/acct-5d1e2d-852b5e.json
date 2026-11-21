@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-vj4lm9",
- "head": "50c1e22920d81e5fcf3bc0c9bd79cdafe94e6377",
+ "head": "5a57103d2c18dc4a743bf16f8c404fa7cd95d4a5",
  "since": 1795220542,
- "beat": 1795240136,
- "beatIso": "2026-11-21T05:48:56Z",
+ "beat": 1795241658,
+ "beatIso": "2026-11-21T06:14:18Z",
  "done": "BL1: delayed syncNow on resume (blurry return), compile checked",
  "next": "ship in next batch release; ask Tj if blur persists"
 }
