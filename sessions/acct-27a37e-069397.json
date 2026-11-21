@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "60b9ab30af2b0305d22340703fe48a1801f364be",
+ "head": "f5e2069945faafcb7a74b2735fbffdae3192ade5",
  "since": 1795129305,
- "beat": 1795244313,
- "beatIso": "2026-11-21T06:58:33Z",
+ "beat": 1795244505,
+ "beatIso": "2026-11-21T07:01:45Z",
  "done": "LP1 follow-up: study fixed and refreshed (16,205 graded, 827 in-play, 223 in my class): in-play 2-leg no-heavy EV at our quote +11.7% (se 7.0) at 3 pt, 15% of traded auctions, stable by day, heavy-leg pocket still -9%: no change (LP1 stays); pregame profile +7.3% (se 1.6, n 4113) at +0.5 pt; Novig still in maintenance (423 SYSTEM_LOCKED), UW1 settings waiting for reopening",
  "next": "CS1c/UW1 follow-up fires ~07:07 UTC (check reopen, maker quoting the 25-43% band, cash locked); re-judge in-play at 300+ graded fills; ON2 monitor re-armed"
 }
