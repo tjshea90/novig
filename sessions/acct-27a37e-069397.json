@@ -8,8 +8,8 @@
  "branch": "ccr-bc2a800c-fgp2ck",
  "head": "0dc92999a881a2c8c6c44e795764e9a483a4ab4b",
  "since": 1795129305,
- "beat": 1795256448,
- "beatIso": "2026-11-21T10:20:48Z",
+ "beat": 1795260128,
+ "beatIso": "2026-11-21T11:22:08Z",
  "done": "UW3 monitor #3 (10:19 UTC): Novig exchange paused again (SYSTEM_LOCKED from ~10:10, maker connected/waiting); 953 quotes this run, 0 won; margin sweep on 4,113 graded profile parlays: sign flips by day, no margin change",
  "next": "monitor #4 send_later 60 min: Novig reopened? quotes resume, first wins/fills in US daytime (13:00 UTC+), cash vs collateral, any halt; FV1b/FV1c only if fills stay 0 through ~16:00 UTC"
 }
