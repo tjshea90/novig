@@ -26,8 +26,8 @@ class RfqBelowFairTest {
         assertEquals("rounded UP to Novig's thousandth: 0.36 - 0.0125 = 0.3475", 0.348, quote(cfg.copy(quoteBelowFairPoints = 0.0125)).price, 1e-9)
     }
 
-    @Test fun theQuoteNeverLeavesNovigsPriceRangeWhateverTheSetting() {
-        val p = quote(cfg.copy(quoteBelowFairPoints = 0.5)).price
-        assertTrue("price $p", p >= 0.001 && p < 0.36)
+    @Test fun aSettingFarTooBigEndsAtNovigsFloorPriceAndTheStakeRulesDeclineItNeverAnInvalidPrice() {
+        val d = RfqPricer.decide(created(), now, cfg.copy(quoteBelowFairPoints = 0.5), LegFairs { legs[it] }, 0.0)
+        assertTrue(d.toString(), d is RfqDecision.Decline && !d.reason.contains("outside Novig"))
     }
 }
