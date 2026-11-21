@@ -1,21 +1,19 @@
 # CHECKPOINT 4813 — read me first, then TASKS.md
 
-**Written:** 2026-11-21T05:47:49Z · **tests:** all 11 fast checks green
-**Branch:** `ccr-bc2a800c-fgp2ck` · **builds on:** `64e35f89d` (this checkpoint is the commit after it)
+**Written:** 2026-11-21T05:48:56Z · **tests:** all 11 fast checks green
+**Branch:** `claude/optimistic-curie-vj4lm9` · **builds on:** `630a3f94d` (this checkpoint is the commit after it)
 
 ## Just done
-FV1 analysis: research/parlay_fair_coverage_2026-11-21.md (weighted attribution of no-fair legs: journal samples 1/25, 97% unscanned, overnight only ~7% real pregame league gaps), LEVERS row, TASKS FV1a-d, CHANGES line; no setting/code changed
+BL1: delayed syncNow on resume (blurry return), compile checked
 
 ## Do this next
-FV1a catalog snapshot workflow then a day of journals joined (decides FV1b UFC fair-only pass / FV1c NHL goal scorer hold census / FV1d soccer); keep ON2 monitor check-ins (next due ~05:56 UTC)
+ship in next batch release; ask Tj if blur persists
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
-     M research/INDEX.md
-     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
