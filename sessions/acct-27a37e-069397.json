@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "6e2182c81c6e5f79e4d79db6017984688753e3c3",
+ "head": "0a0b7eb139b72ab6956d07e8b6418a84e0f81d11",
  "since": 1795129305,
- "beat": 1795241229,
- "beatIso": "2026-11-21T06:07:09Z",
+ "beat": 1795241410,
+ "beatIso": "2026-11-21T06:10:10Z",
  "done": "ON2 monitor check-in #3 (06:07 UTC): healthy; maker connected, not halted, 437 quotes/1 won/1 filled, desk 516 bids $331, cash $67.13, no engine-log errors, ParlayAPI 594 credits; FV2 widened profile and LP1 in-play LIVE both adopted, no in-play quote yet (dry overnight); no change made",
  "next": "check-in #4 due ~06:52 UTC (send_later re-armed); LP1 follow-up fires 06:36 UTC (rfq-pnl-study in-play margin re-judge); watch adaptiveCash decline text and first in-play fills; stop ~10:00 UTC"
 }
