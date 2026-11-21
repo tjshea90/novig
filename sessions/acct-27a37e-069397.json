@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "0dc92999a881a2c8c6c44e795764e9a483a4ab4b",
+ "head": "27dc66266c3bd0170a02557fb0de6dbcb2121dc1",
  "since": 1795129305,
- "beat": 1795260128,
- "beatIso": "2026-11-21T11:22:08Z",
- "done": "UW3 monitor #3 (10:19 UTC): Novig exchange paused again (SYSTEM_LOCKED from ~10:10, maker connected/waiting); 953 quotes this run, 0 won; margin sweep on 4,113 graded profile parlays: sign flips by day, no margin change",
- "next": "monitor #4 send_later 60 min: Novig reopened? quotes resume, first wins/fills in US daytime (13:00 UTC+), cash vs collateral, any halt; FV1b/FV1c only if fills stay 0 through ~16:00 UTC"
+ "beat": 1795260299,
+ "beatIso": "2026-11-21T11:24:59Z",
+ "done": "UW3 monitor #4 (11:22 UTC): Novig pause ended ~11:00, 1,872 quotes 0 won; funnel: 10 of 2,360 quotes executed and all 10 lost to a price 0.2-1.7 pts under ours (fair+.001): wins need quoting under our own fair = Tj's policy call, class B not met; engine bids filled 10 for $8.10 (cash 40.48)",
+ "next": "monitor #5 send_later 60 min: US-daytime funnel re-run (QUOTE_SENT x EXECUTED by rfqId), first wins/fills, cash vs collateral, halts; tell Tj the below-fair option once; FV1b/FV1c only if fills stay 0 through ~16:00 UTC"
 }
