@@ -2116,3 +2116,11 @@ Turn the parlay in play engine live instead of shadow. Any parlay that you have 
 ```
 I don't care how you do it. I want my 77 dollar wallet tied up in parlay maker fills as soon as possible . As long as they are not parlays which are too easy for the buyer to win or terrible ev parlays. They should have a good chance at profit 
 ```
+
+## 2026-11-21T06:33:40Z
+```
+If i add 100 dollars:
+
+1) will i have more parlay fills 
+2) can they be profitable less risky fills 
+```
