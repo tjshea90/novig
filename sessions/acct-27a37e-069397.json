@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "4570e2d080f6dff1522d6524ba6917acd2add82e",
+ "head": "4a1fd76e73955232542739f17a23cefd73bfdaf7",
  "since": 1795129305,
- "beat": 1795233354,
- "beatIso": "2026-11-21T03:55:54Z",
- "done": "ON1 DONE: engine LIVE (trading, bids via maker=true, scan on), desk resting 123 real bids $64.44; bidDeployPct restored to 100; CHANGES.md + TASKS.md updated",
- "next": "if Tj wants the parlay maker quoting now: rfq_set.py dayLossStopPct (his word); in-play parlays liveParlays only on his word; consider a cash reserve so bid fills cannot starve parlay collateral"
+ "beat": 1795233381,
+ "beatIso": "2026-11-21T03:56:21Z",
+ "done": "ON2: RfqConfig.lossStopFromMs + RfqLedger.Summary.pnlStop24h: the maker's loss stop counts only fills made since the research profile began (it was tripped by the old settings' fills); full floor green (4545 passed; NovigOrderSocketTest flaked once under load, passes alone and on rerun); CHANGES.md ON2",
+ "next": "land on main (check origin/main), engine_set --reset for a runner on the new code, then rfq_set lossStopFromMs=<restart ms>, confirm maker resumes (status rfq.halted empty), then send_later check-ins"
 }
