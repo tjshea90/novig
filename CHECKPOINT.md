@@ -1,13 +1,13 @@
-# CHECKPOINT 4804 — read me first, then TASKS.md
+# CHECKPOINT 4805 — read me first, then TASKS.md
 
-**Written:** 2026-11-20T23:16:45Z · **tests:** all 11 fast checks green
-**Branch:** `claude/optimistic-curie-dxgkit` · **builds on:** `d5d578a96` (this checkpoint is the commit after it)
+**Written:** 2026-11-21T00:22:22Z · **tests:** all 11 fast checks green
+**Branch:** `claude/optimistic-curie-rie8bc` · **builds on:** `da720cd8b` (this checkpoint is the commit after it)
 
 ## Just done
-full :data tests run for WalletBetMoney fix
+ENGINEER 11-20 routine: watch only, nothing to change
 
 ## Do this next
-ship in next release
+continue PW1/PS1 parlay lane when wallet funded
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ ship in next release
 
 ## Last ten checkpoints
 ```
+  da720cd8b ckpt 4804: full :data tests run for WalletBetMoney fix
   d5d578a96 ckpt 4803: WalletBetMoney: graded win with no Novig payout yet no longer shows as a fu
   520f0318f ckpt 4802: NT2 SHIPPED: v1.0.148 (release green, recorded)
   c87fa9036 ckpt 4801: pre-release: NT2: the NCAAB tab no longer lists small college games with no
