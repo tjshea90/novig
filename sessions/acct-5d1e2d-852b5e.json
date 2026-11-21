@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "852b5e",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-rie8bc",
+ "head": "ba8689716ebfff97d8ffe437901b0792938ecfc2",
+ "since": 1795220542,
+ "beat": 1795220542,
+ "beatIso": "2026-11-21T00:22:22Z",
+ "done": "ENGINEER 11-20 routine: watch only, nothing to change",
+ "next": "continue PW1/PS1 parlay lane when wallet funded"
+}
