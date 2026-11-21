@@ -890,7 +890,7 @@ fun main(args: Array<String>) = runBlocking {
                             if (!unchanged) { rfqBook.set(book); publisher.stageExtra("parlays.json", com.tjshea.vigilant.data.rfq.ParlayBook.encode(book)) }
                             publisher.stageExtra("rfq-fills.json", com.tjshea.vigilant.data.rfq.FillBook.encode(rfqFills.values))
                         }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("RFQ parlay hub: ${e.message?.take(120)}") }
-                        rfqMaker.onLedger(com.tjshea.vigilant.data.rfq.RfqLedger.summarize(execs, System.currentTimeMillis()))
+                        rfqMaker.onLedger(com.tjshea.vigilant.data.rfq.RfqLedger.summarize(execs, System.currentTimeMillis(), rfqCfg.get().lossStopFromMs))
                     }
                     cycle++
                     val now = System.currentTimeMillis()
