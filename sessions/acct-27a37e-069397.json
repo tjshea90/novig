@@ -8,8 +8,8 @@
  "branch": "ccr-bc2a800c-fgp2ck",
  "head": "11ef3457442c6ce8fa13ec117293240be9178256",
  "since": 1795129305,
- "beat": 1795240070,
- "beatIso": "2026-11-21T05:47:50Z",
+ "beat": 1795240250,
+ "beatIso": "2026-11-21T05:50:50Z",
  "done": "FV1 analysis: research/parlay_fair_coverage_2026-11-21.md (weighted attribution of no-fair legs: journal samples 1/25, 97% unscanned, overnight only ~7% real pregame league gaps), LEVERS row, TASKS FV1a-d, CHANGES line; no setting/code changed",
  "next": "FV1a catalog snapshot workflow then a day of journals joined (decides FV1b UFC fair-only pass / FV1c NHL goal scorer hold census / FV1d soccer); keep ON2 monitor check-ins (next due ~05:56 UTC)"
 }
