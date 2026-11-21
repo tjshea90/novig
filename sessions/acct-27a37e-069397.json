@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "5942ce96857eb5985ca50abc2ca8f95b20335b57",
+ "head": "bb11139a0107644b32752b1113f3296df5a754bb",
  "since": 1795129305,
- "beat": 1795239548,
- "beatIso": "2026-11-21T05:39:08Z",
+ "beat": 1795239716,
+ "beatIso": "2026-11-21T05:41:56Z",
  "done": "ON2 monitor check-in #2 (05:10 UTC): healthy; maker connected, not halted, 80 quotes/0 won/0 filled (overnight, expected), desk 518 bids $327 resting, no errors, cash $66.70; ParlayAPI 601/10000 credits (~5-7/h, dry about 11-25, Tj's refill); no change made",
  "next": "check-in #3 due ~05:55 UTC (send_later re-armed, stop ~10:00 UTC); first real parlay fills expected with the day slate from ~16:00 UTC: judge by shape on 20+; FL1 flaky NovigOrderSocketTest"
 }
