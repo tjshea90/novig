@@ -569,7 +569,9 @@ class MainActivity : ComponentActivity() {
         LaunchTrace.stage("on-screen")
         (application as VigilantApp).container.onScreen = true
         // Everything GitHub is doing is read the moment the app opens (the engine's heartbeat, list, bets, bids, messages, usage): TCL31.
-        runCatching { (application as VigilantApp).container.cloud.syncNow() }
+        // Tj 2026-11-21 (chat): back from another app the screen was blurry a few seconds. The sync wakes every loop at once and
+        // redraws everything while the first frame is still being drawn, so it waits for the screen to settle (0.6 s) first.
+        (application as VigilantApp).container.let { c -> c.appScope.launch { kotlinx.coroutines.delay(600); runCatching { c.cloud.syncNow() } } }
         // A release published while the phone was asleep is found as the app opens, and the 15-minute worker keeps looking when it is closed.
         runCatching { UpdateWorker.schedule(applicationContext); (application as VigilantApp).container.let { c -> c.appScope.launch { c.updater.check(notify = true) } } }
         // The full app is back in front: no need for the widget over it.
