@@ -40,9 +40,10 @@ jobs:
           python3 -I tools/rfq_shape_study.py selftest
           python3 -I tools/rfq_shape_study.py out/graded.csv.gz > out/SHAPES.txt
           # PS1: the calibration study over EVERY priced request (not only the executed ones), the tiers and the settings audit (tools/rfq_calibration_study.py)
-          python3 -I tools/rfq_calibration_study.py selftest
+          # numpy is not on the runner image (2026-11-21: the step died on `import numpy`, the Publish step was skipped and the Release stayed a day old): a venv carries it, and the selftest sits inside the guard
+          python3 -m venv /tmp/cal-venv && /tmp/cal-venv/bin/pip install --quiet numpy || echo "numpy could not be installed: the calibration study will be skipped"
           # the earlier files are published even when this heavier study fails
-          (python3 -I tools/rfq_calibration_study.py run journals out/study > out/study.log 2>&1 && cp out/study/STUDY.md out/STUDY.md) || { echo "the calibration study failed: see the run log"; tail -20 out/study.log; echo "calibration study failed in this run" > out/STUDY.md; }
+          (/tmp/cal-venv/bin/python -I tools/rfq_calibration_study.py selftest > out/study.log 2>&1 && /tmp/cal-venv/bin/python -I tools/rfq_calibration_study.py run journals out/study >> out/study.log 2>&1 && cp out/study/STUDY.md out/STUDY.md) || { echo "the calibration study failed: see the run log"; tail -20 out/study.log; echo "calibration study failed in this run" > out/STUDY.md; }
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
