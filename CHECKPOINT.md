@@ -1,21 +1,25 @@
-# CHECKPOINT 4812 — read me first, then TASKS.md
+# CHECKPOINT 4813 — read me first, then TASKS.md
 
-**Written:** 2026-11-21T05:10:57Z · **tests:** all 11 fast checks green
-**Branch:** `ccr-bc2a800c-fgp2ck` · **builds on:** `e76d99932` (this checkpoint is the commit after it)
+**Written:** 2026-11-21T05:47:49Z · **tests:** all 11 fast checks green
+**Branch:** `ccr-bc2a800c-fgp2ck` · **builds on:** `64e35f89d` (this checkpoint is the commit after it)
 
 ## Just done
-ON2 monitor check-in #2 (05:10 UTC): healthy; maker connected, not halted, 80 quotes/0 won/0 filled (overnight, expected), desk 518 bids $327 resting, no errors, cash $66.70; ParlayAPI 601/10000 credits (~5-7/h, dry about 11-25, Tj's refill); no change made
+FV1 analysis: research/parlay_fair_coverage_2026-11-21.md (weighted attribution of no-fair legs: journal samples 1/25, 97% unscanned, overnight only ~7% real pregame league gaps), LEVERS row, TASKS FV1a-d, CHANGES line; no setting/code changed
 
 ## Do this next
-check-in #3 due ~05:55 UTC (send_later re-armed, stop ~10:00 UTC); first real parlay fills expected with the day slate from ~16:00 UTC: judge by shape on 20+; FL1 flaky NovigOrderSocketTest
+FV1a catalog snapshot workflow then a day of journals joined (decides FV1b UFC fair-only pass / FV1c NHL goal scorer hold census / FV1d soccer); keep ON2 monitor check-ins (next due ~05:56 UTC)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M research/INDEX.md
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  d38120752 ckpt 4812: ON2 monitor check-in #2 (05:10 UTC): healthy; maker connected, not halted, 
   e76d99932 ckpt 4811: ON2 monitor check-in #1 (04:22 UTC): healthy; maker connected, not halted, 
   6480fc59e ckpt 4810: ON2 DEPLOYED: loss-stop fix live (run 44863668546: maker connected, not hal
   4a1fd76e7 ckpt 4809: ON2: RfqConfig.lossStopFromMs + RfqLedger.Summary.pnlStop24h: the maker's l
@@ -25,5 +29,7 @@ check-in #3 due ~05:55 UTC (send_later re-armed, stop ~10:00 UTC); first real pa
   ba8689716 ckpt 4805: ENGINEER 11-20 routine: watch only, nothing to change
   da720cd8b ckpt 4804: full :data tests run for WalletBetMoney fix
   d5d578a96 ckpt 4803: WalletBetMoney: graded win with no Novig payout yet no longer shows as a fu
-  520f0318f ckpt 4802: NT2 SHIPPED: v1.0.148 (release green, recorded)
 ```
+
+(4 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
