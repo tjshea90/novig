@@ -407,10 +407,12 @@ class RfqMaker(
         ledger = s
         row("LEDGER", null) { put("settled", s.settled); put("makerWon", s.makerWon); put("makerLost", s.makerLost); put("open", s.open); put("pnl", s.pnlTotal); put("pnl24h", s.pnl24h) }
         val stop = lossStop(cfg)
-        if (cfg.mode == RfqConfig.Mode.LIVE && stop > 0.0 && s.pnl24h <= -stop) {
-            halt("the maker's settled parlays lost ${"%.2f".format(-s.pnl24h)} dollars in 24 hours (the stop is ${"%.2f".format(stop)})", 6 * 3_600_000L)
+        // ON2: the stop judges the parlays filled under the current profile (lossStopFromMs); with 0 that is every fill, as before.
+        val judged = s.pnlStop24h
+        if (cfg.mode == RfqConfig.Mode.LIVE && stop > 0.0 && judged <= -stop) {
+            halt("the maker's settled parlays lost ${"%.2f".format(-judged)} dollars in 24 hours${if (cfg.lossStopFromMs > 0L) " (fills since the profile began)" else ""} (the stop is ${"%.2f".format(stop)})", 6 * 3_600_000L)
             haltIsLossStop = true
-        } else if (halted != null && haltIsLossStop && (stop <= 0.0 || s.pnl24h > -stop)) {
+        } else if (halted != null && haltIsLossStop && (stop <= 0.0 || judged > -stop)) {
             // MK17d (Tj: "turn the stop loss off"): a halt that the loss stop made ends when the stop is switched off (or raised above the loss), not six hours later.
             halted = null; haltedUntilMs = 0L; haltIsLossStop = false
             log("RFQ maker resumes: the loss stop is ${if (stop <= 0.0) "off" else "no longer reached"}")
