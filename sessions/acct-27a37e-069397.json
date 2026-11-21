@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "f0f3752f8f8aecfa08306c641b272566fd20da8e",
+ "head": "1bdae779988ba0304922e27881c3e3d91ba2ca18",
  "since": 1795129305,
- "beat": 1795232599,
- "beatIso": "2026-11-21T03:43:19Z",
+ "beat": 1795232758,
+ "beatIso": "2026-11-21T03:45:58Z",
  "done": "ON1 DONE: engine LIVE (trading, bids via maker=true, scan on), desk resting 123 real bids $64.44; bidDeployPct restored to 100; CHANGES.md + TASKS.md updated",
  "next": "if Tj wants the parlay maker quoting now: rfq_set.py dayLossStopPct (his word); in-play parlays liveParlays only on his word; consider a cash reserve so bid fills cannot starve parlay collateral"
 }
