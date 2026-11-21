@@ -50,6 +50,8 @@ class RfqMaker(
         var quoteId: String? = null
         var reserved: Double = 0.0
         var reservedUntilMs: Long = 0L
+        /** The user accepted this quote (a win): its collateral is certain, held in full (CS1). */
+        var certain: Boolean = false
     }
 
     private val nonce = AtomicLong(0)
@@ -105,6 +107,33 @@ class RfqMaker(
     }
 
     fun inFlight(): Double = synchronized(pending) { val now = clock(); pending.values.filter { it.reservedUntilMs > now }.sumOf { it.reserved } }
+
+    /** Send times of the quotes and accept times of the wins, newest last, for the recent win rate (CS1); guarded by the `pending` lock. */
+    private val quoteLog = ArrayDeque<Long>()
+    private val winLog = ArrayDeque<Long>()
+
+    /** The share of recent quotes that were accepted: wins in the last 2 hours over quotes, smoothed toward the floor with 100 quotes of prior, never under [RfqConfig.quoteWinFloor]. Call under the `pending` lock. */
+    private fun winRate(cfg: RfqConfig, now: Long): Double {
+        val from = now - WIN_WINDOW_MS
+        while (quoteLog.isNotEmpty() && quoteLog.first() < from) quoteLog.removeFirst()
+        while (winLog.isNotEmpty() && winLog.first() < from) winLog.removeFirst()
+        val floor = cfg.quoteWinFloor.coerceIn(0.001, 0.9)
+        return maxOf(floor, minOf(1.0, (winLog.size + floor * PRIOR_QUOTES) / (quoteLog.size + PRIOR_QUOTES)))
+    }
+
+    /**
+     * The cash the quotes out have a claim on (CS1): a won quote in full, the rest (with [RfqConfig.reserveByWinRate]) only for the number of wins that is almost certain to be enough, using the largest
+     * collaterals first. With it off, or when every quote could win, the same as [inFlight].
+     */
+    fun cashHeld(cfg: RfqConfig = config()): Double = synchronized(pending) {
+        val now = clock()
+        val live = pending.values.filter { it.reservedUntilMs > now && it.reserved > 0.0 }
+        val certain = live.filter { it.certain }.sumOf { it.reserved }
+        val open = live.filter { !it.certain }.map { it.reserved }
+        if (!cfg.reserveByWinRate || open.isEmpty()) return@synchronized certain + open.sum()
+        val k = poissonQuantile(open.size * winRate(cfg, now), cfg.reserveConfidence.coerceIn(0.5, 0.99999))
+        certain + (if (k >= open.size) open.sum() else open.sortedDescending().take(k).sum())
+    }
 
     private fun row(kind: String, rfqId: String?, build: kotlinx.serialization.json.JsonObjectBuilder.() -> Unit) {
         runCatching { journal(RfqRow(clock(), kind, rfqId, buildJsonObject(build).toString())) }
@@ -208,7 +237,7 @@ class RfqMaker(
         // MK17: with the wallet as the collateral limit the paper run reads the balance too and judges as the live one would (the cash there is, the share of the wallet one parlay may take).
         val cashNow = cash()
         val cashRoom = when {
-            cfg.mode == RfqConfig.Mode.LIVE -> cashNow?.let { it - inFlight() - cfg.cashReserve } ?: -1.0
+            cfg.mode == RfqConfig.Mode.LIVE -> cashNow?.let { it - cashHeld(cfg) - cfg.cashReserve } ?: -1.0
             cfg.walletCollateral && cashNow != null -> cashNow - cfg.cashReserve
             else -> null
         }
@@ -258,9 +287,10 @@ class RfqMaker(
             val perStake = (1.0 - d.price) / d.price
             if (send(RfqProtocol.quote(nonce.incrementAndGet(), e.rfqId, d.price, d.maxWager, e.rfqId))) {
                 quotesSent++; lastQuoteAtMs = now
+                synchronized(pending) { quoteLog.addLast(now); while (quoteLog.size > MAX_RATE_LOG) quoteLog.removeFirst() }
                 p.quotePrice = d.price; p.quoteMax = d.maxWager
                 p.reserved = d.maxWager * perStake; p.reservedUntilMs = e.expiresTs + config().reserveAfterCloseMs
-                row("QUOTE_SENT", e.rfqId) { put("price", d.price); put("maxWager", d.maxWager); put("fair", d.fair); put("collateral", p.reserved) }
+                row("QUOTE_SENT", e.rfqId) { put("price", d.price); put("maxWager", d.maxWager); put("fair", d.fair); put("collateral", p.reserved); put("held", cashHeld(cfg)); put("full", inFlight()) }
             }
         }
     }
@@ -327,6 +357,10 @@ class RfqMaker(
         // Novig echoes our four-decimal price rounded to a THOUSANDTH, so the echo is up to 0.0005 away from what we sent: 0.4495 came back as 0.450 on 2026-11-19, a gap of 5.0000000000000044e-4 in floating point,
         // which the old 5e-4 bound refused: our own win was rejected, counted against the 99% confirm rate (1 reject in 12 last looks = 92%) and locked the maker for 5 minutes (MAKER_LOCKED, run 44474874762).
         // The bound is 0.0006 (half a thousandth plus slack for the arithmetic): a rounding difference is never a reason to reject our own quote; it fills at OUR price.
+        synchronized(pending) {
+            p!!.certain = true; p.reservedUntilMs = maxOf(p.reservedUntilMs, clock() + BALANCE_CATCHUP_MS)
+            winLog.addLast(clock()); while (winLog.size > MAX_RATE_LOG) winLog.removeFirst()
+        }
         val sound = kotlin.math.abs(e.price - p!!.quotePrice!!) < PRICE_ECHO_TOLERANCE && e.wager <= (p.quoteMax ?: 0.0) + 0.005
         val ok = reply(RfqProtocol.confirm(nonce.incrementAndGet(), e.rfqId, e.quoteId, sound))
         if (ok) synchronized(answeredLooks) { answeredLooks.add(e.quoteId); while (answeredLooks.size > 2_000) answeredLooks.remove(answeredLooks.first()) }
@@ -477,5 +511,17 @@ class RfqMaker(
         const val RESERVE_AFTER_CLOSE_MS = 45_000L
         /** After a fill the collateral stays counted this long: the balance is read once a minute, so until the next reading the cash still shows what the fill has already locked. */
         const val BALANCE_CATCHUP_MS = 75_000L
+        /** CS1: the window the recent win rate is read over, the quotes' prior weight and the log's size. */
+        const val WIN_WINDOW_MS = 2 * 3_600_000L
+        const val PRIOR_QUOTES = 100.0
+        const val MAX_RATE_LOG = 20_000
+
+        /** The smallest k with P(X <= k) >= [confidence] for X ~ Poisson([lambda]): the wins that are almost certainly enough. */
+        fun poissonQuantile(lambda: Double, confidence: Double): Int {
+            if (lambda <= 0.0) return 0
+            var k = 0; var term = Math.exp(-lambda); var cum = term
+            while (cum < confidence && k < 100_000) { k++; term *= lambda / k; cum += term }
+            return k
+        }
     }
 }
