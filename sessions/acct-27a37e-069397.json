@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "348e10fef324310c9af15fef2a17d5789b9ae8d0",
+ "head": "c512d817d57394ab7bca3c4a3b27d09014902aeb",
  "since": 1795129305,
- "beat": 1795232348,
- "beatIso": "2026-11-21T03:39:08Z",
- "done": "ON1: engine_set gates.cloudTrading=LIVE gates.cloudBids=true vigGuards.bidDeployPct=50 --on pushed to cloud-config (04c5d75d8); CHANGES.md entry with revert; maker is LIVE in profile but halted by its own 24h loss stop (-$60.17 vs $26.26), liveParlays left SHADOW",
- "next": "verify engine status shows tradeMode live and desk active (cloud-feed status.json), then tell Tj: parlay maker halted by loss stop, offer rfq_set dayLossStopPct, offer liveParlays"
+ "beat": 1795232459,
+ "beatIso": "2026-11-21T03:40:59Z",
+ "done": "ON1: engine adopted gates.cloudTrading=LIVE (status tradeMode live); found engineBids needs maker=true so set maker=true too (cloud-config f4a519f8e); CHANGES.md corrected",
+ "next": "confirm Novig engine desk becomes active (status deskActive) after maker=true; then reply to Tj: parlay maker LIVE but halted by loss stop (-$79.13 24h, stop $20.57; 27 settled, 4 won), liveParlays SHADOW, Kalshi lane already LIVE; tick ON1"
 }
