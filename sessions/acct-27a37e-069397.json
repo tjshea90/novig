@@ -8,8 +8,8 @@
  "branch": "ccr-bc2a800c-fgp2ck",
  "head": "b4de31cec270b020303be7f769c2f566919ce443",
  "since": 1795129305,
- "beat": 1795232281,
- "beatIso": "2026-11-21T03:38:01Z",
+ "beat": 1795232288,
+ "beatIso": "2026-11-21T03:38:08Z",
  "done": "NT2 SHIPPED: v1.0.148 (release green, recorded)",
  "next": "nothing pending for NT1/NT2; the parlay engine is OFF; PARLAY MANDATE LOOP wake 10:50 UTC 11-21"
 }
