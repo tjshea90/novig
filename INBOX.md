@@ -2111,3 +2111,8 @@ Is there anything you can do to get parlays filled now that aren't terrible nega
 ```
 Turn the parlay in play engine live instead of shadow. Any parlay that you have moderate confidence that my chances of profit are good should be accepted with real money 
 ```
+
+## 2026-11-21T06:07:28Z
+```
+I don't care how you do it. I want my 77 dollar wallet tied up in parlay maker fills as soon as possible . As long as they are not parlays which are too easy for the buyer to win or terrible ev parlays. They should have a good chance at profit 
+```
