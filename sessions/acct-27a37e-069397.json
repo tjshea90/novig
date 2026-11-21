@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "016b64744b41b08681da6f0c558133b5e3bc7c6d",
+ "head": "6e2182c81c6e5f79e4d79db6017984688753e3c3",
  "since": 1795129305,
- "beat": 1795241128,
- "beatIso": "2026-11-21T06:05:28Z",
- "done": "LP1: in-play parlays LIVE (liveParlays LIVE, per-leg cap .8, ~3 pt margin) on thin graded evidence (n120, EV rises with margin, 80-90% leg pocket -24% excluded); engine adopted 06:02:44; only 1 game in play so no in-play quote yet; rfq-pnl-study dispatched for a bigger sample",
- "next": "re-judge in-play margin when the study lands (Release rfq-pnl-study graded.csv.gz: live=1 EV at our quote by margin, need 300+ fills); watch first live in-play fills on the Saturday slate; revert in CHANGES LP1; ON2 monitor continues"
+ "beat": 1795241229,
+ "beatIso": "2026-11-21T06:07:09Z",
+ "done": "ON2 monitor check-in #3 (06:07 UTC): healthy; maker connected, not halted, 437 quotes/1 won/1 filled, desk 516 bids $331, cash $67.13, no engine-log errors, ParlayAPI 594 credits; FV2 widened profile and LP1 in-play LIVE both adopted, no in-play quote yet (dry overnight); no change made",
+ "next": "check-in #4 due ~06:52 UTC (send_later re-armed); LP1 follow-up fires 06:36 UTC (rfq-pnl-study in-play margin re-judge); watch adaptiveCash decline text and first in-play fills; stop ~10:00 UTC"
 }
