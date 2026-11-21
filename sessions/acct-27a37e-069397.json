@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-bc2a800c-fgp2ck",
- "head": "26d29c7ab6aa4a228200c5911d1f0f7a7d9c0d3f",
+ "head": "697c57c6175543451a09d4a66cebc85c208225b1",
  "since": 1795129305,
- "beat": 1795252565,
- "beatIso": "2026-11-21T09:16:05Z",
- "done": "UW3: quoteWinFloor .01 live; new run 44884601470, 44 quotes in 4 min, cash-short gone from the top declines, 0 won, no halt",
- "next": "monitor #2 send_later 45 min: quotes/won/filled, cash vs collateral, any halt; next lever is leg fair coverage (FV1b UFC fair-only pass, FV1c NHL anytime scorer) since declines are now 'no fair line'"
+ "beat": 1795252676,
+ "beatIso": "2026-11-21T09:17:56Z",
+ "done": "UW3 monitor #2 (09:16 UTC): maker live and quoting ~11/min, 226 quotes this run, 0 won yet (expected 0.5-1.6), no halt; cash-short gone; 3-leg stays excluded (-8.4% graded); runs replaced by a tjshea90-token dispatch at 08:22 and 08:58 (harmless)",
+ "next": "monitor #3 send_later 60 min (to ~16:00 UTC): first wins/fills in the US-daytime slate, cash vs collateral, any halt; coverage levers FV1b/FV1c only if fills stay at 0 through the daytime slate"
 }
